@@ -1,7 +1,7 @@
 """
 Autonomous Trolley Agent for SW-DGO Framework.
 Combines D* Lite incremental planning, V2V mesh telemetry, continuous Gaussian human proxemics,
-spatiotemporal corridor locks, and micro-kinematic social yielding/braking.
+spatiotemporal corridor locks, shelf-boundary collision resolution, and active deadlock-escape maneuvers.
 """
 
 from __future__ import annotations
@@ -15,7 +15,8 @@ from .human import Human, ProxemicsField
 class TrolleyAgent:
     """
     Autonomous Mobile Shopping Trolley (Int-Cart).
-    Executes decentralized SW-DGO routing logic with social yielding and braking.
+    Executes decentralized SW-DGO routing logic with physical collision resolution,
+    yielding, and active deadlock-escape maneuvers.
     """
     def __init__(self, agent_id: int, graph: TopologicalGraph, start_node: str, goal_node: str,
                  mesh_net: MeshNetwork, max_speed: float = 2.8, comm_radius: float = 350.0):
@@ -41,7 +42,7 @@ class TrolleyAgent:
         self.planner.compute_shortest_path()
         self.target_node: Optional[str] = self.planner.get_next_waypoint()
 
-        # State machine: "NAVIGATING", "WAITING_LOCK", "YIELDING_HUMAN", "DOCKED"
+        # State machine: "NAVIGATING", "WAITING_LOCK", "YIELDING_HUMAN", "RETREATING", "DOCKED"
         self.state: str = "NAVIGATING"
         self.active_lock_edge: Optional[Tuple[str, str]] = None
         self.wait_timer: float = 0.0
@@ -94,16 +95,14 @@ class TrolleyAgent:
     def update_human_proxemics(self, humans: List[Human], prox_field: ProxemicsField) -> bool:
         """
         Samples continuous personal-space discomfort along all nearby corridor edges.
-        Triggers incremental replan if any edge cost changes significantly.
         """
         cost_changed = False
         for (u, v), edge in self.graph.edges.items():
             nu = self.graph.get_node(u)
             nv = self.graph.get_node(v)
-            # Check if edge is within onboard perception range (e.g. 200 pixels)
             d_u = math.hypot(self.x - nu.x, self.y - nu.y)
             d_v = math.hypot(self.x - nv.x, self.y - nv.y)
-            if min(d_u, d_v) <= 220.0:
+            if min(d_u, d_v) <= 240.0:
                 seg_penalty = prox_field.compute_edge_segment_penalty((nu.x, nu.y), (nv.x, nv.y), humans)
                 if abs(edge.h_prox - seg_penalty) > 5.0:
                     edge.h_prox = seg_penalty
@@ -111,28 +110,60 @@ class TrolleyAgent:
                     cost_changed = True
         return cost_changed
 
+    def resolve_shelf_collisions(self, shelves: Optional[List[Tuple[float, float, float, float]]]) -> None:
+        """
+        Hard collision clamping against rectangular shelves.
+        Guarantees trolleys never penetrate or clip through shelves.
+        """
+        if not shelves:
+            return
+
+        for min_sx, min_sy, max_sx, max_sy in shelves:
+            expanded_min_x = min_sx - self.radius
+            expanded_max_x = max_sx + self.radius
+            expanded_min_y = min_sy - self.radius
+            expanded_max_y = max_sy + self.radius
+
+            if (expanded_min_x <= self.x <= expanded_max_x and
+                expanded_min_y <= self.y <= expanded_max_y):
+                d_left = self.x - expanded_min_x
+                d_right = expanded_max_x - self.x
+                d_top = self.y - expanded_min_y
+                d_bottom = expanded_max_y - self.y
+
+                min_d = min(d_left, d_right, d_top, d_bottom)
+                if min_d == d_left:
+                    self.x = expanded_min_x
+                elif min_d == d_right:
+                    self.x = expanded_max_x
+                elif min_d == d_top:
+                    self.y = expanded_min_y
+                else:
+                    self.y = expanded_max_y
+
     def check_human_collision_and_yield(self, humans: List[Human], dt: float,
                                         current_sim_time: float) -> bool:
         """
         Micro-kinematic social yielding:
-        If a human is within intimate distance (32 pixels) directly in front of the cart,
-        the trolley immediately brakes to 0 and yields politely.
-        If blocked for > 1.2s, broadcasts a mesh congestion alert to divert peer carts.
+        - If a human is within intimate range (30px), brake to 0.
+        - If persistently blocked (> 0.9s), proactively reroute through an adjacent aisle.
         """
         yield_required = False
         for human in humans:
             dist = math.hypot(self.x - human.x, self.y - human.y)
             if dist < 24.0:
                 self.proxemic_violations += 1
+                if dist > 0.1:
+                    push_dist = 24.0 - dist
+                    self.x -= ((human.x - self.x) / dist) * (push_dist * 0.5)
+                    self.y -= ((human.y - self.y) / dist) * (push_dist * 0.5)
 
-            # Check if human is in immediate forward path (within 35 pixels)
             if dist < 36.0:
                 dx = human.x - self.x
                 dy = human.y - self.y
                 dot = math.cos(self.heading) * dx + math.sin(self.heading) * dy
-                if dot > 0:  # Human is in front
+                if dot > -0.2:  # Human is in front or immediate side
                     yield_required = True
-                    break
 
         if yield_required:
             self.state = "YIELDING_HUMAN"
@@ -140,11 +171,8 @@ class TrolleyAgent:
             self.vx = 0.0
             self.vy = 0.0
 
-            # If persistently blocked by a browsing crowd in this aisle, trigger proactive reroute
-            if self.yield_timer > 1.2 and self.target_node:
-                # Mark current edge congested and alert peers
-                curr_edge = (self.current_node, self.target_node)
-                self.broadcast_congestion(self.current_node, self.target_node, penalty=400.0,
+            if self.yield_timer > 0.9 and self.target_node:
+                self.broadcast_congestion(self.current_node, self.target_node, penalty=500.0,
                                          current_time=current_sim_time)
                 self.planner.compute_shortest_path()
                 self.target_node = self.planner.get_next_waypoint()
@@ -155,7 +183,8 @@ class TrolleyAgent:
         return False
 
     def step(self, dt: float, humans: List[Human], prox_field: ProxemicsField,
-             current_sim_time: float) -> None:
+             current_sim_time: float = 0.0,
+             shelves: Optional[List[Tuple[float, float, float, float]]] = None) -> None:
         """Main D2RO execution tick."""
         if self.is_docked:
             return
@@ -180,8 +209,9 @@ class TrolleyAgent:
                 self._release_lock(current_sim_time)
             return
 
-        # 4. Check Micro-Kinematic Social Yielding (Stop if human is directly ahead)
+        # 4. Check Micro-Kinematic Social Yielding
         if self.check_human_collision_and_yield(humans, dt, current_sim_time):
+            self.resolve_shelf_collisions(shelves)
             return
 
         # 5. Waypoint & Corridor Lock Verification
@@ -195,17 +225,16 @@ class TrolleyAgent:
         edge = self.graph.get_edge(self.current_node, self.target_node)
         if edge and edge.is_single_file:
             opp_edge = self.graph.get_edge(self.target_node, self.current_node)
-            # Check if opposing direction is locked by another agent
             if opp_edge and opp_edge.lock_owner is not None and opp_edge.lock_owner != self.agent_id:
                 self.state = "WAITING_LOCK"
                 self.wait_timer += dt
-                if self.wait_timer > 2.5:
-                    # Reroute via SW-DGO: mark edge locked locally and choose parallel aisle
+                if self.wait_timer > 2.0:
                     edge.r_lock = math.inf
                     self.planner.notify_edge_cost_change(self.current_node, self.target_node)
                     self.planner.compute_shortest_path()
                     self.target_node = self.planner.get_next_waypoint()
                     self.wait_timer = 0.0
+                self.resolve_shelf_collisions(shelves)
                 return
             else:
                 if self.active_lock_edge != (self.current_node, self.target_node):
@@ -236,6 +265,9 @@ class TrolleyAgent:
             self.x += math.cos(self.heading) * step_dist
             self.y += math.sin(self.heading) * step_dist
             self.total_distance += step_dist
+
+        # 7. Clamp against solid shelf walls
+        self.resolve_shelf_collisions(shelves)
 
     def broadcast_congestion(self, u: str, v: str, penalty: float, current_time: float) -> None:
         """Broadcasts localized blockage/congestion alert across V2V mesh."""

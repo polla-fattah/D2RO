@@ -1,7 +1,7 @@
 """
-Human Pedestrian Model and Gaussian Proxemics Generator.
-Models dynamic shoppers and computes continuous social personal-space discomfort fields
-with segment-level edge sampling and kinematic collision bubbles.
+Human Pedestrian Model and Shelf-Aware Navigation.
+Models dynamic shoppers that strictly respect supermarket shelf boundaries,
+navigate through aisles/crossways, and possess continuous Gaussian proxemic fields.
 """
 
 from __future__ import annotations
@@ -29,8 +29,13 @@ class Human:
     def pos(self) -> Tuple[float, float]:
         return (self.x, self.y)
 
-    def update(self, dt: float, bounds: Tuple[float, float, float, float]) -> None:
-        """Updates position, wandering motion, and shelf browsing states."""
+    def update(self, dt: float, bounds: Tuple[float, float, float, float],
+               shelves: List[Tuple[float, float, float, float]],
+               aisle_x_coords: List[float], crossway_y_coords: List[float]) -> None:
+        """
+        Updates pedestrian state and ensures pedestrians strictly navigate within open aisles
+        and never penetrate solid shelves.
+        """
         self.state_timer -= dt
         min_x, min_y, max_x, max_y = bounds
 
@@ -38,8 +43,15 @@ class Human:
             if self.state == "browsing":
                 self.state = "walking"
                 self.state_timer = random.uniform(3.0, 7.0)
-                self.target_x = random.uniform(min_x + 50, max_x - 50)
-                self.target_y = random.uniform(min_y + 50, max_y - 50)
+                # Pick a valid aisle or crossway target
+                if random.random() < 0.6:
+                    # Move along current aisle or pick a target along an aisle
+                    self.target_x = random.choice(aisle_x_coords)
+                    self.target_y = random.uniform(crossway_y_coords[0], crossway_y_coords[-1])
+                else:
+                    # Move along a horizontal crossway
+                    self.target_x = random.uniform(aisle_x_coords[0], aisle_x_coords[-1])
+                    self.target_y = random.choice(crossway_y_coords)
             else:
                 self.state = "browsing"
                 self.state_timer = random.uniform(2.0, 5.0)
@@ -59,9 +71,39 @@ class Human:
                 self.state = "browsing"
                 self.state_timer = random.uniform(2.0, 4.0)
 
-        # Clamp within store bounds
-        self.x = max(min_x + 10, min(max_x - 10, self.x))
-        self.y = max(min_y + 10, min(max_y - 10, self.y))
+        # 1. Hard Shelf Collision Resolution (Pedestrians cannot walk through shelves)
+        for min_sx, min_sy, max_sx, max_sy in shelves:
+            # Expand shelf box by human radius
+            expanded_min_x = min_sx - self.radius
+            expanded_max_x = max_sx + self.radius
+            expanded_min_y = min_sy - self.radius
+            expanded_max_y = max_sy + self.radius
+
+            if (expanded_min_x <= self.x <= expanded_max_x and
+                expanded_min_y <= self.y <= expanded_max_y):
+                # Calculate penetration depths to all 4 edges
+                d_left = self.x - expanded_min_x
+                d_right = expanded_max_x - self.x
+                d_top = self.y - expanded_min_y
+                d_bottom = expanded_max_y - self.y
+
+                min_d = min(d_left, d_right, d_top, d_bottom)
+                if min_d == d_left:
+                    self.x = expanded_min_x
+                    self.vx = -abs(self.vx)
+                elif min_d == d_right:
+                    self.x = expanded_max_x
+                    self.vx = abs(self.vx)
+                elif min_d == d_top:
+                    self.y = expanded_min_y
+                    self.vy = -abs(self.vy)
+                else:
+                    self.y = expanded_max_y
+                    self.vy = abs(self.vy)
+
+        # 2. Store Perimeter Boundary Clamping
+        self.x = max(min_x + 15, min(max_x - 15, self.x))
+        self.y = max(min_y + 15, min(max_y - 15, self.y))
 
 
 class ProxemicsField:
@@ -69,7 +111,7 @@ class ProxemicsField:
     Computes 2D Gaussian personal-space discomfort fields based on HA-VLN 2.0 guidelines.
     Includes continuous line-segment integration along corridor edges.
     """
-    def __init__(self, amplitude: float = 350.0, sigma: float = 40.0):
+    def __init__(self, amplitude: float = 400.0, sigma: float = 40.0):
         self.amplitude = amplitude  # High peak penalty to ensure detours are mathematically favored
         self.sigma = sigma          # Personal space standard deviation (pixels)
 
@@ -86,7 +128,7 @@ class ProxemicsField:
         return total_penalty
 
     def compute_edge_segment_penalty(self, p1: Tuple[float, float], p2: Tuple[float, float],
-                                    humans: List[Human], num_samples: int = 5) -> float:
+                                    humans: List[Human], num_samples: int = 6) -> float:
         """
         Numerically integrates proxemic discomfort along the continuous line segment (p1 -> p2).
         Guarantees that a human standing anywhere in an aisle inflates the edge cost.
