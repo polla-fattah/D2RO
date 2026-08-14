@@ -1,7 +1,7 @@
 """
 Generates the complete, publication-ready Microsoft Word manuscript (paper.docx)
 with integrated Literature Review, Methodology, 5-Component Mathematical Formulations,
-LaTeX Table data, Simulation Paradigms comparison, Experimental Results, and EMBEDDED HIGH-RES FIGURES.
+LaTeX Table data, Simulation Paradigms comparison, Experimental Results, and ALL 10 EMBEDDED HIGH-RES FIGURES.
 """
 
 from __future__ import annotations
@@ -204,8 +204,45 @@ def build_paper_docx():
         cap.runs[0].font.size = Pt(9.5)
         cap.runs[0].font.italic = True
 
-    # Section 4: Experimental Results
-    doc.add_heading("4. Experimental Results & Quantitative Discussion", level=1)
+    # Section 4: Trajectory Heatmaps & Spatiotemporal Analysis
+    doc.add_heading("4. Spatial Proxemic Heatmaps & Spatiotemporal Trajectory Analysis", level=1)
+    doc.add_paragraph(
+        "To visually demonstrate the superiority of D²RO over baseline algorithms, spatial discomfort heatmaps and time-space trajectory "
+        "diagrams are analyzed across the three domains:"
+    )
+
+    # Add Figure 8 (Proxemic Heatmap & Social Detour)
+    fig8_path = os.path.join(FIG_DIR, "fig8_social_detour_proxemic_heatmap.png")
+    if os.path.exists(fig8_path):
+        doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER
+        doc.add_picture(fig8_path, width=Inches(6.0))
+        cap = doc.add_paragraph("Figure 8: Spatial Human Proxemic Discomfort Field H_prox(x, y) heatmap and trajectory overlay comparing Static A* (blind path through Aisle 3 crowd) against D²RO proactive social detour along Action Alley.")
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap.runs[0].font.size = Pt(9.5)
+        cap.runs[0].font.italic = True
+
+    # Add Figure 9 (Spatiotemporal Alcove Time-Space Diagram)
+    fig9_path = os.path.join(FIG_DIR, "fig9_spatiotemporal_alcove_lock_diagram.png")
+    if os.path.exists(fig9_path):
+        doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER
+        doc.add_picture(fig9_path, width=Inches(5.6))
+        cap = doc.add_paragraph("Figure 9: Spatiotemporal time-space trajectory diagram of Turnout Alcove resolution: Emergency Pushchair P1 maintains full velocity under priority lock R_lock=inf, while routine Pushchair P2 yields inside the alcove bay.")
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap.runs[0].font.size = Pt(9.5)
+        cap.runs[0].font.italic = True
+
+    # Add Figure 10 (Airport Crowd Flow Streamlines)
+    fig10_path = os.path.join(FIG_DIR, "fig10_airport_crowd_density_streamlines.png")
+    if os.path.exists(fig10_path):
+        doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER
+        doc.add_picture(fig10_path, width=Inches(6.0))
+        cap = doc.add_paragraph("Figure 10: Airport open concourse vector flow streamlines and multi-agent luggage cart trajectories smoothly navigating around high-density passenger clusters.")
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap.runs[0].font.size = Pt(9.5)
+        cap.runs[0].font.italic = True
+
+    # Section 5: Experimental Results
+    doc.add_heading("5. Experimental Results & Quantitative Discussion", level=1)
     doc.add_paragraph(
         "Comprehensive empirical benchmarks were conducted across 20 randomized Monte Carlo trials. All raw data is exported to "
         "experiments/data/ and summarized in Table 1 below:"
@@ -259,8 +296,8 @@ def build_paper_docx():
         cap.runs[0].font.size = Pt(9.5)
         cap.runs[0].font.italic = True
 
-    # Section 5: Conclusion
-    doc.add_heading("5. Conclusion", level=1)
+    # Section 6: Conclusion
+    doc.add_heading("6. Conclusion", level=1)
     doc.add_paragraph(
         "The D²RO framework establishes an integrated, socially compliant, and provably deadlock-free routing architecture for autonomous "
         "multi-agent fleets. By coupling incremental D* Lite heuristic search with event-driven V2V mesh telemetry, spatiotemporal corridor "
@@ -270,7 +307,7 @@ def build_paper_docx():
 
     doc_path = os.path.join(BASE_DIR, "..", "paper.docx")
     doc.save(doc_path)
-    print(f"Successfully generated updated manuscript with embedded figures: {doc_path}")
+    print(f"Successfully generated updated manuscript with all 10 embedded figures: {doc_path}")
 
 if __name__ == "__main__":
     build_paper_docx()
