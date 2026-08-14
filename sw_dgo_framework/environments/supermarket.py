@@ -1,9 +1,15 @@
 """
-Supermarket Environment Topology and Multi-Scenario Suite.
-Constructs realistic retail layouts and scenario configurations for D²RO evaluation.
+Realistic Retail Supermarket Layout and Benchmark Scenarios.
+Models authentic supermarket architecture including:
+- Front Checkout Bank & Multi-Bay Cart Return Depots
+- Grocery Center Aisle Grid (Aisles 1 to 6) with End-Cap Island Displays
+- Transverse Action Alley (Middle Arterial Promenade)
+- Perimeter Fresh Produce & Bakery Thoroughfares
+- Asymmetric corridor widths (single-file vs wide arterial avenues)
 """
 
 from __future__ import annotations
+import math
 import random
 from dataclasses import dataclass
 from typing import List, Tuple, Dict, Optional
@@ -12,12 +18,13 @@ from ..core.human import Human
 
 @dataclass
 class ShelfObstacle:
-    """Rectangular shelf obstacle for collision checks and rendering."""
+    """Rectangular fixture/shelf obstacle with semantic retail department labeling."""
     x: float
     y: float
     w: float
     h: float
     name: str = "Shelf"
+    category: str = "grocery"  # "grocery", "endcap", "checkout", "island"
 
     @property
     def bounds(self) -> Tuple[float, float, float, float]:
@@ -25,164 +32,209 @@ class ShelfObstacle:
 
 class SupermarketLayout:
     """
-    Creates an orthogonal retail layout with:
-    - Multiple parallel single-file aisles
-    - Top, middle, and bottom cross-aisles
-    - Cart return docking bays
+    Realistic Supermarket Environment with multi-department architecture.
     """
-    def __init__(self, num_aisles: int = 5, aisle_length: float = 350.0,
-                 aisle_spacing: float = 140.0, start_x: float = 150.0, start_y: float = 120.0):
-        self.num_aisles = num_aisles
-        self.aisle_length = aisle_length
-        self.aisle_spacing = aisle_spacing
-        self.start_x = start_x
-        self.start_y = start_y
-
+    def __init__(self):
         self.graph = TopologicalGraph()
         self.shelves: List[ShelfObstacle] = []
         self.docking_bays: List[str] = []
-        self.bounds = (0.0, 0.0, start_x + (num_aisles + 1) * aisle_spacing + 100.0, start_y + aisle_length + 180.0)
 
-        self._build_layout()
+        # Coordinate System & Major Thoroughfares
+        self.start_x = 180.0
+        self.aisle_spacing = 130.0
+        self.num_aisles = 6
+        
+        # Y Coordinate Levels
+        self.y_back_promenade = 90.0      # Rear bakery/dairy corridor (wide)
+        self.y_shelf_top_start = 140.0
+        self.y_action_alley = 300.0       # Middle Action Alley cross-promenade (wide)
+        self.y_shelf_bot_end = 460.0
+        self.y_front_concourse = 510.0    # Front concourse before checkouts (wide)
+        self.y_checkout_registers = 590.0 # Checkout lane register bank
+        self.y_cart_depot = 660.0         # Cart return docking depot
 
-    def _build_layout(self) -> None:
-        """Constructs nodes, single-file aisle edges, cross-aisles, and shelf obstacles."""
-        y_top = self.start_y
-        y_mid = self.start_y + (self.aisle_length / 2.0)
-        y_bot = self.start_y + self.aisle_length
-        y_dock = y_bot + 80.0
+        self.bounds = (0.0, 0.0, self.start_x + (self.num_aisles + 1) * self.aisle_spacing + 80.0, self.y_cart_depot + 90.0)
 
-        # 1. Create Nodes at Aisle Junctions
+        self._build_realistic_store()
+
+    def _build_realistic_store(self) -> None:
+        """Constructs authentic retail topological roadmap and solid fixtures."""
+        
+        # 1. WAYPOINT NODES AT KEY JUNCTIONS
+        # Perimeter & Aisle Junctions
         for i in range(self.num_aisles):
-            x = self.start_x + i * self.aisle_spacing
-            self.graph.add_node(f"N_top_{i}", x, y_top)
-            self.graph.add_node(f"N_mid_{i}", x, y_mid)
-            self.graph.add_node(f"N_bot_{i}", x, y_bot)
+            ax = self.start_x + i * self.aisle_spacing
+            self.graph.add_node(f"N_back_{i}", ax, self.y_back_promenade)
+            self.graph.add_node(f"N_mid_{i}", ax, self.y_action_alley)
+            self.graph.add_node(f"N_front_{i}", ax, self.y_front_concourse)
 
-        # 2. Add Vertical Aisle Edges (Marked Single-File)
+        # Left Produce & Right Deli Perimeter Nodes
+        x_left_produce = self.start_x - 100.0
+        x_right_deli = self.start_x + (self.num_aisles - 1) * self.aisle_spacing + 100.0
+
+        self.graph.add_node("N_produce_back", x_left_produce, self.y_back_promenade)
+        self.graph.add_node("N_produce_mid", x_left_produce, self.y_action_alley)
+        self.graph.add_node("N_produce_front", x_left_produce, self.y_front_concourse)
+
+        self.graph.add_node("N_deli_back", x_right_deli, self.y_back_promenade)
+        self.graph.add_node("N_deli_mid", x_right_deli, self.y_action_alley)
+        self.graph.add_node("N_deli_front", x_right_deli, self.y_front_concourse)
+
+        # Cart Return Depots (Front of store)
+        self.graph.add_node("DOCK_BAY_MAIN", self.start_x + 2 * self.aisle_spacing, self.y_cart_depot, is_docking_bay=True)
+        self.graph.add_node("DOCK_BAY_EXPRESS", self.start_x + 4 * self.aisle_spacing, self.y_cart_depot, is_docking_bay=True)
+        self.docking_bays.extend(["DOCK_BAY_MAIN", "DOCK_BAY_EXPRESS"])
+
+        # 2. CORRIDOR EDGES (Single-File Grocery Aisles vs Wide Arterials)
+        # Vertical Grocery Aisles (Narrow Single-File Corridors)
         for i in range(self.num_aisles):
-            self.graph.add_edge(f"N_top_{i}", f"N_mid_{i}", is_single_file=True, bidirectional=True)
-            self.graph.add_edge(f"N_mid_{i}", f"N_bot_{i}", is_single_file=True, bidirectional=True)
+            # Upper aisle half (Back to Action Alley)
+            self.graph.add_edge(f"N_back_{i}", f"N_mid_{i}", is_single_file=True, bidirectional=True)
+            # Lower aisle half (Action Alley to Front Concourse)
+            self.graph.add_edge(f"N_mid_{i}", f"N_front_{i}", is_single_file=True, bidirectional=True)
 
-        # 3. Add Horizontal Cross-Aisles (Wide/Bidirectional)
+        # Left & Right Perimeter Thoroughfares (Wide / Non-single-file)
+        self.graph.add_edge("N_produce_back", "N_produce_mid", is_single_file=False, bidirectional=True)
+        self.graph.add_edge("N_produce_mid", "N_produce_front", is_single_file=False, bidirectional=True)
+        self.graph.add_edge("N_deli_back", "N_deli_mid", is_single_file=False, bidirectional=True)
+        self.graph.add_edge("N_deli_mid", "N_deli_front", is_single_file=False, bidirectional=True)
+
+        # Horizontal Arterial Promenades (Rear, Action Alley, Front)
+        self.graph.add_edge("N_produce_back", f"N_back_0", is_single_file=False, bidirectional=True)
+        self.graph.add_edge("N_produce_mid", f"N_mid_0", is_single_file=False, bidirectional=True)
+        self.graph.add_edge("N_produce_front", f"N_front_0", is_single_file=False, bidirectional=True)
+
         for i in range(self.num_aisles - 1):
-            self.graph.add_edge(f"N_top_{i}", f"N_top_{i+1}", is_single_file=False, bidirectional=True)
+            self.graph.add_edge(f"N_back_{i}", f"N_back_{i+1}", is_single_file=False, bidirectional=True)
             self.graph.add_edge(f"N_mid_{i}", f"N_mid_{i+1}", is_single_file=False, bidirectional=True)
-            self.graph.add_edge(f"N_bot_{i}", f"N_bot_{i+1}", is_single_file=False, bidirectional=True)
+            self.graph.add_edge(f"N_front_{i}", f"N_front_{i+1}", is_single_file=False, bidirectional=True)
 
-        # 4. Add Cart Return Docking Station
-        dock_x = self.start_x + (self.num_aisles // 2) * self.aisle_spacing
-        self.graph.add_node("DOCK_BAY", dock_x, y_dock, is_docking_bay=True)
-        self.docking_bays.append("DOCK_BAY")
+        self.graph.add_edge(f"N_back_{self.num_aisles-1}", "N_deli_back", is_single_file=False, bidirectional=True)
+        self.graph.add_edge(f"N_mid_{self.num_aisles-1}", "N_deli_mid", is_single_file=False, bidirectional=True)
+        self.graph.add_edge(f"N_front_{self.num_aisles-1}", "N_deli_front", is_single_file=False, bidirectional=True)
 
+        # Connect Front Concourse to Cart Return Depots through checkout lanes
         for i in range(self.num_aisles):
-            self.graph.add_edge(f"N_bot_{i}", "DOCK_BAY", is_single_file=False, bidirectional=True)
+            self.graph.add_edge(f"N_front_{i}", "DOCK_BAY_MAIN", is_single_file=False, bidirectional=True)
+            self.graph.add_edge(f"N_front_{i}", "DOCK_BAY_EXPRESS", is_single_file=False, bidirectional=True)
+        self.graph.add_edge("N_produce_front", "DOCK_BAY_MAIN", is_single_file=False, bidirectional=True)
+        self.graph.add_edge("N_deli_front", "DOCK_BAY_EXPRESS", is_single_file=False, bidirectional=True)
 
-        # 5. Build Shelf Obstacles Between Aisles
-        shelf_width = self.aisle_spacing - 45.0
-        shelf_h1 = (self.aisle_length / 2.0) - 30.0
+        # 3. SOLID RETAIL FIXTURES & SHELVING BLOCKS
+        shelf_width = self.aisle_spacing - 46.0
+        h_upper_shelf = (self.y_action_alley - self.y_shelf_top_start) - 30.0
+        h_lower_shelf = (self.y_shelf_bot_end - (self.y_action_alley + 30.0))
 
+        # Grocery Center Shelves with End-Cap Displays
         for i in range(self.num_aisles - 1):
-            shelf_x = self.start_x + i * self.aisle_spacing + 22.5
-            self.shelves.append(ShelfObstacle(shelf_x, y_top + 15.0, shelf_width, shelf_h1, name=f"Shelf_T_{i}"))
-            self.shelves.append(ShelfObstacle(shelf_x, y_mid + 15.0, shelf_width, shelf_h1, name=f"Shelf_B_{i}"))
+            sx = self.start_x + i * self.aisle_spacing + 23.0
+            # Upper Grocery Shelf Block
+            self.shelves.append(ShelfObstacle(sx, self.y_shelf_top_start + 15.0, shelf_width, h_upper_shelf, name=f"Aisle {i+1}A", category="grocery"))
+            # Lower Grocery Shelf Block
+            self.shelves.append(ShelfObstacle(sx, self.y_action_alley + 30.0, shelf_width, h_lower_shelf, name=f"Aisle {i+1}B", category="grocery"))
+
+        # Produce Display Islands (Left Department)
+        self.shelves.append(ShelfObstacle(x_left_produce - 45.0, 180.0, 70.0, 80.0, name="Organic Produce", category="island"))
+        self.shelves.append(ShelfObstacle(x_left_produce - 45.0, 350.0, 70.0, 80.0, name="Fresh Fruits", category="island"))
+
+        # Bakery & Deli Counters (Right Department)
+        self.shelves.append(ShelfObstacle(x_right_deli - 25.0, 180.0, 75.0, 100.0, name="Artisan Bakery", category="deli"))
+        self.shelves.append(ShelfObstacle(x_right_deli - 25.0, 350.0, 75.0, 100.0, name="Meat & Seafood", category="deli"))
+
+        # Checkout Register Booths (Front of Store)
+        for i in range(self.num_aisles):
+            rx = self.start_x + i * self.aisle_spacing - 15.0
+            self.shelves.append(ShelfObstacle(rx, self.y_checkout_registers - 25.0, 30.0, 45.0, name=f"Register {i+1}", category="checkout"))
 
 
 class ScenarioSuite:
     """
-    Generates distinct benchmark scenarios evaluating specific capabilities of SW-DGO.
+    Generates realistic operational scenarios for autonomous retail fleet routing.
     """
     @staticmethod
     def get_scenario(scenario_id: str, layout: SupermarketLayout) -> Tuple[List[Dict], List[Human], str]:
-        """
-        Returns (trolley_configs, humans_list, description)
-        """
         if scenario_id == "A" or scenario_id == "crowded_aisle":
-            # Scenario A: Dense crowd blocking Aisle 2 -> Trolleys proactively divert to Aisles 0, 1, 3, 4
-            desc = "Scenario A: Dense Shopper Crowd in Aisle 2. Trolleys detect Gaussian proxemics and proactively detour via adjacent aisles."
+            desc = "Scenario A: Heavy Shopper Congestion in Grocery Aisle 3. Carts detect continuous Gaussian personal-space fields and proactively divert through open parallel aisles."
             trolleys = [
-                {"id": 1, "start": "N_top_2", "goal": "DOCK_BAY"},
-                {"id": 2, "start": "N_top_2", "goal": "DOCK_BAY"},
-                {"id": 3, "start": "N_top_1", "goal": "DOCK_BAY"},
-                {"id": 4, "start": "N_top_3", "goal": "DOCK_BAY"},
+                {"id": 1, "start": "N_back_2", "goal": "DOCK_BAY_MAIN"},
+                {"id": 2, "start": "N_back_2", "goal": "DOCK_BAY_MAIN"},
+                {"id": 3, "start": "N_back_1", "goal": "DOCK_BAY_MAIN"},
+                {"id": 4, "start": "N_back_4", "goal": "DOCK_BAY_EXPRESS"},
             ]
-            x_aisle2 = layout.start_x + 2 * layout.aisle_spacing
+            ax3 = layout.start_x + 2 * layout.aisle_spacing
             humans = [
-                Human(1, x_aisle2, 220.0, speed=0.3, state="browsing"),
-                Human(2, x_aisle2 + 10, 260.0, speed=0.4, state="browsing"),
-                Human(3, x_aisle2 - 8, 300.0, speed=0.3, state="browsing"),
-                Human(4, x_aisle2, 340.0, speed=0.2, state="browsing"),
-                Human(5, layout.start_x + 3 * layout.aisle_spacing, 420.0, speed=0.8),
+                Human(1, ax3, 190.0, speed=0.2, state="browsing"),
+                Human(2, ax3 + 8, 230.0, speed=0.3, state="browsing"),
+                Human(3, ax3 - 6, 270.0, speed=0.2, state="browsing"),
+                Human(4, ax3, 380.0, speed=0.3, state="browsing"),
+                Human(5, ax3, 420.0, speed=0.2, state="browsing"),
+                Human(6, layout.start_x + 1 * layout.aisle_spacing, 250.0, speed=0.9),
+                Human(7, layout.start_x + 3 * layout.aisle_spacing, 390.0, speed=0.8),
             ]
             return trolleys, humans, desc
 
         elif scenario_id == "B" or scenario_id == "head_on_lock":
-            # Scenario B: Corridor Lock & Head-on Negotiation in Single-File Aisle 1
-            desc = "Scenario B: Head-On Encounter in Single-File Aisle 1. Mutual exclusion lock (R_lock) prevents live-lock; opposing trolley reroutes to Aisle 2."
+            desc = "Scenario B: Single-File Corridor Lock Negotiation. Trolley 1 heads South while Trolley 2 heads North in Aisle 2. Trolley 1 claims mutex lock; Trolley 2 yields and takes Aisle 1."
             trolleys = [
-                {"id": 1, "start": "N_top_1", "goal": "N_bot_1"},
-                {"id": 2, "start": "N_bot_1", "goal": "N_top_1"},
-                {"id": 3, "start": "N_top_3", "goal": "DOCK_BAY"},
+                {"id": 1, "start": "N_back_1", "goal": "DOCK_BAY_MAIN"},
+                {"id": 2, "start": "N_front_1", "goal": "N_back_1"},
+                {"id": 3, "start": "N_back_4", "goal": "DOCK_BAY_EXPRESS"},
             ]
             humans = [
-                Human(1, layout.start_x + 0 * layout.aisle_spacing, 250.0, speed=0.9),
-                Human(2, layout.start_x + 4 * layout.aisle_spacing, 350.0, speed=0.9),
+                Human(1, layout.start_x + 0 * layout.aisle_spacing, 220.0, speed=0.8),
+                Human(2, layout.start_x + 3 * layout.aisle_spacing, 400.0, speed=0.9),
             ]
             return trolleys, humans, desc
 
         elif scenario_id == "C" or scenario_id == "mesh_blockage":
-            # Scenario C: Sudden Physical Blockage & V2V Mesh Broadcast
-            desc = "Scenario C: Sudden Blockage in Aisle 0. Trolley 1 broadcasts CONGESTION_ALERT over V2V mesh; rear trolleys divert before entering."
+            desc = "Scenario C: Sudden Pallet Blockage in Aisle 1. Trolley 1 encounters a fallen restock box, broadcasts CONGESTION_ALERT over V2V mesh, and trailing fleet detours before arriving."
             trolleys = [
-                {"id": 1, "start": "N_top_0", "goal": "DOCK_BAY"},
-                {"id": 2, "start": "N_top_0", "goal": "DOCK_BAY"},
-                {"id": 3, "start": "N_top_1", "goal": "DOCK_BAY"},
-                {"id": 4, "start": "N_top_4", "goal": "DOCK_BAY"},
+                {"id": 1, "start": "N_back_0", "goal": "DOCK_BAY_MAIN"},
+                {"id": 2, "start": "N_back_0", "goal": "DOCK_BAY_MAIN"},
+                {"id": 3, "start": "N_back_1", "goal": "DOCK_BAY_MAIN"},
+                {"id": 4, "start": "N_back_5", "goal": "DOCK_BAY_EXPRESS"},
             ]
-            # Dense blockage in Aisle 0
-            x_aisle0 = layout.start_x + 0 * layout.aisle_spacing
+            ax0 = layout.start_x + 0 * layout.aisle_spacing
             humans = [
-                Human(1, x_aisle0, 240.0, speed=0.0, state="browsing"),
-                Human(2, x_aisle0, 270.0, speed=0.0, state="browsing"),
-                Human(3, x_aisle0, 310.0, speed=0.0, state="browsing"),
+                Human(1, ax0, 210.0, speed=0.0, state="browsing"),
+                Human(2, ax0, 240.0, speed=0.0, state="browsing"),
+                Human(3, ax0, 270.0, speed=0.0, state="browsing"),
             ]
             return trolleys, humans, desc
 
         elif scenario_id == "D" or scenario_id == "social_crossing":
-            # Scenario D: Pedestrian Cross-Traffic & Social Yielding/Braking
-            desc = "Scenario D: Pedestrian Cross-Traffic. Dynamic shoppers cross aisles; trolleys politely brake/yield without colliding."
+            desc = "Scenario D: Action Alley Cross-Traffic. Dynamic shoppers cross perpendicular through Action Alley; trolleys smoothly decelerate, yield politely, and resume."
             trolleys = [
-                {"id": 1, "start": "N_top_0", "goal": "DOCK_BAY"},
-                {"id": 2, "start": "N_top_2", "goal": "DOCK_BAY"},
-                {"id": 3, "start": "N_top_4", "goal": "DOCK_BAY"},
+                {"id": 1, "start": "N_back_0", "goal": "DOCK_BAY_MAIN"},
+                {"id": 2, "start": "N_back_2", "goal": "DOCK_BAY_MAIN"},
+                {"id": 3, "start": "N_back_4", "goal": "DOCK_BAY_EXPRESS"},
             ]
             humans = [
-                Human(1, 200.0, 295.0, speed=1.3, state="walking"),
-                Human(2, 600.0, 295.0, speed=1.1, state="walking"),
-                Human(3, 350.0, 470.0, speed=1.0, state="walking"),
-                Human(4, 500.0, 470.0, speed=1.2, state="walking"),
+                Human(1, 200.0, layout.y_action_alley, speed=1.2, state="walking"),
+                Human(2, 650.0, layout.y_action_alley, speed=1.1, state="walking"),
+                Human(3, 400.0, layout.y_front_concourse, speed=1.0, state="walking"),
+                Human(4, 750.0, layout.y_front_concourse, speed=1.2, state="walking"),
             ]
             return trolleys, humans, desc
 
         else:
-            # Scenario E: High-Density Supermarket Rush Hour
-            desc = "Scenario E: Supermarket Rush Hour. 6 autonomous trolleys navigating alongside 10 dynamic shoppers."
+            desc = "Scenario E: Supermarket Rush Hour. 6 autonomous trolleys navigating across Produce, Bakery, and Grocery aisles amid 12 dynamic shoppers."
             trolleys = [
-                {"id": 1, "start": "N_top_0", "goal": "DOCK_BAY"},
-                {"id": 2, "start": "N_top_1", "goal": "DOCK_BAY"},
-                {"id": 3, "start": "N_top_2", "goal": "DOCK_BAY"},
-                {"id": 4, "start": "N_top_3", "goal": "DOCK_BAY"},
-                {"id": 5, "start": "N_top_4", "goal": "DOCK_BAY"},
-                {"id": 6, "start": "N_mid_2", "goal": "DOCK_BAY"},
+                {"id": 1, "start": "N_produce_back", "goal": "DOCK_BAY_MAIN"},
+                {"id": 2, "start": "N_back_1", "goal": "DOCK_BAY_MAIN"},
+                {"id": 3, "start": "N_back_2", "goal": "DOCK_BAY_MAIN"},
+                {"id": 4, "start": "N_back_4", "goal": "DOCK_BAY_EXPRESS"},
+                {"id": 5, "start": "N_deli_back", "goal": "DOCK_BAY_EXPRESS"},
+                {"id": 6, "start": "N_mid_3", "goal": "DOCK_BAY_EXPRESS"},
             ]
-            random.seed(42)
+            random.seed(101)
             humans = []
             min_x, min_y, max_x, max_y = layout.bounds
-            for i in range(10):
+            for i in range(12):
                 humans.append(Human(
                     id=i + 1,
-                    x=random.uniform(min_x + 80, max_x - 80),
-                    y=random.uniform(min_y + 80, max_y - 80),
+                    x=random.uniform(min_x + 90, max_x - 90),
+                    y=random.uniform(min_y + 90, max_y - 90),
                     speed=random.uniform(0.7, 1.3)
                 ))
             return trolleys, humans, desc
