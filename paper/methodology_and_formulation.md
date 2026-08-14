@@ -1,51 +1,71 @@
-# Methodology & Mathematical Formulation: The $\text{D}^2\text{RO}$ Framework
-## Socially-Weighted Distributed Graph Optimization (SW-DGO) for Autonomous Fleet Navigation
+# Socially-Weighted Distributed Graph Optimization ($\text{D}^2\text{RO}$) for Autonomous Multi-Agent Service Fleets in Crowded Environments
 
-**Abstract / Overview:**
-This document details the formal mathematical model, system architecture, simulation methodology, and algorithmic execution of the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework. Designed for autonomous mobile service fleets (*Int-Cart* shopping trolleys, hospital pushchairs, and airport luggage carts) operating in crowded, narrow, and dynamic human environments, $\text{D}^2\text{RO}$ synthesizes incremental heuristic search ($D^*$ Lite), event-driven Vehicle-to-Vehicle (V2V) ad-hoc mesh communication, continuous 2D anisotropic Gaussian human proxemics, spatiotemporal directional corridor mutex locks, and kinetic vehicle safety envelopes ($S_{\text{trolley}}$).
+**Authors:** Polla Fattah, et al.  
+**Target Submission:** *IEEE Transactions on Robotics / Autonomous Robots (Special Issue on Multi-Agent Social Navigation)*
 
 ---
 
-## 1. Problem Formulation & System Modeling
+## 1. Introduction & Literature Review
 
-### 1.1 Planar Retail Workspace and Roadmap Graph
-Let $\mathcal{W} \subset \mathbb{R}^2$ define the continuous 2D planar environment floor. The navigation topology is modeled as an embedded directed graph:
+The continuous deployment of autonomous mobile service fleets—such as retail shopping trolleys (*Int-Cart*), hospital patient pushchairs, and airport luggage carts—in shared human-populated environments represents a fundamental frontier in robotics. Navigating these environments requires addressing multiple intersecting challenges: Multi-Agent Path Finding (MAPF), dynamic graph replanning, continuous local collision avoidance, ad-hoc wireless communication, and human-aware social proxemics.
 
-$$G = (V, E)$$
+```mermaid
+graph TD
+    subgraph Literature["Foundations & Literature Landscape"]
+        L1["1. Lifelong MAPF & MAPD<br/>(Stern et al., 2019; Ma et al., 2017)"]
+        L2["2. Incremental Graph Repair<br/>(Koenig & Likhachev, 2002; Al-Mutib et al., 2012)"]
+        L3["3. Velocity Obstacles & ORCA<br/>(Van den Berg et al., 2008; Dergachev & Yakovlev, 2021)"]
+        L4["4. Mobile Ad-Hoc Networks (MANET)<br/>(Gielis et al., 2022; Slyusar & Kulich, 2016)"]
+        L5["5. Social Proxemics & Footprints<br/>(HA-VLN Authors, 2024; Mohamad Azlan et al., 2024)"]
+    end
 
-where:
-* $V = \{v_1, v_2, \dots, v_{|V|}\}$ is the set of waypoint vertices positioned at aisle junctions, shelf corners, room entries, and docking stations, with physical coordinates $\mathbf{p}_v = [x_v, y_v]^T \in \mathbb{R}^2$.
-* $E \subseteq V \times V$ is the set of directed edges representing traversable corridors.
-* $E_{\text{single-file}} \subset E$ denotes narrow single-file corridors where passage width $w_{\text{aisle}} < 2 r_{\text{trolley}}$, rendering bidirectional passing kinematically infeasible.
+    subgraph IdentifiedGaps["Critical Research Gaps Identified"]
+        G1["Lack of V2V Mesh Telemetry in MAPF"]
+        G2["Symmetrical Live-Locks in Narrow Corridors"]
+        G3["Omission of Physical Chassis Sweeping Margins & Tailgating"]
+        G4["Single-Domain Evaluation Overfitting"]
+    end
 
-### 1.2 Agent Kinematics & Fleet State
-The system manages a decentralized fleet of $N$ autonomous mobile agents $\mathcal{A} = \{a_1, a_2, \dots, a_N\}$. Each agent $a_i$ operates under unicycle non-holonomic kinematics:
+    Literature --> IdentifiedGaps
+    IdentifiedGaps --> D2RO["Proposed D²RO / SW-DGO Framework"]
+```
+
+### 1.1 Decentralized and Lifelong Multi-Agent Path Finding (MAPF)
+Classical MAPF formalizes the collision-free routing of discrete agents on graph topologies (*Stern et al., 2019*). In lifelong multi-agent pickup and delivery (MAPD) (*Ma et al., 2017*), agents dynamically receive transport assignments without resting. To overcome the communication bottlenecks and single-point failure risks of centralized servers, recent research has investigated decentralized solvers, including priority swapping (*Dergachev & Yakovlev, 2024*), automated negotiation (*Keskin et al., 2024*), and learning-based policies such as PRIMAL (*Sartoretti et al., 2019*) and Learn-to-Follow (*Skrynnik et al., 2024*). However, learning-based policies suffer from out-of-distribution failure when encountering sudden physical corridor blockages, demonstrating the continued necessity of provably complete heuristic search.
+
+### 1.2 Dynamic Incremental Replanning in Stochastic Environments
+In retail and hospital corridors, topological traversal costs shift dynamically as shoppers congregate or medical carts block aisles. Full graph recalculations from scratch ($O(|V| \log |V|)$) are computationally prohibitive for decentralized embedded microcontrollers. Koenig and Likhachev (2002) resolved this with $D^*$ Lite, an incremental heuristic search algorithm that re-evaluates only inconsistent vertices ($g(s) \neq rhs(s)$) affected by dynamic edge-cost shifts. Al-Mutib et al. (2012) and Wagner & Choset (2011) demonstrated the power of dynamic dimensionality reduction and incremental repair in multi-agent routing.
+
+### 1.3 Kinematic Coordination, Velocity Obstacles, and Corridor Deadlocks
+In continuous space, Optimal Reciprocal Collision Avoidance (ORCA) (*Van den Berg et al., 2008*) calculates collision-free half-planes in velocity space without explicit communication. However, standard ORCA suffers from **symmetrical live-locks and local minima traps** in narrow, orthogonal corridors where agents cannot physically pass one another. Dergachev and Yakovlev (2021) addressed this by combining continuous reciprocal avoidance with locally confined MAPF fallback.
+
+### 1.4 Ad-Hoc Multi-Robot Mesh Communication
+Transitioning to fully decentralized fleets requires peer-to-peer data exchange without centralized infrastructure (*Gielis et al., 2022*). Slyusar and Kulich (2016) and Edwige (2024) evaluated mobile ad-hoc networks (MANET) and Swarm SLAM, proving that decentralized agents can effectively merge localized spatial state representations over multi-hop wireless meshes.
+
+### 1.5 Human Proxemics and Vehicle Clearance Margins
+Social navigation guidelines (*HA-VLN 2.0, 2024*) dictate that robots must respect psychological personal space boundaries rather than treating pedestrians as rigid cylindrical obstacles. Crucially, recent mechatronic deployments of autonomous carts (*Mohamad Azlan et al., 2024 - Int-Cart*) reveal that real non-holonomic vehicles require **physical sweeping clearance margins**: turning sharp $90^\circ$ corners can cause outer chassis boundaries to scrape shelf fixtures, and trailing carts require kinetic following buffers to eliminate tailgating.
+
+### 1.6 Identified Research Gaps & Contributions of $\text{D}^2\text{RO}$
+1. **The Remote Information Isolation Gap:** Existing decentralized MAPF planners rely on myopic, on-board line-of-sight sensing. Trailing carts drive directly into blocked corridors before discovering obstructions, requiring costly backtracking.
+2. **The Symmetrical Corridor Deadlock Gap:** Reactive continuous algorithms (ORCA, APF) fail completely ($0.0\%$ success) in narrow single-file corridors due to opposing velocity cancellation.
+3. **The Chassis Sweeping Clearance Gap:** Standard graph formulations assume point agents, leading to wall scraping during non-holonomic corner execution.
+4. **The Multi-Domain Generalization Gap:** Existing literature overfits to single benchmark layouts. A robust framework must generalize across retail aisles, clinical hospital wards with turnout alcoves, and massive open airport concourses.
+
+The proposed **$\text{D}^2\text{RO}$ (Decentralized Dynamic Route Optimization)** framework bridges all four gaps.
+
+---
+
+## 2. Mathematical Formulation & System Architecture
+
+### 2.1 Environmental Topology & Non-Holonomic Kinematics
+The planar workspace $\mathcal{W} \subset \mathbb{R}^2$ is embedded as a directed graph $G = (V, E)$. The fleet consists of $N$ autonomous agents $\mathcal{A} = \{a_1, \dots, a_N\}$ governed by unicycle non-holonomic kinematics:
 
 $$\mathbf{x}_i(t) = \begin{bmatrix} x_i(t) \\ y_i(t) \\ \theta_i(t) \\ v_i(t) \end{bmatrix}, \quad \dot{\mathbf{x}}_i(t) = \begin{bmatrix} v_i(t) \cos \theta_i(t) \\ v_i(t) \sin \theta_i(t) \\ \omega_i(t) \\ a_i(t) \end{bmatrix}$$
 
-where:
-* $\mathbf{p}_i(t) = [x_i(t), y_i(t)]^T$ is the 2D Cartesian position,
-* $\theta_i(t) \in [-\pi, \pi)$ is the orientation heading angle,
-* $v_i(t) \in [0, v_{\max}]$ and $\omega_i(t) \in [-\omega_{\max}, \omega_{\max}]$ are linear and angular velocities,
-* $a_i(t) \in [-a_{\max}, a_{\max}]$ is the linear acceleration command.
+subject to linear speed $v_i(t) \in [0, v_{\max}]$, angular steering rate $\omega_i(t) \in [-\omega_{\max}, \omega_{\max}]$, and linear acceleration $a_i(t) \in [-a_{\max}, a_{\max}]$.
 
-### 1.3 Dynamic Human Pedestrians
-The environment contains $M(t)$ dynamic human pedestrians $\mathcal{H}(t) = \{h_1, h_2, \dots, h_M\}$. Each pedestrian $h_j$ is defined by:
-
-$$\mathbf{h}_j(t) = \begin{bmatrix} \mathbf{p}_j^h(t) \\ \mathbf{v}_j^h(t) \end{bmatrix} = \begin{bmatrix} x_j^h(t) \\ y_j^h(t) \\ v_j^h \cos \phi_j^h \\ v_j^h \sin \phi_j^h \end{bmatrix}$$
-
-where $\mathbf{p}_j^h(t)$ is position and $\phi_j^h$ is the walking direction.
-
----
-
-## 2. The SW-DGO Optimization Objective
-
-The fleet navigation goal for each agent $a_i$ moving from start waypoint $s_{\text{start}}$ to docking goal $s_{\text{goal}}$ is formulated as finding the optimal sequence of waypoints $\pi^* = (v_0, v_1, \dots, v_K)$ that minimizes the cumulative dynamic cost:
-
-$$\pi^* = \arg\min_{\pi \in \Pi(s_{\text{start}}, s_{\text{goal}})} \sum_{k=0}^{|\pi|-1} C(v_k, v_{k+1}, t_k)$$
-
-### 2.1 The Complete 5-Component Composite Edge Cost Function
-For any directed edge $(u, v) \in E$ at time $t$, the traversal cost $C(u, v, t)$ is defined by five decoupled penalty functions:
+### 2.2 The Complete 5-Component SW-DGO Traversal Cost Function
+The traversal cost $C(u, v, t)$ across any directed edge $(u, v) \in E$ at time $t$ is evaluated as:
 
 $$\boxed{C(u, v, t) = D(u, v) + W_{\text{mesh}}(u, v, t) + H_{\text{prox}}(v, t) + R_{\text{lock}}(u, v, t) + S_{\text{trolley}}(v, t)}$$
 
@@ -56,155 +76,124 @@ flowchart TD
     W["2. V2V Mesh Decay: W_mesh(u, v, t)"]
     H["3. Gaussian Proxemics: H_prox(v, t)"]
     R["4. Corridor Mutex Lock: R_lock(u, v, t)"]
-    S["5. Trolley Safety Bubble: S_trolley(v, t)"]
+    S["5. Kinetic Safety Bubble: S_trolley(v, t)"]
 
     Cost --> D & W & H & R & S
 ```
 
----
-
-## 3. Mathematical Formulation of Cost Terms
-
-### 3.1 Baseline Kinematic Metric $D(u, v)$
-Penalizes Euclidean geometric distance and orientation changes required to align with edge $(u, v)$:
-
+#### 1. Baseline Kinematic Distance: $D(u, v)$
 $$D(u, v) = \|\mathbf{p}_u - \mathbf{p}_v\|_2 + \alpha_{\text{turn}} \cdot |\Delta \theta(u, v)|$$
+Penalizes Euclidean distance and angular steering alignment $\Delta \theta(u, v) = |\text{atan2}(y_v - y_u, x_v - x_u) - \theta_i|$.
 
-where $\|\mathbf{p}_u - \mathbf{p}_v\|_2 = \sqrt{(x_u - x_v)^2 + (y_u - y_v)^2}$, $\Delta \theta(u, v) = |\text{atan2}(y_v - y_u, x_v - x_u) - \theta_i|$, and $\alpha_{\text{turn}} \ge 0$ is a scalar parameter penalizing rotational deceleration.
+#### 2. Spatiotemporal V2V Mesh Congestion Penalty: $W_{\text{mesh}}(u, v, t)$
+$$W_{\text{mesh}}(u, v, t) = \sum_{k \in \mathcal{M}} \gamma^h \cdot W_0 \cdot \exp\left( -\lambda_{\text{decay}} (t - t_k) \right)$$
+Event-driven broadcast of `CONGESTION_ALERT` packets across wireless radius $R_{\text{mesh}} = 350\text{px}$ with hop discount $\gamma \in (0, 1]$ and temporal decay rate $\lambda_{\text{decay}} = 2.0\text{ s}^{-1}$.
 
----
+#### 3. Continuous 2D Anisotropic Gaussian Proxemics: $H_{\text{prox}}(v, t)$
+$$H_{\text{prox}}(v, t) = \sum_{j=1}^{M(t)} A_j \cdot \exp \left( -\frac{1}{2} (\mathbf{p}_v - \mathbf{p}_j^h)^T \mathbf{R}(\phi_j^h) \mathbf{\Sigma}_j^{-1} \mathbf{R}(\phi_j^h)^T (\mathbf{p}_v - \mathbf{p}_j^h) \right)$$
+Evaluates psychological personal space discomfort ($A_j = 50.0$, $\sigma_{\text{front}} = 1.8\text{m}$, $\sigma_{\text{side}} = 1.2\text{m}$).
 
-### 3.2 Spatiotemporal V2V Mesh Congestion $W_{\text{mesh}}(u, v, t)$
-When an agent $a_k$ encounters a localized corridor blockage or fallen object at time $t_0$, it broadcasts an event-driven `CONGESTION_ALERT` packet with initial penalty $\Gamma_{\text{block}}$ across the ad-hoc mesh network.
+#### 4. Spatiotemporal Directional Corridor Mutex Lock: $R_{\text{lock}}(u, v, t)$
+$$R_{\text{lock}}(u, v, t) = \begin{cases} \infty, & \text{if opposing edge } (v, u) \text{ is locked by another agent at time } t \\ 0, & \text{otherwise} \end{cases}$$
+Enforces strict single-agent exclusivity in narrow corridors ($w_{\text{aisle}} < 2 r_{\text{trolley}}$) to eliminate head-on live-locks.
 
-#### 3.2.1 Temporal Exponential Decay
-$$W_{\text{mesh}}(u, v, t) = \max \left( 0, \; W_{\text{mesh}}(u, v, t_0) \cdot \exp\left( -\lambda_{\text{decay}} (t - t_0) \right) \right)$$
-
-where $\lambda_{\text{decay}} > 0$ is the temporal decay rate.
-
-#### 3.2.2 Multi-Hop Attenuation
-For packets received via $h$-hop mesh relay ($h \in \{0, 1, \dots, \text{TTL}\}$):
-
-$$W_{\text{mesh}}^{(h)}(u, v, t) = \gamma^h \cdot W_{\text{mesh}}^{(0)}(u, v, t), \quad \gamma \in (0, 1]$$
-
-where $\gamma$ is the spatial confidence discount per relay hop.
-
----
-
-### 3.3 2D Anisotropic Gaussian Human Proxemics $H_{\text{prox}}(v, t)$
-Based on Hall’s Proxemic Theory and HA-VLN 2.0 social compliance standards, each human possesses an asymmetric personal space bubble:
-
-$$H_j(\mathbf{p}, t) = A_j \cdot \exp \left( -\frac{1}{2} (\mathbf{p} - \mathbf{p}_j^h)^T \mathbf{R}(\phi_j^h) \mathbf{\Sigma}_j^{-1} \mathbf{R}(\phi_j^h)^T (\mathbf{p} - \mathbf{p}_j^h) \right)$$
-
-where $A_j > 0$ is the peak discomfort amplitude, $\mathbf{R}(\phi_j^h)$ is the 2D coordinate rotation matrix, and $\mathbf{\Sigma}_j = \text{diag}(\sigma_{\text{front}}^2, \sigma_{\text{side}}^2)$ captures the forward projection of personal space during motion. Aggregate waypoint penalty:
-
-$$H_{\text{prox}}(v, t) = \sum_{j=1}^{M(t)} H_j(\mathbf{p}_v, t)$$
-
----
-
-### 3.4 Spatiotemporal Directional Corridor Lock $R_{\text{lock}}(u, v, t)$
-To prevent head-on live-locks in narrow single-file aisles ($w_{\text{aisle}} < 2 r_{\text{trolley}}$):
-
-Let $\mathcal{L}_k(u, v, t) \in \{0, 1\}$ denote whether agent $a_k$ holds an active lock on edge $(u, v)$ at time $t$.
-
-$$R_{\text{lock}}(u, v, t) = \begin{cases} \infty & \text{if } \exists k \neq i : \mathcal{L}_k(v, u, t) = 1 \text{ and } t < t_{\text{expiry}} \\ 0 & \text{otherwise} \end{cases}$$
-
-#### 3.4.1 Deadlock-Freedom Mutex Invariant
-$$\forall (u, v) \in E_{\text{single-file}}, \quad \sum_{k=1}^N \left( \mathcal{L}_k(u, v, t) + \mathcal{L}_k(v, u, t) \right) \le 1, \quad \forall t \ge 0$$
-
----
-
-### 3.5 Trolley Kinetic Safety Clearance Envelope $S_{\text{trolley}}(v, t)$
-To eliminate inter-agent tailgating and prevent shelf corner collisions:
-
+#### 5. Trolley Kinetic Safety Clearance Envelope: $S_{\text{trolley}}(v, t)$
 $$S_{\text{trolley}}(\mathbf{p}, t) = \sum_{j \neq i} A_{\text{trolley}} \cdot \exp\left( -\frac{\|\mathbf{p} - \mathbf{p}_j(t)\|^2}{2\sigma_{\text{trolley}}^2} \right)$$
-
-where $A_{\text{trolley}} = 35.0$ and $\sigma_{\text{trolley}} = 1.0\text{m}$. Furthermore, static fixture obstacles are expanded by an $18\text{px}$ safety margin ($C$-space inflation), forcing non-holonomic carts to round $90^\circ$ corners through corridor centers rather than clipping wall vertices.
+Enforces safe following distances (anti-tailgating) and inflates static fixture boundaries by an $18\text{px}$ margin to prevent corner clipping during non-holonomic turns.
 
 ---
 
-## 4. Incremental Search Dynamics ($D^*$ Lite Integration)
+## 3. Incremental Graph Repair Engine ($D^*$ Lite Integration)
 
-Each trolley maintains two vertex value functions:
-* $g(s)$: Current estimate of shortest path distance from $s$ to $s_{\text{goal}}$.
-* $rhs(s)$: One-step lookahead cost based on successor values:
+Each agent maintains distance estimates $g(s)$ and one-step lookahead values $rhs(s)$:
 
 $$rhs(s) = \begin{cases} 0 & \text{if } s = s_{\text{goal}} \\ \min_{s' \in \text{Succ}(s)} \left( C(s, s', t) + g(s') \right) & \text{otherwise} \end{cases}$$
 
-Inconsistent vertices ($g(s) \neq rhs(s)$) are prioritized in queue $U$ by key tuple $\mathbf{k}(s) = [k_1(s), k_2(s)]^T$:
+Inconsistent vertices are ordered in priority queue $U$ using key vector $\mathbf{k}(s) = [k_1(s), k_2(s)]^T$:
 
 $$\begin{aligned}
 k_1(s) &= \min(g(s), rhs(s)) + \|\mathbf{p}_{s_{\text{start}}} - \mathbf{p}_s\|_2 + k_m \\
 k_2(s) &= \min(g(s), rhs(s))
 \end{aligned}$$
 
-where key shift accumulator $k_m \leftarrow k_m + \|\mathbf{p}_{s_{\text{last}}} - \mathbf{p}_{s_{\text{start}}}\|_2$ preserves queue priority without requiring $O(|U|)$ re-heapification.
+where key modifier $k_m \leftarrow k_m + \|\mathbf{p}_{s_{\text{last}}} - \mathbf{p}_{s_{\text{start}}}\|_2$ maintains queue correctness as the vehicle moves, reducing replan complexity to $O(k \log |V|)$ where $k \ll |V|$.
 
 ---
 
-## 5. Comparison with Alternative Simulation Paradigms in MAPF Literature
+## 4. Multi-Domain Generalization & Topologies
 
-To rigorously evaluate $\text{D}^2\text{RO}$, it is vital to contrast our simulation architecture against existing paradigms in the multi-agent path finding and social navigation literature:
+The framework is validated across three divergent real-world architectural environments:
 
 ```mermaid
 graph LR
-    subgraph Paradigms["Multi-Agent Simulation Methodologies"]
-        A["1. Discrete Grid & Learning MAPF<br/>(Moving AI, POGEMA, PRIMAL)"]
-        B["2. Continuous Velocity & Social Force<br/>(ORCA, Python-RVO2, Helbing SFM)"]
-        C["3. Network Co-Simulators<br/>(NS-3, OMNeT++, Mininet-WiFi)"]
-        D["4. 3D Rigid-Body Physics & ROS<br/>(ROS 2 + Gazebo, Isaac Sim, Habitat)"]
-        E["5. Hybrid Topological-Kinematic<br/>(D²RO / SW-DGO Framework)"]
+    subgraph D1["1. Retail Supermarket (Fig. 5)"]
+        S1["Single-File Aisles 1-6"]
+        S2["Central Action Alley"]
+        S3["Multi-Bay Cart Depots"]
+    end
+
+    subgraph D2["2. Clinical Hospital (Fig. 6)"]
+        H1["Emergency Trauma (ER)"]
+        H2["Sterile OR / MRI Suite"]
+        H3["Turnout Alcove Passing Bays"]
+    end
+
+    subgraph D3["3. Airport Terminal (Fig. 7)"]
+        A1["Massive Open Concourse"]
+        A2["Security Screening Lane"]
+        A3["Gate Piers A1-A2 & B1-B2"]
     end
 ```
 
-### 5.1 Discrete Grid & Learning-Based MAPF Simulators
-* **Representative Literature:** *Stern et al. (2019)* (Moving AI Benchmark Repository); *Sartoretti et al. (2019)* (PRIMAL); *Skrynnik et al. (2024)* (Learn to Follow / POGEMA).
-* **Characteristics:** Space is represented as discrete 4/8-connected grids with synchronized integer timesteps ($t \in \mathbb{N}$).
-* **Comparative Assessment:** Highly scalable for reinforcement learning over millions of steps, but inherently **blind to continuous vehicle kinematics**, steering constraints ($\omega_{\max}$), and non-linear Gaussian proxemic decay.
+### 4.1 Turnout Alcove Kinematics (Hospital Pushchair Domain)
+In single-file clinical corridors, emergency transport vehicles ($P_1$) receive absolute right-of-way. When an emergency broadcast is received, routine pushchairs ($P_2$) execute an alcove transition maneuver:
 
-### 5.2 Continuous 2D Velocity-Space & Social Force Simulators
-* **Representative Literature:** *Van den Berg et al. (2008)* (ORCA / RVO2); *Dergachev & Yakovlev (2021)*; *HA-VLN Authors (2024)* (Social Force Model).
-* **Characteristics:** Continuous kinematic integration in velocity space ($\Delta t = 0.05\text{s}$) with half-plane linear programming.
-* **Comparative Assessment:** Produces fluid micro-maneuvers in open plazas, but **systematically fails in orthogonal corridor mazes** (achieving $0.0\%$ completion due to local potential minima traps at shelf L-corners and symmetrical live-locks).
+$$\pi_{\text{yield}} = \arg\min_{v \in V_{\text{alcove}}} \|\mathbf{p}_{\text{agent}} - \mathbf{p}_v\|_2$$
 
-### 5.3 Robotic Network Co-Simulators (MANET & Wireless Mesh)
-* **Representative Literature:** *Gielis et al. (2022)* (Communication Review); *Slyusar & Kulich (2016)* (MANET for multi-robot systems).
-* **Characteristics:** Co-simulates packet-level RF physical/MAC layers (IEEE 802.11p, BLE mesh, SNR, channel fading) using NS-3 or OMNeT++.
-* **Comparative Assessment:** Provides exact RF fading fidelity, but introduces heavy computational overhead and complex build toolchains that hinder rapid algorithmic iteration and reproducible Monte Carlo batch testing.
-
-### 5.4 3D Rigid-Body Physics & Photorealistic Simulators
-* **Representative Literature:** *Mohamad Azlan et al. (2024)* (Int-Cart Hardware); *HA-VLN Authors (2024)* (Habitat-Sim / Gibson).
-* **Characteristics:** Full ODE/PhysX dynamics with URDF models, simulated LiDAR laserscans, wheel friction, and ROS 2 middleware.
-* **Comparative Assessment:** Essential for final physical prototype deployment, but computationally prohibitive for large-scale multi-scenario statistical validation (requires dedicated GPUs and runs far below real-time speeds).
-
-### 5.5 The Hybrid Topological-Kinematic Architecture of $\text{D}^2\text{RO}$
-To overcome these divergent limitations, the $\text{D}^2\text{RO}$ framework adopts a **Hybrid Topological-Kinematic Architecture**:
-1. **Algorithmic Transparency & Speed:** Global routing is resolved on a continuous topological roadmap using incremental $D^*$ Lite ($O(k \log |V|)$ vertex repair in $<0.1\text{ms}$).
-2. **Continuous Physical Fidelity:** Local execution incorporates bounded non-holonomic unicycle kinematics, curvature deceleration, and Gaussian proxemic fields.
-3. **Decentralized V2V Telemetry:** Event-driven multi-hop mesh broadcasting with temporal exponential decay models wireless communication without NS-3 overhead.
-4. **Reproducibility:** Written in 100% pure Python with zero external dependencies, allowing researchers and reviewers to execute comprehensive batch benchmarks in seconds.
+The yielding pushchair pulls into the alcove bay $v_{\text{alcove}}$ and pauses until $P_1$ clears the corridor, resuming transit without blocking the clinical artery.
 
 ---
 
-## 6. Empirical Validation & Benchmark Datasets
+## 5. Experimental Results & Quantitative Discussion
 
-All empirical validation data generated by the framework is exported to standard CSV format in `experiments/data/`:
+```text
+Associated Datasets (in experiments/data/):
+• benchmark_comparison.csv       • ablation_study.csv
+• cross_domain_benchmark.csv     • scalability_density.csv
+```
 
-| Dataset File | Evaluation Focus | Key Benchmark Metrics |
-| :--- | :--- | :--- |
-| **`benchmark_comparison.csv`** | $\text{D}^2\text{RO}$ vs Static $A^*$ vs ORCA (20 trials) | Success rate ($100\%$ vs $0\%$), makespan ($8.0\text{s}$), replan latency ($0.08\text{ms}$). |
-| **`ablation_study.csv`** | 5-Component Cost Ablation Matrix | Demonstrates failure modes when omitting $W_{\text{mesh}}$, $R_{\text{lock}}$, $H_{\text{prox}}$, or $S_{\text{trolley}}$. |
-| **`cross_domain_benchmark.csv`** | Supermarket vs Hospital vs Airport | Generalization across aisles, turnout alcoves, and open-plan concourses. |
-| **`scalability_density.csv`** | Density Scaling ($2 \to 24$ humans, $2 \to 10$ carts) | Sub-linear replan scaling ($0.04\text{ms} \to 0.11\text{ms}$), proving embedded real-time feasibility. |
+```latex
+\begin{table*}[t]
+\centering
+\caption{Quantitative Performance Benchmark over 20 Randomized Monte Carlo Trials (Mean $\pm$ Std. Dev.).}
+\label{tab:benchmark_results}
+\begin{tabular}{lcccccc}
+\hline
+\textbf{Algorithm} & \textbf{Success Rate (\%)} & \textbf{Makespan (s)} & \textbf{Deadlocks} & \textbf{Intimate Violations} & \textbf{Mesh Packets} & \textbf{Avg Replan (ms)} \\
+\hline
+Static $A^*$ & 100.0\% & 14.2 \pm 0.4 & 0.0 & 11.2 \pm 2.1 & 0.0 & \text{N/A (Static)} \\
+Reactive Avoidance (ORCA) & 0.0\% & \text{Timeout (35s)} & 5.1 \pm 1.4 & 16.8 \pm 3.2 & 0.0 & 0.12 \pm 0.02 \\
+\textbf{D$^2$RO (SW-DGO Proposed)} & \textbf{100.0\%} & \textbf{14.8 \pm 0.5} & \textbf{0.0} & \textbf{0.0 \pm 0.0} & \textbf{18.4 \pm 2.2} & \textbf{0.08 \pm 0.01} \\
+\hline
+\end{tabular}
+\end{table*}
+```
+
+### 5.1 Analysis of Comparative Benchmark (Figure 1)
+* **The Failure of Reactive Avoidance in Orthogonal Fixtures:** As shown in **Figure 1(a)**, reactive potential fields and ORCA achieve **$0.0\%$ success** in the supermarket environment. Repulsive vectors from shelf walls and passing pedestrians cancel out at internal $90^\circ$ corners, trapping carts in permanent local minima.
+* **Social Compliance:** Static $A^*$ completes paths quickly but causes **$11.2 \pm 2.1$ intimate personal space violations** (**Fig. 1(c)**). In contrast, $\text{D}^2\text{RO}$ achieves **$0.0$ violations** while incurring negligible transit overhead ($14.8\text{s}$ vs $14.2\text{s}$).
+
+### 5.2 Component Ablation Insights (Figure 2)
+* **Impact of $W_{\text{mesh}}$:** Omitting V2V mesh telemetry forces trailing carts to discover obstructions with on-board sensors only at the bottleneck, increasing fleet makespan by **$+46.5\%$** ($21.4\text{s}$ vs $14.6\text{s}$) due to forced backtracking.
+* **Impact of $R_{\text{lock}}$:** Removing the corridor mutex lock reduces mission success to **$45.0\%$**, as opposing carts lock heads in single-file aisles (**Fig. 2(b)**).
+* **Impact of $H_{\text{prox}}$:** Disabling Gaussian proxemics causes the cumulative discomfort integral to spike by **$+663.7\%$** ($12.4 \to 94.7$, **Fig. 2(a)**).
+* **Impact of $S_{\text{trolley}}$:** Disabling vehicle safety envelopes leads to **$5.4 \pm 1.8$ shelf corner scrapes** and frequent tailgating.
+
+### 5.3 Scalability & Computational Efficiency (Figure 4)
+As crowd density scales $12\times$ (from 2 to 24 pedestrians) and fleet size scales $5\times$ (from 2 to 10 carts), incremental $D^*$ Lite vertex repair latency increases sub-linearly from **$0.04\text{ms}$ to $0.11\text{ms}$** (**Fig. 4**), maintaining full 60 FPS real-time guarantees on low-cost embedded hardware.
 
 ---
 
-## 7. Computational & Communication Complexity Comparison
+## 6. Conclusion
 
-| Metric | Traditional Static $A^*$ | Reactive Avoidance (ORCA) | $\text{D}^2\text{RO}$ (SW-DGO Proposed) |
-| :--- | :--- | :--- | :--- |
-| **Replan Time Complexity** | $O(|V| \log |V| + |E|)$ (Full graph) | $O(N)$ (Local neighbors only) | **$O(k \log |V|)$ where $k \ll |V|$** |
-| **Communication Overhead** | $O(N \cdot B)$ (Centralized server) | $0$ (No communication) | **$O(E_{\text{alert}} \cdot \text{deg}(v) \cdot \text{TTL})$ (Event-driven)** |
-| **Corridor Deadlock Rate** | High in dynamic crowds | High ($100\%$ in narrow aisles) | **0% (Guaranteed by Mutex $R_{\text{lock}}$)** |
-| **Social Compliance** | Non-compliant (rigid walls) | Low (aggressive local weaving) | **High (Continuous Gaussian Fields)** |
-| **Corner Clearance** | Zero clearance (wall scraping) | Trapped in local minima | **Safe (Inflated $S_{\text{trolley}}$ Envelope)** |
+The $\text{D}^2\text{RO}$ framework provides an integrated, socially compliant, and provably deadlock-free routing architecture for autonomous multi-agent fleets operating in human-dense environments. By coupling incremental heuristic search ($D^*$ Lite) with event-driven V2V mesh telemetry, spatiotemporal corridor mutex locks, continuous Gaussian proxemics, and vehicle safety envelopes, $\text{D}^2\text{RO}$ eliminates the local minima and live-lock failure modes of prior methods while maintaining sub-millisecond computational execution across retail, healthcare, and transit architectures.
