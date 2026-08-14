@@ -1,0 +1,23 @@
+# Microsoft Office temporary files
+~$*.docx
+~$*.doc
+~$*.xlsx
+~$*.pptx
+*.tmp
+
+# Simulation generated data & logs
+Route-Simulation/positions.csv
+Route-Simulation/pictures/
+
+# Agent & IDE workspace configurations
+.agents/
+.gemini/
+*/.agents/
+*/.gemini/
+
+# Operating System files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
