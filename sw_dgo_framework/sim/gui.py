@@ -1,14 +1,12 @@
 """
 Native Python Desktop GUI Visualizer for D²RO / SW-DGO Framework.
-Built with Python's native Tkinter Canvas for 60 FPS real-time simulation,
-interactive scenario switching, live telemetry, and direct obstacle placement.
+Renders directional shopping trolley chassis geometry, non-holonomic kinematics,
+Gaussian proxemic fields, and interactive scenario switching in pure Python.
 """
 
 from __future__ import annotations
 import math
-import time
 import tkinter as tk
-from tkinter import ttk
 from typing import List, Dict, Tuple, Optional
 from ..environments.supermarket import SupermarketLayout, ScenarioSuite
 from ..core.mesh_network import MeshNetwork
@@ -25,16 +23,15 @@ class SupermarketSimApp:
         self.root.geometry("1120x820")
         self.root.configure(bg="#0f172a")
 
-        # Simulation parameters & state
+        # Simulation parameters
         self.layout = SupermarketLayout(num_aisles=5)
         self.prox_field = ProxemicsField(amplitude=450.0, sigma=38.0)
         self.current_scenario_key = "A"
         self.is_running = True
-        self.sim_speed = 1.0
         self.dt = 0.05
         self.sim_time = 0.0
 
-        # Simulation entities
+        # Entities
         self.mesh_net: Optional[MeshNetwork] = None
         self.agents: List[TrolleyAgent] = []
         self.humans: List[Human] = []
@@ -55,15 +52,14 @@ class SupermarketSimApp:
         self._sim_loop()
 
     def _create_widgets(self) -> None:
-        # Top Header & Scenario Tabs
         top_frame = tk.Frame(self.root, bg="#0f172a", pady=10)
         top_frame.pack(fill=tk.X, padx=16)
 
-        title_lbl = tk.Label(top_frame, text="D²RO Fleet Simulator (SW-DGO + V2V Mesh)",
+        title_lbl = tk.Label(top_frame, text="D²RO Directional Trolley Fleet Simulator",
                              font=("Segoe UI", 16, "bold"), fg="#ffffff", bg="#0f172a")
         title_lbl.pack(anchor="w")
 
-        # Scenario Button Tabs
+        # Scenario Tabs
         tab_frame = tk.Frame(top_frame, bg="#0f172a", pady=8)
         tab_frame.pack(fill=tk.X)
 
@@ -100,7 +96,6 @@ class SupermarketSimApp:
         bottom_frame = tk.Frame(self.root, bg="#0f172a", pady=6)
         bottom_frame.pack(fill=tk.X, padx=16)
 
-        # Play / Pause / Reset Buttons
         ctrl_frame = tk.Frame(bottom_frame, bg="#0f172a")
         ctrl_frame.pack(side=tk.LEFT)
 
@@ -114,7 +109,6 @@ class SupermarketSimApp:
                                 command=lambda: self.load_scenario(self.current_scenario_key))
         restart_btn.pack(side=tk.LEFT, padx=4)
 
-        # Telemetry Labels
         self.telemetry_lbl = tk.Label(bottom_frame, text="", font=("Consolas", 10),
                                       fg="#f8fafc", bg="#1e293b", padx=12, pady=5)
         self.telemetry_lbl.pack(side=tk.RIGHT)
@@ -123,14 +117,12 @@ class SupermarketSimApp:
         self.current_scenario_key = key
         self.sim_time = 0.0
 
-        # Update tab styles
         for k, btn in self.tab_buttons.items():
             if k == key:
                 btn.configure(bg="#2563eb", fg="#ffffff")
             else:
                 btn.configure(bg="#1e293b", fg="#94a3b8")
 
-        # Reset layout graph locks and penalties
         self.layout = SupermarketLayout(num_aisles=5)
         trolley_cfgs, self.humans, self.scenario_desc = ScenarioSuite.get_scenario(key, self.layout)
         self.desc_lbl.configure(text=self.scenario_desc)
@@ -152,7 +144,6 @@ class SupermarketSimApp:
         self.play_btn.configure(text="Pause" if self.is_running else "Play")
 
     def _on_canvas_click(self, event: tk.Event) -> None:
-        """Left click allows user to dynamically place a congestion penalty on the nearest aisle."""
         click_x, click_y = event.x, event.y
         nearest_node = None
         min_d = 999999.0
@@ -162,8 +153,7 @@ class SupermarketSimApp:
                 min_d = d
                 nearest_node = nid
 
-        if nearest_node and min_d < 40.0:
-            # Broadcast obstacle alert at nearest node
+        if nearest_node and min_d < 45.0:
             for a in self.agents:
                 for succ in self.layout.graph.successors(nearest_node):
                     a.broadcast_congestion(nearest_node, succ, penalty=500.0, current_time=self.sim_time)
@@ -173,27 +163,28 @@ class SupermarketSimApp:
         if self.is_running and self.agents:
             self.sim_time += self.dt
 
-            # 1. Update dynamic humans with shelf collision clamping
             for h in self.humans:
                 h.update(self.dt, self.layout.bounds, self.shelf_boxes, self.aisle_x, self.crossway_y)
 
-            # 2. Step trolley agents with D* Lite, mesh & yielding
             for a in self.agents:
                 a.step(self.dt, self.humans, self.prox_field, current_sim_time=self.sim_time, shelves=self.shelf_boxes)
 
-            # 3. Decay mesh penalties over time
             self.layout.graph.decay_mesh_penalties(self.dt, decay_rate=2.0)
 
-        # Draw frame
         self._render()
-
-        # 30 ms tick (~33 FPS smooth animation)
         self.root.after(30, self._sim_loop)
+
+    def _rotate_point(self, px: float, py: float, cx: float, cy: float, angle: float) -> Tuple[float, float]:
+        cos_a = math.cos(angle)
+        sin_a = math.sin(angle)
+        nx = cx + (px * cos_a - py * sin_a)
+        ny = cy + (px * sin_a + py * cos_a)
+        return (nx, ny)
 
     def _render(self) -> None:
         self.canvas.delete("all")
 
-        # 1. Draw Edges (Aisles & Crossways)
+        # 1. Draw Aisles & Crossways
         for (u, v), edge in self.layout.graph.edges.items():
             nu = self.layout.graph.get_node(u)
             nv = self.layout.graph.get_node(v)
@@ -209,28 +200,26 @@ class SupermarketSimApp:
             self.canvas.create_text(s.x + s.w/2, s.y + s.h/2, text=s.name,
                                    fill="#94a3b8", font=("Segoe UI", 9, "bold"))
 
-        # 3. Draw Nodes
+        # 3. Draw Nodes & Dock Bay
         for nid, n in self.layout.graph.nodes.items():
             if n.is_docking_bay:
-                self.canvas.create_oval(n.x - 9, n.y - 9, n.x + 9, n.y + 9, fill="#10b981", outline="#ffffff", width=1.5)
-                self.canvas.create_text(n.x, n.y + 20, text="DOCK BAY", fill="#10b981", font=("Segoe UI", 10, "bold"))
+                self.canvas.create_oval(n.x - 10, n.y - 10, n.x + 10, n.y + 10, fill="#10b981", outline="#ffffff", width=1.5)
+                self.canvas.create_text(n.x, n.y + 20, text="CART DOCK", fill="#10b981", font=("Segoe UI", 10, "bold"))
             else:
                 self.canvas.create_oval(n.x - 3.5, n.y - 3.5, n.x + 3.5, n.y + 3.5, fill="#38bdf8", outline="")
 
-        # 4. Draw Humans (Shoppers with Gaussian Halos)
+        # 4. Draw Humans with Gaussian Halos
         for h in self.humans:
-            # Gaussian Personal-Space Halo
             self.canvas.create_oval(h.x - 38, h.y - 38, h.x + 38, h.y + 38,
                                    outline="#f97316", width=1, dash=(3, 3))
             self.canvas.create_oval(h.x - 18, h.y - 18, h.x + 18, h.y + 18,
                                    fill="#7c2d12", outline="")
-            # Human Body
             self.canvas.create_oval(h.x - 6, h.y - 6, h.x + 6, h.y + 6,
                                    fill="#f97316", outline="#ffffff", width=1.5)
 
-        # 5. Draw Trolley Agents
+        # 5. Draw Directional Trolley Chassis
         for a in self.agents:
-            color = "#3b82f6"  # Default: Navigating
+            color = "#3b82f6"  # Navigating
             badge_text = ""
             if a.is_docked:
                 color = "#10b981"
@@ -241,22 +230,37 @@ class SupermarketSimApp:
                 color = "#a855f7"
                 badge_text = "LOCK WAIT"
 
-            # Heading indicator line
-            hx = a.x + math.cos(a.heading) * 15
-            hy = a.y + math.sin(a.heading) * 15
-            self.canvas.create_line(a.x, a.y, hx, hy, fill=color, width=2.5)
+            # Directional shopping cart chassis vertices (facing +X forward)
+            local_cart_poly = [
+                (14, 0),    # Front nose tip
+                (10, 8),    # Front right basket corner
+                (-10, 9),   # Rear right corner
+                (-10, -9),  # Rear left corner
+                (10, -8),   # Front left basket corner
+            ]
 
-            # Body circle
-            self.canvas.create_oval(a.x - 9, a.y - 9, a.x + 9, a.y + 9,
-                                   fill=color, outline="#ffffff", width=2)
-            # Label
-            self.canvas.create_text(a.x, a.y - 14, text=f"T{a.agent_id}",
+            # Rotate and translate vertices to agent position and heading
+            world_poly = []
+            for lx, ly in local_cart_poly:
+                wx, wy = self._rotate_point(lx, ly, a.x, a.y, a.heading)
+                world_poly.extend([wx, wy])
+
+            # Draw directional polygon chassis
+            self.canvas.create_polygon(world_poly, fill=color, outline="#ffffff", width=1.8)
+
+            # Draw rear cart handle bar
+            h_left = self._rotate_point(-10, -7, a.x, a.y, a.heading)
+            h_right = self._rotate_point(-10, 7, a.x, a.y, a.heading)
+            self.canvas.create_line(h_left[0], h_left[1], h_right[0], h_right[1], fill="#e2e8f0", width=2.5)
+
+            # Label & State badge
+            self.canvas.create_text(a.x, a.y - 16, text=f"T{a.agent_id}",
                                    fill="#ffffff", font=("Segoe UI", 9, "bold"))
             if badge_text:
                 self.canvas.create_text(a.x, a.y + 18, text=badge_text,
                                        fill=color, font=("Segoe UI", 8, "bold"))
 
-        # 6. Update Telemetry
+        # 6. Telemetry display
         replans = sum(a.replan_count for a in self.agents)
         packets = self.mesh_net.total_packets_transmitted if self.mesh_net else 0
         docked = sum(1 for a in self.agents if a.is_docked)

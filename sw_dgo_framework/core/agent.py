@@ -1,7 +1,7 @@
 """
 Autonomous Trolley Agent for SW-DGO Framework.
-Combines D* Lite incremental planning, V2V mesh telemetry, continuous Gaussian human proxemics,
-spatiotemporal corridor locks, shelf-boundary collision resolution, and active deadlock-escape maneuvers.
+Implements non-holonomic unicycle kinematics with bounded steering rate (max_omega),
+curvature deceleration, directional trolley chassis geometry, and social yielding.
 """
 
 from __future__ import annotations
@@ -15,40 +15,45 @@ from .human import Human, ProxemicsField
 class TrolleyAgent:
     """
     Autonomous Mobile Shopping Trolley (Int-Cart).
-    Executes decentralized SW-DGO routing logic with physical collision resolution,
-    yielding, and active deadlock-escape maneuvers.
+    Executes decentralized SW-DGO routing logic with non-holonomic kinematics,
+    bounded steering angles, directional chassis, and social yielding.
     """
     def __init__(self, agent_id: int, graph: TopologicalGraph, start_node: str, goal_node: str,
-                 mesh_net: MeshNetwork, max_speed: float = 2.8, comm_radius: float = 350.0):
+                 mesh_net: MeshNetwork, max_speed: float = 2.6, max_omega: float = 4.5,
+                 comm_radius: float = 350.0):
         self.agent_id = agent_id
-        # Decentralized local graph memory
         self.graph = graph.clone()
         self.current_node = start_node
         self.goal_node = goal_node
         self.mesh_net = mesh_net
 
-        # Kinematic state
+        # Non-holonomic Kinematics
         node_obj = self.graph.get_node(start_node)
         self.x: float = node_obj.x
         self.y: float = node_obj.y
-        self.vx: float = 0.0
-        self.vy: float = 0.0
+        self.heading: float = 0.0  # Current orientation angle in radians
+        self.speed: float = 0.0    # Current forward linear velocity
         self.max_speed = max_speed
-        self.heading: float = 0.0
-        self.radius: float = 12.0  # Physical trolley radius (pixels)
+        self.max_omega = max_omega  # Maximum steering rate (rad/s)
+        self.radius: float = 12.0   # Physical trolley footprint radius (pixels)
 
         # High-level planning
         self.planner = DStarLite(self.graph, start_node, goal_node)
         self.planner.compute_shortest_path()
         self.target_node: Optional[str] = self.planner.get_next_waypoint()
 
-        # State machine: "NAVIGATING", "WAITING_LOCK", "YIELDING_HUMAN", "RETREATING", "DOCKED"
+        # Initialize heading towards first waypoint
+        if self.target_node:
+            t_obj = self.graph.get_node(self.target_node)
+            self.heading = math.atan2(t_obj.y - self.y, t_obj.x - self.x)
+
+        # State machine: "NAVIGATING", "WAITING_LOCK", "YIELDING_HUMAN", "DOCKED"
         self.state: str = "NAVIGATING"
         self.active_lock_edge: Optional[Tuple[str, str]] = None
         self.wait_timer: float = 0.0
         self.yield_timer: float = 0.0
 
-        # Performance & Benchmark Metrics
+        # Performance Metrics
         self.total_distance: float = 0.0
         self.travel_time: float = 0.0
         self.replan_count: int = 0
@@ -93,9 +98,6 @@ class TrolleyAgent:
         return cost_changed
 
     def update_human_proxemics(self, humans: List[Human], prox_field: ProxemicsField) -> bool:
-        """
-        Samples continuous personal-space discomfort along all nearby corridor edges.
-        """
         cost_changed = False
         for (u, v), edge in self.graph.edges.items():
             nu = self.graph.get_node(u)
@@ -111,10 +113,6 @@ class TrolleyAgent:
         return cost_changed
 
     def resolve_shelf_collisions(self, shelves: Optional[List[Tuple[float, float, float, float]]]) -> None:
-        """
-        Hard collision clamping against rectangular shelves.
-        Guarantees trolleys never penetrate or clip through shelves.
-        """
         if not shelves:
             return
 
@@ -143,11 +141,6 @@ class TrolleyAgent:
 
     def check_human_collision_and_yield(self, humans: List[Human], dt: float,
                                         current_sim_time: float) -> bool:
-        """
-        Micro-kinematic social yielding:
-        - If a human is within intimate range (30px), brake to 0.
-        - If persistently blocked (> 0.9s), proactively reroute through an adjacent aisle.
-        """
         yield_required = False
         for human in humans:
             dist = math.hypot(self.x - human.x, self.y - human.y)
@@ -162,14 +155,13 @@ class TrolleyAgent:
                 dx = human.x - self.x
                 dy = human.y - self.y
                 dot = math.cos(self.heading) * dx + math.sin(self.heading) * dy
-                if dot > -0.2:  # Human is in front or immediate side
+                if dot > -0.2:
                     yield_required = True
 
         if yield_required:
             self.state = "YIELDING_HUMAN"
             self.yield_timer += dt
-            self.vx = 0.0
-            self.vy = 0.0
+            self.speed = 0.0
 
             if self.yield_timer > 0.9 and self.target_node:
                 self.broadcast_congestion(self.current_node, self.target_node, penalty=500.0,
@@ -185,23 +177,23 @@ class TrolleyAgent:
     def step(self, dt: float, humans: List[Human], prox_field: ProxemicsField,
              current_sim_time: float = 0.0,
              shelves: Optional[List[Tuple[float, float, float, float]]] = None) -> None:
-        """Main D2RO execution tick."""
+        """Main non-holonomic kinematic D2RO execution tick."""
         if self.is_docked:
             return
 
         self.travel_time += dt
 
-        # 1. Process V2V Mesh Telemetry & Local Proxemic Edge Sensing
+        # 1. Process V2V Mesh & Proxemics
         mesh_changed = self.process_inbound_mesh()
         prox_changed = self.update_human_proxemics(humans, prox_field)
 
-        # 2. Incremental Replan if edge costs updated
+        # 2. Incremental Replan
         if mesh_changed or prox_changed:
             self.planner.compute_shortest_path()
             self.replan_count += 1
             self.target_node = self.planner.get_next_waypoint()
 
-        # 3. Check if reached goal
+        # 3. Check Docking
         if self.current_node == self.goal_node:
             self.is_docked = True
             self.state = "DOCKED"
@@ -209,7 +201,7 @@ class TrolleyAgent:
                 self._release_lock(current_sim_time)
             return
 
-        # 4. Check Micro-Kinematic Social Yielding
+        # 4. Check Human Yielding
         if self.check_human_collision_and_yield(humans, dt, current_sim_time):
             self.resolve_shelf_collisions(shelves)
             return
@@ -228,6 +220,7 @@ class TrolleyAgent:
             if opp_edge and opp_edge.lock_owner is not None and opp_edge.lock_owner != self.agent_id:
                 self.state = "WAITING_LOCK"
                 self.wait_timer += dt
+                self.speed = 0.0
                 if self.wait_timer > 2.0:
                     edge.r_lock = math.inf
                     self.planner.notify_edge_cost_change(self.current_node, self.target_node)
@@ -243,13 +236,13 @@ class TrolleyAgent:
         self.state = "NAVIGATING"
         self.wait_timer = 0.0
 
-        # 6. Kinematic Motion towards target node
+        # 6. Non-Holonomic Kinematics (Bounded Steering Angle & Differential Turning)
         target_obj = self.graph.get_node(self.target_node)
         dx = target_obj.x - self.x
         dy = target_obj.y - self.y
         dist = math.hypot(dx, dy)
 
-        if dist < 6.0:  # Waypoint arrival threshold
+        if dist < 6.0:  # Waypoint arrived
             if self.active_lock_edge and self.active_lock_edge != (self.current_node, self.target_node):
                 self._release_lock(current_sim_time)
 
@@ -258,10 +251,23 @@ class TrolleyAgent:
             self.planner.compute_shortest_path()
             self.target_node = self.planner.get_next_waypoint()
         else:
-            self.heading = math.atan2(dy, dx)
-            step_dist = min(dist, self.max_speed * dt * 30.0)
-            self.vx = math.cos(self.heading) * (step_dist / (dt * 30.0))
-            self.vy = math.sin(self.heading) * (step_dist / (dt * 30.0))
+            # Desired steering angle
+            desired_heading = math.atan2(dy, dx)
+            # Angular error normalized to [-pi, pi]
+            angle_diff = (desired_heading - self.heading + math.pi) % (2 * math.pi) - math.pi
+
+            # Smoothly rotate heading with bounded angular velocity (max_omega)
+            max_turn = self.max_omega * dt
+            turn_step = max(-max_turn, min(max_turn, angle_diff))
+            self.heading += turn_step
+
+            # Unicycle forward motion: speed is scaled down during sharp turns
+            alignment = max(0.15, math.cos(angle_diff))
+            target_speed = self.max_speed * alignment
+            self.speed = min(dist / (dt * 30.0), target_speed)
+
+            # Move forward strictly in current heading direction
+            step_dist = self.speed * dt * 30.0
             self.x += math.cos(self.heading) * step_dist
             self.y += math.sin(self.heading) * step_dist
             self.total_distance += step_dist
@@ -270,7 +276,6 @@ class TrolleyAgent:
         self.resolve_shelf_collisions(shelves)
 
     def broadcast_congestion(self, u: str, v: str, penalty: float, current_time: float) -> None:
-        """Broadcasts localized blockage/congestion alert across V2V mesh."""
         self.graph.update_mesh_penalty(u, v, penalty)
         self.planner.notify_edge_cost_change(u, v)
         self.mesh_net.broadcast(
