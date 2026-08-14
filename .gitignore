@@ -5,7 +5,6 @@
 ~$*.pptx
 *.tmp
 
-
 # Agent & IDE workspace configurations
 .agents/
 .gemini/
@@ -18,10 +17,9 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
+
 # Python artifacts
 __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
-
-planners/
