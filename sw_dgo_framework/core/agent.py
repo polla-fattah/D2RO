@@ -1,7 +1,7 @@
 """
 Autonomous Trolley Agent for SW-DGO Framework.
-Implements non-holonomic unicycle kinematics with bounded steering rate (max_omega),
-curvature deceleration, directional trolley chassis geometry, and social yielding.
+Implements non-holonomic kinematics, dynamic inter-trolley safety clearance envelopes (S_trolley),
+anti-tailgating following distances, expanded shelf margin collision solvers, and human proxemics.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ class TrolleyAgent:
     """
     Autonomous Mobile Shopping Trolley (Int-Cart).
     Executes decentralized SW-DGO routing logic with non-holonomic kinematics,
-    bounded steering angles, directional chassis, and social yielding.
+    active inter-trolley safety clearance envelopes, shelf-margin safety zones, and social yielding.
     """
     def __init__(self, agent_id: int, graph: TopologicalGraph, start_node: str, goal_node: str,
                  mesh_net: MeshNetwork, max_speed: float = 2.6, max_omega: float = 4.5,
@@ -31,23 +31,26 @@ class TrolleyAgent:
         node_obj = self.graph.get_node(start_node)
         self.x: float = node_obj.x
         self.y: float = node_obj.y
-        self.heading: float = 0.0  # Current orientation angle in radians
-        self.speed: float = 0.0    # Current forward linear velocity
+        self.heading: float = 0.0
+        self.speed: float = 0.0
         self.max_speed = max_speed
-        self.max_omega = max_omega  # Maximum steering rate (rad/s)
-        self.radius: float = 12.0   # Physical trolley footprint radius (pixels)
+        self.max_omega = max_omega
+
+        # Safety Envelopes (Physical Body Radius vs Kinetic Clearance Bubble)
+        self.radius: float = 12.0          # Physical chassis radius (pixels)
+        self.safety_bubble_radius: float = 26.0  # Kinetic safety clearance envelope (pixels)
+        self.shelf_margin: float = 18.0   # Minimum distance maintained from shelf edges/corners
 
         # High-level planning
         self.planner = DStarLite(self.graph, start_node, goal_node)
         self.planner.compute_shortest_path()
         self.target_node: Optional[str] = self.planner.get_next_waypoint()
 
-        # Initialize heading towards first waypoint
         if self.target_node:
             t_obj = self.graph.get_node(self.target_node)
             self.heading = math.atan2(t_obj.y - self.y, t_obj.x - self.x)
 
-        # State machine: "NAVIGATING", "WAITING_LOCK", "YIELDING_HUMAN", "DOCKED"
+        # State machine: "NAVIGATING", "WAITING_LOCK", "YIELDING_HUMAN", "FOLLOWING_CART", "DOCKED"
         self.state: str = "NAVIGATING"
         self.active_lock_edge: Optional[Tuple[str, str]] = None
         self.wait_timer: float = 0.0
@@ -61,7 +64,6 @@ class TrolleyAgent:
         self.proxemic_violations: int = 0
         self.is_docked: bool = False
 
-        # Register with mesh network
         self.mesh_net.register_agent(self.agent_id, self)
 
     @property
@@ -69,7 +71,6 @@ class TrolleyAgent:
         return (self.x, self.y)
 
     def process_inbound_mesh(self) -> bool:
-        """Consumes V2V packets from mesh queue and updates local edge weights."""
         packets = self.mesh_net.fetch_inbound(self.agent_id)
         cost_changed = False
 
@@ -113,14 +114,18 @@ class TrolleyAgent:
         return cost_changed
 
     def resolve_shelf_collisions(self, shelves: Optional[List[Tuple[float, float, float, float]]]) -> None:
+        """
+        Hard collision & clearance buffer clamping against rectangular shelves.
+        Enforces shelf_margin so trolley corners never scrape or slam into shelf walls.
+        """
         if not shelves:
             return
 
         for min_sx, min_sy, max_sx, max_sy in shelves:
-            expanded_min_x = min_sx - self.radius
-            expanded_max_x = max_sx + self.radius
-            expanded_min_y = min_sy - self.radius
-            expanded_max_y = max_sy + self.radius
+            expanded_min_x = min_sx - self.shelf_margin
+            expanded_max_x = max_sx + self.shelf_margin
+            expanded_min_y = min_sy - self.shelf_margin
+            expanded_max_y = max_sy + self.shelf_margin
 
             if (expanded_min_x <= self.x <= expanded_max_x and
                 expanded_min_y <= self.y <= expanded_max_y):
@@ -139,19 +144,57 @@ class TrolleyAgent:
                 else:
                     self.y = expanded_max_y
 
+    def check_inter_trolley_safety(self, peer_agents: Optional[List[TrolleyAgent]]) -> bool:
+        """
+        Inter-trolley safety clearance (S_trolley):
+        - Prevents tailgating and inter-agent crowding.
+        - If peer trolley is ahead within following distance, smoothly decelerate.
+        - If peer trolley is inside the kinetic safety bubble (< 28px), apply elastic contact separation.
+        """
+        if not peer_agents:
+            return False
+
+        must_slow_down = False
+        for other in peer_agents:
+            if other.agent_id == self.agent_id or other.is_docked:
+                continue
+
+            dist = math.hypot(self.x - other.x, self.y - other.y)
+
+            # 1. Contact Repulsion (Never overlap)
+            if dist < 24.0 and dist > 0.1:
+                push_dist = 24.0 - dist
+                self.x -= ((other.x - self.x) / dist) * (push_dist * 0.5)
+                self.y -= ((other.y - self.y) / dist) * (push_dist * 0.5)
+
+            # 2. Forward Following Distance & Kinetic Bubble
+            if dist < 38.0:
+                dx = other.x - self.x
+                dy = other.y - self.y
+                dot = math.cos(self.heading) * dx + math.sin(self.heading) * dy
+                if dot > 0.3:  # Peer cart is directly in front of this cart
+                    must_slow_down = True
+
+        if must_slow_down:
+            self.state = "FOLLOWING_CART"
+            self.speed = max(0.0, self.speed * 0.3)
+            return True
+
+        return False
+
     def check_human_collision_and_yield(self, humans: List[Human], dt: float,
                                         current_sim_time: float) -> bool:
         yield_required = False
         for human in humans:
             dist = math.hypot(self.x - human.x, self.y - human.y)
-            if dist < 24.0:
+            if dist < 26.0:
                 self.proxemic_violations += 1
                 if dist > 0.1:
-                    push_dist = 24.0 - dist
+                    push_dist = 26.0 - dist
                     self.x -= ((human.x - self.x) / dist) * (push_dist * 0.5)
                     self.y -= ((human.y - self.y) / dist) * (push_dist * 0.5)
 
-            if dist < 36.0:
+            if dist < 38.0:
                 dx = human.x - self.x
                 dy = human.y - self.y
                 dot = math.cos(self.heading) * dx + math.sin(self.heading) * dy
@@ -176,7 +219,8 @@ class TrolleyAgent:
 
     def step(self, dt: float, humans: List[Human], prox_field: ProxemicsField,
              current_sim_time: float = 0.0,
-             shelves: Optional[List[Tuple[float, float, float, float]]] = None) -> None:
+             shelves: Optional[List[Tuple[float, float, float, float]]] = None,
+             peer_agents: Optional[List[TrolleyAgent]] = None) -> None:
         """Main non-holonomic kinematic D2RO execution tick."""
         if self.is_docked:
             return
@@ -206,7 +250,12 @@ class TrolleyAgent:
             self.resolve_shelf_collisions(shelves)
             return
 
-        # 5. Waypoint & Corridor Lock Verification
+        # 5. Check Inter-Trolley Kinetic Safety Clearance (Anti-Tailgating)
+        if self.check_inter_trolley_safety(peer_agents):
+            self.resolve_shelf_collisions(shelves)
+            return
+
+        # 6. Waypoint & Corridor Lock Verification
         if self.target_node is None:
             self.planner.compute_shortest_path()
             self.target_node = self.planner.get_next_waypoint()
@@ -236,7 +285,7 @@ class TrolleyAgent:
         self.state = "NAVIGATING"
         self.wait_timer = 0.0
 
-        # 6. Non-Holonomic Kinematics (Bounded Steering Angle & Differential Turning)
+        # 7. Non-Holonomic Kinematics (Bounded Steering Angle & Differential Turning)
         target_obj = self.graph.get_node(self.target_node)
         dx = target_obj.x - self.x
         dy = target_obj.y - self.y
@@ -251,28 +300,24 @@ class TrolleyAgent:
             self.planner.compute_shortest_path()
             self.target_node = self.planner.get_next_waypoint()
         else:
-            # Desired steering angle
             desired_heading = math.atan2(dy, dx)
-            # Angular error normalized to [-pi, pi]
             angle_diff = (desired_heading - self.heading + math.pi) % (2 * math.pi) - math.pi
 
-            # Smoothly rotate heading with bounded angular velocity (max_omega)
             max_turn = self.max_omega * dt
             turn_step = max(-max_turn, min(max_turn, angle_diff))
             self.heading += turn_step
 
-            # Unicycle forward motion: speed is scaled down during sharp turns
-            alignment = max(0.15, math.cos(angle_diff))
+            # Unicycle forward motion with corner deceleration
+            alignment = max(0.2, math.cos(angle_diff))
             target_speed = self.max_speed * alignment
             self.speed = min(dist / (dt * 30.0), target_speed)
 
-            # Move forward strictly in current heading direction
             step_dist = self.speed * dt * 30.0
             self.x += math.cos(self.heading) * step_dist
             self.y += math.sin(self.heading) * step_dist
             self.total_distance += step_dist
 
-        # 7. Clamp against solid shelf walls
+        # 8. Clamp against solid shelf walls with safety margin
         self.resolve_shelf_collisions(shelves)
 
     def broadcast_congestion(self, u: str, v: str, penalty: float, current_time: float) -> None:

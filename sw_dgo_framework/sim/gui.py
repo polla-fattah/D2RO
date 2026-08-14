@@ -1,7 +1,7 @@
 """
 Native Python Desktop GUI Visualizer for D²RO / SW-DGO Framework.
 Renders realistic multi-department supermarket architecture, directional shopping cart chassis,
-non-holonomic kinematics, dynamic trajectory trails, and interactive scenario switching.
+trolley kinetic safety clearance envelopes (S_trolley), dynamic trajectory trails, and interactive scenario switching.
 """
 
 from __future__ import annotations
@@ -168,7 +168,8 @@ class SupermarketSimApp:
                 h.update(self.dt, self.layout.bounds, self.shelf_boxes, self.aisle_x, self.crossway_y)
 
             for a in self.agents:
-                a.step(self.dt, self.humans, self.prox_field, current_sim_time=self.sim_time, shelves=self.shelf_boxes)
+                a.step(self.dt, self.humans, self.prox_field, current_sim_time=self.sim_time,
+                       shelves=self.shelf_boxes, peer_agents=self.agents)
 
             self.layout.graph.decay_mesh_penalties(self.dt, decay_rate=2.0)
 
@@ -186,18 +187,15 @@ class SupermarketSimApp:
         self.canvas.delete("all")
 
         # Department Background Zones
-        # Produce Zone (Left)
         self.canvas.create_rectangle(30, 70, self.layout.start_x - 30, self.layout.y_front_concourse + 20,
                                     fill="#064e3b", outline="#047857", width=1, stipple="gray25")
         self.canvas.create_text(self.layout.start_x - 100, 75, text="PRODUCE & FRESH", fill="#10b981", font=("Segoe UI", 9, "bold"))
 
-        # Deli/Bakery Zone (Right)
         x_deli = self.layout.start_x + (self.layout.num_aisles - 1) * self.layout.aisle_spacing + 100.0
         self.canvas.create_rectangle(x_deli - 80, 70, x_deli + 80, self.layout.y_front_concourse + 20,
                                     fill="#4c0519", outline="#9f1239", width=1, stipple="gray25")
         self.canvas.create_text(x_deli, 75, text="DELI & BAKERY", fill="#f43f5e", font=("Segoe UI", 9, "bold"))
 
-        # Action Alley Promenade Indicator
         self.canvas.create_text(self.layout.start_x + 2.5 * self.layout.aisle_spacing, self.layout.y_action_alley - 12,
                                text="— CENTRAL ACTION ALLEY (TRANSVERSE PROMENADE) —", fill="#64748b", font=("Segoe UI", 8, "bold"))
 
@@ -249,11 +247,9 @@ class SupermarketSimApp:
             clr = agent_colors[idx % len(agent_colors)]
             path = a.planner.extract_full_path()
             if len(path) > 1:
-                # Line from cart current position to target node
                 if a.target_node:
                     tn = self.layout.graph.get_node(a.target_node)
                     self.canvas.create_line(a.x, a.y, tn.x, tn.y, fill=clr, width=1.5, dash=(2, 2))
-                # Remainder of planned path
                 for p_idx in range(len(path) - 1):
                     p_u = self.layout.graph.get_node(path[p_idx])
                     p_v = self.layout.graph.get_node(path[p_idx + 1])
@@ -268,7 +264,7 @@ class SupermarketSimApp:
             self.canvas.create_oval(h.x - 6, h.y - 6, h.x + 6, h.y + 6,
                                    fill="#f97316", outline="#ffffff", width=1.5)
 
-        # 6. Draw Directional Shopping Trolley Chassis
+        # 6. Draw Directional Shopping Trolley Chassis + Kinetic Safety Bubble
         for a in self.agents:
             color = "#3b82f6"
             badge_text = ""
@@ -280,6 +276,15 @@ class SupermarketSimApp:
             elif a.state == "WAITING_LOCK":
                 color = "#a855f7"
                 badge_text = "LOCK WAIT"
+            elif a.state == "FOLLOWING_CART":
+                color = "#06b6d4"
+                badge_text = "SAFE SPACING"
+
+            # Draw Trolley Kinetic Safety Clearance Envelope (S_trolley)
+            if not a.is_docked:
+                self.canvas.create_oval(a.x - a.safety_bubble_radius, a.y - a.safety_bubble_radius,
+                                       a.x + a.safety_bubble_radius, a.y + a.safety_bubble_radius,
+                                       outline=color, width=1, dash=(2, 2))
 
             # Directional shopping cart chassis vertices
             local_cart_poly = [
@@ -303,7 +308,7 @@ class SupermarketSimApp:
             self.canvas.create_line(h_left[0], h_left[1], h_right[0], h_right[1], fill="#e2e8f0", width=2.5)
 
             # Label & State badge
-            self.canvas.create_text(a.x, a.y - 16, text=f"T{a.agent_id}",
+            self.canvas.create_text(a.x, a.y - 18, text=f"T{a.agent_id}",
                                    fill="#ffffff", font=("Segoe UI", 9, "bold"))
             if badge_text:
                 self.canvas.create_text(a.x, a.y + 18, text=badge_text,
@@ -313,9 +318,9 @@ class SupermarketSimApp:
         replans = sum(a.replan_count for a in self.agents)
         packets = self.mesh_net.total_packets_transmitted if self.mesh_net else 0
         docked = sum(1 for a in self.agents if a.is_docked)
-        yielding = sum(1 for a in self.agents if a.state == "YIELDING_HUMAN")
+        yielding = sum(1 for a in self.agents if a.state in ["YIELDING_HUMAN", "FOLLOWING_CART"])
         
-        telemetry_text = f"Time: {self.sim_time:.1f}s | Replans: {replans} | Mesh Pkts: {packets} | Yielding: {yielding} | Docked: {docked}/{len(self.agents)}"
+        telemetry_text = f"Time: {self.sim_time:.1f}s | Replans: {replans} | Mesh Pkts: {packets} | Safe Yielding: {yielding} | Docked: {docked}/{len(self.agents)}"
         self.telemetry_lbl.configure(text=telemetry_text)
 
 

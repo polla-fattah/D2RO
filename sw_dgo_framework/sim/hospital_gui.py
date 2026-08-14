@@ -1,7 +1,7 @@
 """
 Native Python Desktop GUI Simulator for Autonomous Hospital Pushchair Fleet.
 Renders clinical hospital layout (ER, OR, MRI, Wards, Nurse Stations, Alcoves),
-directional patient pushchair chassis, real-time path trajectories, and head-on conflict resolution.
+directional pushchairs with kinetic safety envelopes, real-time path trajectories, and head-on conflict resolution.
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ class HospitalSimApp:
         # Simulation parameters
         self.layout = HospitalLayout()
         self.prox_field = ProxemicsField(amplitude=500.0, sigma=42.0)
-        self.current_scenario_key = "B"  # Default to Head-On Encounter
+        self.current_scenario_key = "B"
         self.is_running = True
         self.dt = 0.05
         self.sim_time = 0.0
@@ -128,7 +128,6 @@ class HospitalSimApp:
         self.emergency_flags = {}
 
         for cfg in pushchair_cfgs:
-            # Emergency pushchairs travel slightly faster
             speed = 3.2 if cfg.get("is_emergency", False) else 2.5
             agent = TrolleyAgent(
                 agent_id=cfg["id"],
@@ -169,7 +168,8 @@ class HospitalSimApp:
                 h.update(self.dt, self.layout.bounds, self.room_boxes, self.aisle_x, self.crossway_y)
 
             for a in self.agents:
-                a.step(self.dt, self.humans, self.prox_field, current_sim_time=self.sim_time, shelves=self.room_boxes)
+                a.step(self.dt, self.humans, self.prox_field, current_sim_time=self.sim_time,
+                       shelves=self.room_boxes, peer_agents=self.agents)
 
             self.layout.graph.decay_mesh_penalties(self.dt, decay_rate=2.0)
 
@@ -188,12 +188,12 @@ class HospitalSimApp:
 
         # 1. Draw Clinical Rooms & Department Zones
         dept_colors = {
-            "er": ("#450a0a", "#dc2626", "#fca5a5"),       # Red / Triage
-            "or": ("#083344", "#0891b2", "#67e8f9"),       # Cyan / Surgical
-            "mri": ("#1e1b4b", "#4f46e5", "#a5b4fc"),      # Indigo / MRI
-            "icu": ("#2e1065", "#9333ea", "#d8b4fe"),      # Purple / ICU
-            "ward": ("#064e3b", "#059669", "#6ee7b7"),     # Green / Inpatient
-            "nurse_station": ("#0f172a", "#3b82f6", "#93c5fd") # Blue / Hub
+            "er": ("#450a0a", "#dc2626", "#fca5a5"),
+            "or": ("#083344", "#0891b2", "#67e8f9"),
+            "mri": ("#1e1b4b", "#4f46e5", "#a5b4fc"),
+            "icu": ("#2e1065", "#9333ea", "#d8b4fe"),
+            "ward": ("#064e3b", "#059669", "#6ee7b7"),
+            "nurse_station": ("#0f172a", "#3b82f6", "#93c5fd")
         }
 
         for r in self.layout.rooms:
@@ -203,7 +203,7 @@ class HospitalSimApp:
             self.canvas.create_text(r.x + r.w/2, r.y + r.h/2, text=r.name,
                                    fill=txt_clr, font=("Segoe UI", 9, "bold"))
 
-        # 2. Draw Corridor Graph Lines (Airlocks vs Open Concourse)
+        # 2. Draw Corridor Graph Lines
         for (u, v), edge in self.layout.graph.edges.items():
             nu = self.layout.graph.get_node(u)
             nv = self.layout.graph.get_node(v)
@@ -220,7 +220,7 @@ class HospitalSimApp:
                                             outline="#f59e0b", width=1.5, dash=(2, 2))
                 self.canvas.create_text(an.x, an.y - 18, text="TURNOUT ALCOVE", fill="#f59e0b", font=("Segoe UI", 7, "bold"))
 
-        # 4. Draw Waypoint Nodes & Department Targets
+        # 4. Draw Waypoint Nodes
         for nid, n in self.layout.graph.nodes.items():
             self.canvas.create_oval(n.x - 4, n.y - 4, n.x + 4, n.y + 4, fill="#38bdf8", outline="")
 
@@ -240,21 +240,19 @@ class HospitalSimApp:
                     p_v = self.layout.graph.get_node(path[p_idx + 1])
                     self.canvas.create_line(p_u.x, p_u.y, p_v.x, p_v.y, fill=clr, width=1.8, dash=(3, 3))
 
-        # 6. Draw Pedestrians (Doctors, Nurses, Visitors with Gaussian Bubbles)
+        # 6. Draw Pedestrians (Doctors, Nurses with Gaussian Bubbles)
         for h in self.humans:
-            # Gaussian Personal Space
             self.canvas.create_oval(h.x - 42, h.y - 42, h.x + 42, h.y + 42,
                                    outline="#f59e0b", width=1, dash=(3, 3))
             self.canvas.create_oval(h.x - 18, h.y - 18, h.x + 18, h.y + 18,
                                    fill="#78350f", outline="")
-            # Pedestrian Body
             self.canvas.create_oval(h.x - 6, h.y - 6, h.x + 6, h.y + 6,
                                    fill="#fbbf24", outline="#ffffff", width=1.5)
 
-        # 7. Draw Autonomous Patient Pushchairs (Directional Wheelchair Chassis)
+        # 7. Draw Autonomous Patient Pushchairs + Kinetic Safety Clearance Rings
         for a in self.agents:
             is_emergency = self.emergency_flags.get(a.agent_id, False)
-            color = "#0284c7"  # Standard Transit
+            color = "#0284c7"
             badge_text = "PATIENT"
             if is_emergency:
                 color = "#dc2626"
@@ -268,15 +266,23 @@ class HospitalSimApp:
             elif a.state == "WAITING_LOCK":
                 color = "#7c3aed"
                 badge_text = "ALCOVE WAIT"
+            elif a.state == "FOLLOWING_CART":
+                color = "#06b6d4"
+                badge_text = "SPACING"
 
-            # Pushchair Chassis Polygon (Directional wheelchair shape facing +X)
+            # Draw Pushchair Safety Ring (S_trolley)
+            if not a.is_docked:
+                self.canvas.create_oval(a.x - a.safety_bubble_radius, a.y - a.safety_bubble_radius,
+                                       a.x + a.safety_bubble_radius, a.y + a.safety_bubble_radius,
+                                       outline=color, width=1, dash=(2, 2))
+
             chair_poly = [
-                (12, 6),    # Front right footrest
-                (12, -6),   # Front left footrest
-                (6, -8),    # Left armrest
-                (-10, -8),  # Rear left wheel
-                (-10, 8),   # Rear right wheel
-                (6, 8),     # Right armrest
+                (12, 6),
+                (12, -6),
+                (6, -8),
+                (-10, -8),
+                (-10, 8),
+                (6, 8),
             ]
 
             world_poly = []
@@ -295,7 +301,6 @@ class HospitalSimApp:
             h2 = self._rotate_point(-11, 7, a.x, a.y, a.heading)
             self.canvas.create_line(h1[0], h1[1], h2[0], h2[1], fill="#e2e8f0", width=2.5)
 
-            # Labels
             lbl_color = "#fca5a5" if is_emergency else "#ffffff"
             self.canvas.create_text(a.x, a.y - 18, text=f"P{a.agent_id} ({badge_text})",
                                    fill=lbl_color, font=("Segoe UI", 8, "bold"))
@@ -304,9 +309,9 @@ class HospitalSimApp:
         replans = sum(a.replan_count for a in self.agents)
         packets = self.mesh_net.total_packets_transmitted if self.mesh_net else 0
         docked = sum(1 for a in self.agents if a.is_docked)
-        yielding = sum(1 for a in self.agents if a.state == "YIELDING_HUMAN")
+        yielding = sum(1 for a in self.agents if a.state in ["YIELDING_HUMAN", "FOLLOWING_CART"])
         
-        telemetry_text = f"Hospital Sim Time: {self.sim_time:.1f}s | Replans: {replans} | V2V Packets: {packets} | Yielding: {yielding} | Completed Transits: {docked}/{len(self.agents)}"
+        telemetry_text = f"Hospital Sim Time: {self.sim_time:.1f}s | Replans: {replans} | V2V Packets: {packets} | Safe Yielding: {yielding} | Transits Completed: {docked}/{len(self.agents)}"
         self.telemetry_lbl.configure(text=telemetry_text)
 
 
