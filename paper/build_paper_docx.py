@@ -1,7 +1,7 @@
 """
-Generates the complete, updated, publication-ready Microsoft Word manuscript (paper.docx)
+Generates the complete, publication-ready Microsoft Word manuscript (paper.docx)
 with integrated Literature Review, Methodology, 5-Component Mathematical Formulations,
-LaTeX Table data, Simulation Paradigms comparison, and Experimental Results & Discussion.
+LaTeX Table data, Simulation Paradigms comparison, Experimental Results, and EMBEDDED HIGH-RES FIGURES.
 """
 
 from __future__ import annotations
@@ -13,18 +13,19 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FIG_DIR = os.path.join(BASE_DIR, "figures")
 
 def build_paper_docx():
     doc = Document()
 
-    # Page Margins (1 inch standard)
+    # 1. Page Margins (1 inch standard)
     for section in doc.sections:
         section.top_margin = Inches(1.0)
         section.bottom_margin = Inches(1.0)
         section.left_margin = Inches(1.0)
         section.right_margin = Inches(1.0)
 
-    # Title
+    # 2. Document Title
     title_p = doc.add_paragraph()
     title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     title_run = title_p.add_run("Socially-Weighted Distributed Graph Optimization (D²RO) for Autonomous Multi-Agent Service Fleets in Crowded Environments\n")
@@ -40,7 +41,7 @@ def build_paper_docx():
     author_run.italic = True
 
     # Abstract
-    abs_heading = doc.add_heading("Abstract", level=1)
+    doc.add_heading("Abstract", level=1)
     abs_p = doc.add_paragraph()
     abs_run = abs_p.add_run(
         "The continuous navigation of autonomous service fleets—such as retail shopping trolleys (Int-Cart), "
@@ -59,93 +60,155 @@ def build_paper_docx():
     # Section 1: Introduction & Literature Review
     doc.add_heading("1. Introduction & Literature Review", level=1)
     doc.add_paragraph(
-        "The automation of independent, communicating agents in dynamic, confined environments requires the convergence of several "
-        "distinct robotic domains. The proposed D²RO framework builds upon foundational work in Multi-Agent Path Finding (MAPF), dynamic "
-        "incremental graph replanning, local collision avoidance, ad-hoc wireless mesh communication, physical trolley mechatronics, "
-        "and human-aware social navigation."
+        "The automation of independent, communicating agents in dynamic, confined environments—such as supermarket trolleys navigating "
+        "shifting obstacles and crowds—requires the convergence of several distinct robotic domains. The proposed Distributed Dynamic "
+        "Route Optimization (D²RO) framework builds upon foundational work in Multi-Agent Path Finding (MAPF), dynamic graph replanning, "
+        "local collision avoidance, ad-hoc mesh communication, physical trolley mechatronics, and human-aware navigation."
     )
 
     doc.add_heading("1.1 Decentralized and Lifelong Multi-Agent Path Finding (MAPF)", level=2)
     doc.add_paragraph(
-        "Stern et al. (2019) formalized standard MAPF, defining discrete vertex and edge collision models. In continuous service "
-        "scenarios, Ma et al. (2017) formulated Lifelong Multi-Agent Path Finding for Online Pickup and Delivery (MAPD). To eliminate "
-        "centralized single-point failure risks, recent work has advanced decentralized solvers via priority swapping (Dergachev & "
-        "Yakovlev, 2024), automated negotiation (Keskin et al., 2024), and reinforcement learning models such as PRIMAL (Sartoretti et al., "
-        "2019) and Learn-to-Follow (Skrynnik et al., 2024). However, learning-based policies struggle with out-of-distribution physical "
-        "corridor closures, demonstrating the necessity of robust heuristic search."
+        "Stern et al. (2019) define the classical MAPF problem and its variants, establishing the fundamental vertex and edge conflict models "
+        "used in grid-based environments. To address continuous operations, Ma et al. (2017) introduced the concept of Lifelong Multi-Agent "
+        "Path Finding for Online Pickup and Delivery (MAPD), where agents dynamically receive tasks (e.g., returning to a docking station) "
+        "without resting.\n\n"
+        "To overcome the limitations of centralized servers—which suffer from single-point failure risks and communication latency—recent "
+        "literature has shifted toward decentralized solvers. For example, Dergachev and Yakovlev (2024) explored decentralized unlabeled "
+        "MAPF using target and priority swapping, while Keskin et al. (2024) presented a decentralized MAPF framework utilizing automated "
+        "negotiation protocols. Furthermore, learning-based approaches have gained traction: Sartoretti et al. (2019) introduced PRIMAL, "
+        "utilizing reinforcement and imitation learning for decentralized pathfinding, and Skrynnik et al. (2024) developed 'Learn to Follow' "
+        "to separate global heuristic sub-goal allocation from low-level local policies. Despite their high scalability, learning-based "
+        "methods often struggle with out-of-distribution environments (e.g., unexpected aisle closures), highlighting the need for search-based "
+        "dynamic adaptability."
     )
 
-    doc.add_heading("1.2 Dynamic Incremental Replanning in Stochastic Environments", level=2)
+    doc.add_heading("1.2 Dynamic Replanning in Unknown and Stochastic Environments", level=2)
     doc.add_paragraph(
-        "In retail and hospital corridors, topological traversal costs shift dynamically as pedestrians congregate. Full graph recalculations "
-        "from scratch (O(|V| log |V|)) are computationally prohibitive. Koenig and Likhachev (2002) resolved this with D* Lite, an incremental "
-        "search algorithm recalculating only vertices affected by dynamic cost changes. Al-Mutib et al. (2012) and Wagner & Choset (2011) "
-        "successfully adapted incremental search and dynamic dimensionality reduction for real-time multi-agent routing."
+        "In retail environments, the topological graph changes dynamically as aisles become blocked or crowded. Recalculating full paths "
+        "from scratch for every agent is computationally prohibitive. Koenig and Likhachev (2002) addressed this with D* Lite, an incremental "
+        "heuristic search algorithm that recalculates only the segments of a path affected by dynamic edge-cost changes.\n\n"
+        "The application of D* Lite to multi-agent systems was successfully demonstrated by Al-Mutib et al. (2012), who utilized it for real-time "
+        "path planning by treating the paths of peer agents as temporary, time-based obstacles. Additionally, Wagner and Choset (2011) "
+        "developed M*, dynamically varying the dimensionality of the search space only when agent paths conflict. D²RO adapts these "
+        "incremental principles, allowing trolleys to dynamically inflate the traversal costs (edge weights) of specific aisles based on "
+        "real-time congestion data without recomputing the entire global map."
     )
 
-    doc.add_heading("1.3 Kinematic Coordination and Symmetrical Corridor Deadlocks", level=2)
+    doc.add_heading("1.3 Kinematic Coordination and Local Collision Avoidance", level=2)
     doc.add_paragraph(
-        "While MAPF provides global waypoints, continuous local collision avoidance is required during micro-maneuvers. Optimal Reciprocal "
-        "Collision Avoidance (ORCA) (Van den Berg et al., 2008) provides collision-free half-planes in velocity space. However, standard "
-        "ORCA suffers from symmetrical live-locks and local minima in narrow, orthogonal corridors. Dergachev and Yakovlev (2021) "
-        "addressed this via hybrid reciprocal avoidance with localized MAPF fallback."
+        "While MAPF and D* Lite provide global waypoints, continuous kinematic control is required for safe micro-maneuvers when agents "
+        "cross paths. Van den Berg et al. (2008) introduced Optimal Reciprocal Collision Avoidance (ORCA), a highly efficient framework "
+        "providing sufficient conditions for multiple robots to avoid collisions in continuous space without explicit communication.\n\n"
+        "However, standard ORCA suffers from live-locks (deadlocks) in narrow, symmetric environments like supermarket aisles, where agents "
+        "cannot physically pass one another. Dergachev and Yakovlev (2021) specifically address this in their work on distributed multi-agent "
+        "navigation, proposing a system that uses continuous reciprocal collision avoidance but falls back on a locally confined MAPF instance "
+        "when a deadlock is detected. D²RO leverages this exact synthesis: relying on continuous reactive models for open spaces, and "
+        "spatiotemporal edge reservations for single-file corridors."
     )
 
-    doc.add_heading("1.4 Multi-Robot Ad-Hoc Mesh Communication", level=2)
+    doc.add_heading("1.4 Multi-Robot Ad-Hoc Communication Protocols", level=2)
     doc.add_paragraph(
-        "Transitioning to decentralized control requires robust peer-to-peer data sharing without fixed centralized infrastructure "
-        "(Gielis et al., 2022). Slyusar and Kulich (2016) and Edwige (2024) validated Mobile Ad-Hoc Networks (MANET) and Swarm SLAM, "
-        "demonstrating that independent robots can merge local spatial state information across distributed wireless meshes."
+        "The transition from centralized control to a truly distributed D²RO system requires robust peer-to-peer communication. Gielis et al. "
+        "(2022) emphasize the critical need for co-designing robotic planning algorithms alongside network constraints, noting a literature "
+        "gap in systems that holistically optimize both.\n\n"
+        "For decentralized data sharing, robots must rely on ad-hoc networks. Slyusar and Kulich (2016) evaluated routing protocols for "
+        "Mobile Ad-Hoc Networks (MANETs) in multi-robot exploration. Additionally, Edwige (2024) investigated robot communication within "
+        "Swarm SLAM, demonstrating how independent agents can successfully merge local spatial data over a distributed mesh. In D²RO, this "
+        "translates to an event-driven telemetry protocol where agents broadcast localized edge-cost penalties across a V2V mesh, allowing "
+        "distant agents to proactively reroute."
     )
 
-    doc.add_heading("1.5 Human Proxemics and Physical Vehicle Clearance Envelopes", level=2)
+    doc.add_heading("1.5 Indoor Positioning and Physical Hardware Implementation", level=2)
     doc.add_paragraph(
-        "Human-aware navigation guidelines (HA-VLN 2.0, 2024) emphasize that service robots must respect psychological personal space "
-        "boundaries. Crucially, physical robotic cart implementations (Mohamad Azlan et al., 2024 - Int-Cart) reveal that non-holonomic "
-        "vehicles require physical sweeping clearance margins: sharp 90-degree corner turns can cause the chassis to scrape shelf fixtures, "
-        "and trailing carts require kinetic following buffers to eliminate tailgating."
+        "Unlike simulated grids, physical shopping trolleys require absolute spatial grounding and customized mechatronics. Zafari et al. "
+        "(2019) provide a comprehensive survey of indoor localization technologies, highlighting the superiority of Ultra-Wideband (UWB) "
+        "and BLE for centimeter-level accuracy in GPS-denied environments. Clark et al. (2021) expanded on this with the TEAM framework, "
+        "demonstrating effective trilateration and mapping utilizing a localized robotic network, while Nugraha et al. (2024) proved that "
+        "fusing Indoor Positioning Systems (IPS) with wheel odometry via Extended Kalman Filters (EKF) drastically reduces navigation drift.\n\n"
+        "Bringing these concepts into the physical retail space, Mohamad Azlan et al. (2024) developed the Int-Cart, an autonomous mobile "
+        "trolley robot. Their research validates the integration of LiDAR, depth cameras, and DC/BLDC motor controllers into a physical "
+        "cart chassis, proving the mechanical and sensory viability of deploying autonomous fleets in retail environments."
     )
 
-    doc.add_heading("1.6 Identified Research Gaps", level=2)
+    doc.add_heading("1.6 Human-Aware Navigation", level=2)
     doc.add_paragraph(
-        "1. Remote Information Isolation: Trailing agents lack proactive blockage awareness, forcing costly late-stage backtracking.\n"
-        "2. Symmetrical Corridor Live-Locks: Pure reactive avoidance methods experience 100% failure rates in single-file corridors.\n"
-        "3. Physical Chassis Corner Scraping: Point-agent assumptions lead to wall collisions during non-holonomic corner execution.\n"
-        "4. Single-Domain Overfitting: Existing MAPF works evaluate only single toy environments rather than cross-domain topologies."
+        "A supermarket is vastly different from a structured warehouse because the primary obstacles—human shoppers—are unpredictable and "
+        "require social compliance. Recent benchmark frameworks, such as HA-VLN 2.0 (HA-VLN Authors, 2024), emphasize that robots cannot "
+        "treat humans simply as 'moving cylindrical obstacles.' Planners must incorporate proxemics (personal space boundaries) and "
+        "contextual human activities into their routing algorithms. In the context of D²RO, when a trolley encounters a crowded aisle, "
+        "human-aware metrics dictate that it should not execute aggressive local maneuvers (like weaving through shoppers via ORCA). Instead, "
+        "it must penalize the global mesh graph, increasing the aisle's congestion cost, and choose an alternative path to preserve human comfort."
+    )
+
+    doc.add_heading("1.7 Synthesis and Identification of the Research Gap", level=2)
+    doc.add_paragraph(
+        "The reviewed literature reveals highly mature individual solutions: lifelong routing (Ma et al., 2017), incremental dynamic "
+        "planning (Koenig & Likhachev, 2002), collision avoidance (Van den Berg et al., 2008), physical trolley mechatronics (Mohamad Azlan "
+        "et al., 2024), and human-aware guidelines (HA-VLN Authors, 2024).\n\n"
+        "The Research Gap: There remains a distinct lack of hybrid frameworks that fuse proactive, mesh-informed global graph updates "
+        "with reactive human-aware collision avoidance in highly constrained physical retail spaces. Most decentralized MAPF algorithms "
+        "assume either complete centralized knowledge (vulnerable to latency/failure) or rely on myopic line-of-sight sensing (resulting in "
+        "late-stage deadlocks in narrow corridors).\n\n"
+        "The D²RO framework bridges this gap. By combining D* Lite with an ad-hoc mesh communication layer and human-centric penalty weights, "
+        "D²RO allows an Int-Cart experiencing local shopper congestion to broadcast edge-cost penalties globally. This enables other carts "
+        "to independently and proactively recalculate optimal, socially compliant trajectories before encountering the bottleneck."
     )
 
     # Section 2: Mathematical Formulation
     doc.add_heading("2. Mathematical Formulation & System Architecture", level=1)
     doc.add_paragraph(
-        "The workspace floor is modeled as a directed graph G = (V, E). The fleet consists of N autonomous agents governed by unicycle "
-        "non-holonomic kinematics with linear velocity v in [0, v_max] and angular rate omega in [-omega_max, omega_max]."
-    )
-    doc.add_paragraph(
-        "The complete 5-Component SW-DGO Composite Traversal Cost Function is defined as:\n\n"
+        "The complete 5-Component SW-DGO Traversal Cost Function is formalized as:\n\n"
         "C(u, v, t) = D(u, v) + W_mesh(u, v, t) + H_prox(v, t) + R_lock(u, v, t) + S_trolley(v, t)\n"
     )
     doc.add_paragraph(
-        "• D(u, v): Baseline kinematic transition distance and rotational alignment cost.\n"
-        "• W_mesh(u, v, t): Event-driven V2V congestion alert penalty with exponential temporal decay.\n"
-        "• H_prox(v, t): Continuous 2D anisotropic Gaussian personal space discomfort field.\n"
-        "• R_lock(u, v, t): Spatiotemporal directional mutex lock guaranteeing single-file corridor exclusivity.\n"
-        "• S_trolley(v, t): Kinetic safety clearance envelope enforcing anti-tailgating following distance and an 18px shelf margin."
+        "1. D(u, v): Baseline Euclidean physical distance and non-holonomic orientation change penalty.\n"
+        "2. W_mesh(u, v, t): Event-driven V2V congestion alert with exponential temporal decay: W_mesh(t) = W_0 * exp(-lambda * t).\n"
+        "3. H_prox(v, t): Continuous 2D anisotropic Gaussian human personal space discomfort field.\n"
+        "4. R_lock(u, v, t): Spatiotemporal directional mutex lock guaranteeing single-file corridor exclusivity.\n"
+        "5. S_trolley(v, t): Kinetic safety clearance envelope enforcing anti-tailgating following distance and an 18px shelf margin."
     )
 
-    # Section 3: Multi-Domain Generalization
-    doc.add_heading("3. Multi-Domain Generalization & Topologies", level=1)
+    # Section 3: Multi-Domain Environments & Snapshots
+    doc.add_heading("3. Multi-Domain Topologies & Simulation Architectures", level=1)
     doc.add_paragraph(
-        "The D²RO framework is empirically validated across three distinct architectural topologies:\n"
-        "1. Retail Supermarket: Narrow single-file aisles, central Action Alley promenade, and multi-bay cart collection depots.\n"
-        "2. Clinical Hospital: Emergency trauma (ER) triage, sterile OR corridors, and Turnout Alcoves for dynamic yielding.\n"
-        "3. Airport Terminal: Massive open-plan check-in concourse, security screening bottleneck lanes, and narrow gate piers."
+        "The framework is validated across three divergent real-world architectural environments:"
     )
+
+    # Add Figure 5 (Supermarket)
+    fig5_path = os.path.join(FIG_DIR, "fig5_supermarket_topology_trajectories.png")
+    if os.path.exists(fig5_path):
+        doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER
+        doc.add_picture(fig5_path, width=Inches(5.8))
+        cap = doc.add_paragraph("Figure 5: Supermarket environment floorplan with SW-DGO planned trajectories, aisle shelves, Action Alley promenade, human Gaussian halos, and Cart Depots.")
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap.runs[0].font.size = Pt(9.5)
+        cap.runs[0].font.italic = True
+
+    # Add Figure 6 (Hospital)
+    fig6_path = os.path.join(FIG_DIR, "fig6_hospital_topology_trajectories.png")
+    if os.path.exists(fig6_path):
+        doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER
+        doc.add_picture(fig6_path, width=Inches(5.8))
+        cap = doc.add_paragraph("Figure 6: Hospital autonomous pushchair floorplan featuring Emergency Trauma (ER), Sterile OR/MRI, Clinical Wards, and Turnout Alcoves for dynamic yielding.")
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap.runs[0].font.size = Pt(9.5)
+        cap.runs[0].font.italic = True
+
+    # Add Figure 7 (Airport)
+    fig7_path = os.path.join(FIG_DIR, "fig7_airport_topology_trajectories.png")
+    if os.path.exists(fig7_path):
+        doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER
+        doc.add_picture(fig7_path, width=Inches(5.8))
+        cap = doc.add_paragraph("Figure 7: Airport terminal autonomous luggage trolley concourse simulation with Check-in Banks, Security screening, open plaza, and Gate Piers.")
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap.runs[0].font.size = Pt(9.5)
+        cap.runs[0].font.italic = True
 
     # Section 4: Experimental Results
     doc.add_heading("4. Experimental Results & Quantitative Discussion", level=1)
     doc.add_paragraph(
         "Comprehensive empirical benchmarks were conducted across 20 randomized Monte Carlo trials. All raw data is exported to "
-        "experiments/data/ and summarized below:"
+        "experiments/data/ and summarized in Table 1 below:"
     )
 
     # Table 1
@@ -166,12 +229,35 @@ def build_paper_docx():
         for col_idx, val in enumerate(row_data):
             table.cell(row_idx + 1, col_idx).text = val
 
-    doc.add_paragraph(
-        "\nKey Findings:\n"
-        "1. Elimination of Deadlocks: D²RO achieves 100% mission success with 0.0 deadlocks, while ORCA achieves 0% due to shelf corner traps (Figure 1).\n"
-        "2. Component Necessity: Component ablation proves that omitting R_lock causes 55% deadlock failures, omitting H_prox causes a +663% discomfort spike, and omitting W_mesh increases makespan by +46.5% due to forced backtracking (Figure 2).\n"
-        "3. Sub-linear Scalability: As pedestrian density increases from 2 to 24 humans, D* Lite vertex repair latency remains below 0.12 ms, guaranteeing real-time execution at 60 FPS (Figure 4)."
-    )
+    # Add Figure 1 (Benchmark)
+    fig1_path = os.path.join(FIG_DIR, "fig1_benchmark_comparison.png")
+    if os.path.exists(fig1_path):
+        doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER
+        doc.add_picture(fig1_path, width=Inches(6.2))
+        cap = doc.add_paragraph("Figure 1: Benchmark comparison of D²RO vs. Static A* and ORCA across (a) Success Rate, (b) Makespan, and (c) Social Proxemic Violations.")
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap.runs[0].font.size = Pt(9.5)
+        cap.runs[0].font.italic = True
+
+    # Add Figure 2 (Ablation)
+    fig2_path = os.path.join(FIG_DIR, "fig2_ablation_study.png")
+    if os.path.exists(fig2_path):
+        doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER
+        doc.add_picture(fig2_path, width=Inches(6.0))
+        cap = doc.add_paragraph("Figure 2: Component ablation study evaluating (a) Discomfort Integral and (b) Corridor Deadlocks & Corner Scrapes across the 5 cost configurations.")
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap.runs[0].font.size = Pt(9.5)
+        cap.runs[0].font.italic = True
+
+    # Add Figure 4 (Scalability)
+    fig4_path = os.path.join(FIG_DIR, "fig4_scalability_density.png")
+    if os.path.exists(fig4_path):
+        doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER
+        doc.add_picture(fig4_path, width=Inches(4.8))
+        cap = doc.add_paragraph("Figure 4: Fleet scalability curves showing sub-linear D* Lite vertex repair latency and V2V mesh packets as crowd density increases from 2 to 24 pedestrians.")
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap.runs[0].font.size = Pt(9.5)
+        cap.runs[0].font.italic = True
 
     # Section 5: Conclusion
     doc.add_heading("5. Conclusion", level=1)
@@ -184,7 +270,7 @@ def build_paper_docx():
 
     doc_path = os.path.join(BASE_DIR, "..", "paper.docx")
     doc.save(doc_path)
-    print(f"Successfully generated updated manuscript: {doc_path}")
+    print(f"Successfully generated updated manuscript with embedded figures: {doc_path}")
 
 if __name__ == "__main__":
     build_paper_docx()
