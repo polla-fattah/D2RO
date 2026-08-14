@@ -1,7 +1,7 @@
 """
 Native Python Desktop GUI Simulator for Autonomous Airport Luggage Trolley Fleet.
-Renders massive open-plan check-in concourses, duty-free plazas, narrow gate piers,
-heavy dynamic passenger crowds with Gaussian proxemic repulsion, and real-time trajectory overlays.
+Renders open-plan check-in concourses, retail plazas, narrow gate piers, and heavy dynamic crowds.
+All labeling is generic and scientific. Canvas dimensions are compact and 100% visible on all displays.
 """
 
 from __future__ import annotations
@@ -19,13 +19,13 @@ class AirportSimApp:
     """
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("Airport Autonomous Luggage Trolley Fleet Simulator (SW-DGO / D²RO)")
-        self.root.geometry("1240x940")
+        self.root.title("Airport Autonomous Luggage Trolley Simulator (SW-DGO / D²RO)")
+        self.root.geometry("1020x720")
         self.root.configure(bg="#030712")
 
         # Simulation parameters
         self.layout = AirportLayout()
-        self.prox_field = ProxemicsField(amplitude=480.0, sigma=40.0)
+        self.prox_field = ProxemicsField(amplitude=480.0, sigma=36.0)
         self.current_scenario_key = "A"
         self.is_running = True
         self.dt = 0.05
@@ -39,73 +39,73 @@ class AirportSimApp:
 
         # Geometry helpers
         self.struct_boxes = [s.bounds for s in self.layout.structures]
-        self.aisle_x = [100.0, 180.0, 260.0, self.layout.x_security_choke, 480.0, 620.0, 760.0, self.layout.x_gate_pier_a, self.layout.x_gate_pier_b]
-        self.crossway_y = [110.0, 230.0, 300.0, 440.0, 580.0, 720.0, 800.0]
+        self.aisle_x = [80.0, 150.0, 220.0, self.layout.x_security_choke, 390.0, 510.0, 630.0, self.layout.x_gate_pier_a, self.layout.x_gate_pier_b]
+        self.crossway_y = [80.0, 180.0, 260.0, 340.0, 440.0, 510.0]
 
         self._create_widgets()
         self.load_scenario("A")
         self._sim_loop()
 
     def _create_widgets(self) -> None:
-        top_frame = tk.Frame(self.root, bg="#030712", pady=8)
-        top_frame.pack(fill=tk.X, padx=16)
+        top_frame = tk.Frame(self.root, bg="#030712", pady=6)
+        top_frame.pack(fill=tk.X, padx=12)
 
-        title_lbl = tk.Label(top_frame, text="Autonomous Airport Luggage Trolley Simulator — Open Concourses & Heavy Crowds",
-                             font=("Segoe UI", 15, "bold"), fg="#38bdf8", bg="#030712")
+        title_lbl = tk.Label(top_frame, text="Autonomous Airport Trolley Simulator — Open Concourses & Heavy Crowds",
+                             font=("Segoe UI", 14, "bold"), fg="#38bdf8", bg="#030712")
         title_lbl.pack(anchor="w")
 
         # Scenario Tabs
-        tab_frame = tk.Frame(top_frame, bg="#030712", pady=6)
+        tab_frame = tk.Frame(top_frame, bg="#030712", pady=4)
         tab_frame.pack(fill=tk.X)
 
         self.tab_buttons: Dict[str, tk.Button] = {}
         scenarios = [
-            ("A", "Scenario A: Open Check-in Concourse (18 Dynamic Travelers)"),
+            ("A", "Scenario A: Open Check-in Concourse (16 Travelers)"),
             ("B", "Scenario B: Gate Pier A Head-On Encounter"),
             ("C", "Scenario C: Security Chokepoint Surge Alert"),
-            ("D", "Scenario D: Duty-Free Shopping Meander"),
-            ("E", "Scenario E: International Peak Rush Hour")
+            ("D", "Scenario D: Retail Plaza Meander"),
+            ("E", "Scenario E: Peak Rush Hour")
         ]
 
         for key, label in scenarios:
-            btn = tk.Button(tab_frame, text=label, font=("Segoe UI", 9, "bold"),
+            btn = tk.Button(tab_frame, text=label, font=("Segoe UI", 8, "bold"),
                             bg="#111827", fg="#9ca3af", activebackground="#0284c7",
-                            activeforeground="#ffffff", relief=tk.FLAT, padx=10, pady=4,
+                            activeforeground="#ffffff", relief=tk.FLAT, padx=8, pady=3,
                             command=lambda k=key: self.load_scenario(k))
-            btn.pack(side=tk.LEFT, padx=3)
+            btn.pack(side=tk.LEFT, padx=2)
             self.tab_buttons[key] = btn
 
         # Banner Description
-        self.desc_lbl = tk.Label(self.root, text="", font=("Segoe UI", 10),
-                                 fg="#7dd3fc", bg="#111827", padx=12, pady=5, anchor="w")
-        self.desc_lbl.pack(fill=tk.X, padx=16, pady=2)
+        self.desc_lbl = tk.Label(self.root, text="", font=("Segoe UI", 9),
+                                 fg="#7dd3fc", bg="#111827", padx=10, pady=4, anchor="w")
+        self.desc_lbl.pack(fill=tk.X, padx=12, pady=2)
 
-        # Simulation Canvas
+        # Simulation Canvas (Compact & 100% visible on screen)
         min_x, min_y, max_x, max_y = self.layout.bounds
-        self.canvas = tk.Canvas(self.root, width=int(max_x - min_x) + 20, height=int(max_y - min_y) + 20,
+        self.canvas = tk.Canvas(self.root, width=int(max_x - min_x) + 10, height=int(max_y - min_y) + 10,
                                bg="#090d16", highlightthickness=1, highlightbackground="#1f2937")
-        self.canvas.pack(padx=16, pady=6)
+        self.canvas.pack(padx=12, pady=4)
         self.canvas.bind("<Button-1>", self._on_canvas_click)
 
         # Bottom Controls & Telemetry
         bottom_frame = tk.Frame(self.root, bg="#030712", pady=4)
-        bottom_frame.pack(fill=tk.X, padx=16)
+        bottom_frame.pack(fill=tk.X, padx=12)
 
         ctrl_frame = tk.Frame(bottom_frame, bg="#030712")
         ctrl_frame.pack(side=tk.LEFT)
 
         self.play_btn = tk.Button(ctrl_frame, text="Pause", font=("Segoe UI", 9, "bold"),
-                                  bg="#0284c7", fg="#ffffff", padx=12, pady=3, relief=tk.FLAT,
+                                  bg="#0284c7", fg="#ffffff", padx=10, pady=2, relief=tk.FLAT,
                                   command=self._toggle_play)
-        self.play_btn.pack(side=tk.LEFT, padx=3)
+        self.play_btn.pack(side=tk.LEFT, padx=2)
 
         restart_btn = tk.Button(ctrl_frame, text="Restart", font=("Segoe UI", 9, "bold"),
-                                bg="#374151", fg="#ffffff", padx=12, pady=3, relief=tk.FLAT,
+                                bg="#374151", fg="#ffffff", padx=10, pady=2, relief=tk.FLAT,
                                 command=lambda: self.load_scenario(self.current_scenario_key))
-        restart_btn.pack(side=tk.LEFT, padx=3)
+        restart_btn.pack(side=tk.LEFT, padx=2)
 
         self.telemetry_lbl = tk.Label(bottom_frame, text="", font=("Consolas", 9),
-                                      fg="#f8fafc", bg="#111827", padx=10, pady=4)
+                                      fg="#f8fafc", bg="#111827", padx=10, pady=3)
         self.telemetry_lbl.pack(side=tk.RIGHT)
 
     def load_scenario(self, key: str) -> None:
@@ -122,7 +122,7 @@ class AirportSimApp:
         trolley_cfgs, self.humans, self.scenario_desc = AirportScenarioSuite.get_scenario(key, self.layout)
         self.desc_lbl.configure(text=self.scenario_desc)
 
-        self.mesh_net = MeshNetwork(comm_radius=400.0)
+        self.mesh_net = MeshNetwork(comm_radius=350.0)
         self.agents = []
 
         for cfg in trolley_cfgs:
@@ -132,7 +132,7 @@ class AirportSimApp:
                 start_node=cfg["start"],
                 goal_node=cfg["goal"],
                 mesh_net=self.mesh_net,
-                max_speed=2.8
+                max_speed=2.6
             )
             self.agents.append(agent)
 
@@ -150,11 +150,11 @@ class AirportSimApp:
                 min_d = d
                 nearest_node = nid
 
-        if nearest_node and min_d < 50.0:
+        if nearest_node and min_d < 45.0:
             for a in self.agents:
                 for succ in self.layout.graph.successors(nearest_node):
-                    a.broadcast_congestion(nearest_node, succ, penalty=550.0, current_time=self.sim_time)
-            print(f"[Airport Event] Luggage Stack Obstacle Placed near {nearest_node}")
+                    a.broadcast_congestion(nearest_node, succ, penalty=500.0, current_time=self.sim_time)
+            print(f"[Airport Event] Dynamic Obstacle Placed near {nearest_node}")
 
     def _sim_loop(self) -> None:
         if self.is_running and self.agents:
@@ -165,6 +165,9 @@ class AirportSimApp:
 
             for a in self.agents:
                 a.step(self.dt, self.humans, self.prox_field, current_sim_time=self.sim_time, shelves=self.struct_boxes)
+                # Hard perimeter boundary clamping to prevent going off screen
+                a.x = max(20.0, min(self.layout.width - 20.0, a.x))
+                a.y = max(20.0, min(self.layout.height - 20.0, a.y))
 
             self.layout.graph.decay_mesh_penalties(self.dt, decay_rate=2.0)
 
@@ -182,23 +185,23 @@ class AirportSimApp:
         self.canvas.delete("all")
 
         # Zone Backgrounds
-        # 1. Check-in Open Concourse (Left)
-        self.canvas.create_rectangle(20, 50, 310, 770, fill="#0f172a", outline="#1e293b", width=1, stipple="gray25")
-        self.canvas.create_text(160, 65, text="DEPARTURE CHECK-IN CONCOURSE", fill="#38bdf8", font=("Segoe UI", 9, "bold"))
+        # 1. Check-in Concourse
+        self.canvas.create_rectangle(15, 35, 250, 480, fill="#0f172a", outline="#1e293b", width=1, stipple="gray25")
+        self.canvas.create_text(130, 48, text="CHECK-IN CONCOURSE", fill="#38bdf8", font=("Segoe UI", 8, "bold"))
 
         # 2. Security Screening Zone
-        self.canvas.create_rectangle(320, 50, 410, 770, fill="#1c1917", outline="#44403c", width=1, stipple="gray25")
-        self.canvas.create_text(365, 65, text="SECURITY", fill="#f59e0b", font=("Segoe UI", 8, "bold"))
+        self.canvas.create_rectangle(255, 35, 340, 480, fill="#1c1917", outline="#44403c", width=1, stipple="gray25")
+        self.canvas.create_text(298, 48, text="SECURITY", fill="#f59e0b", font=("Segoe UI", 7, "bold"))
 
-        # 3. Duty-Free Plaza (Center Open Space)
-        self.canvas.create_rectangle(420, 50, 830, 770, fill="#064e3b", outline="#047857", width=1, stipple="gray25")
-        self.canvas.create_text(620, 65, text="DUTY-FREE & DINING CENTRAL PLAZA", fill="#10b981", font=("Segoe UI", 9, "bold"))
+        # 3. Central Retail Plaza
+        self.canvas.create_rectangle(345, 35, 680, 480, fill="#064e3b", outline="#047857", width=1, stipple="gray25")
+        self.canvas.create_text(510, 48, text="CENTRAL RETAIL & DINING PLAZA", fill="#10b981", font=("Segoe UI", 8, "bold"))
 
-        # 4. Gate Piers A & B (Right)
-        self.canvas.create_rectangle(850, 50, 1170, 770, fill="#1e1b4b", outline="#3730a3", width=1, stipple="gray25")
-        self.canvas.create_text(1010, 65, text="BOARDING GATES (PIER A & B)", fill="#818cf8", font=("Segoe UI", 9, "bold"))
+        # 4. Gate Piers A & B
+        self.canvas.create_rectangle(690, 35, 965, 480, fill="#1e1b4b", outline="#3730a3", width=1, stipple="gray25")
+        self.canvas.create_text(825, 48, text="BOARDING GATES (PIER A & B)", fill="#818cf8", font=("Segoe UI", 8, "bold"))
 
-        # 1. Draw Terminal Fixtures & Shops
+        # 1. Draw Terminal Fixtures & Structures
         zone_colors = {
             "checkin": ("#1e293b", "#0284c7", "#7dd3fc"),
             "security": ("#451a03", "#d97706", "#fde68a"),
@@ -211,7 +214,7 @@ class AirportSimApp:
             self.canvas.create_rectangle(s.x, s.y, s.x + s.w, s.y + s.h,
                                         fill=bg_clr, outline=border_clr, width=1.5)
             self.canvas.create_text(s.x + s.w/2, s.y + s.h/2, text=s.name,
-                                   fill=txt_clr, font=("Segoe UI", 8, "bold"))
+                                   fill=txt_clr, font=("Segoe UI", 7, "bold"))
 
         # 2. Draw Corridor Roadmap
         for (u, v), edge in self.layout.graph.edges.items():
@@ -219,14 +222,14 @@ class AirportSimApp:
             nv = self.layout.graph.get_node(v)
             color = "#f43f5e" if edge.is_single_file else "#374151"
             dash = (4, 4) if edge.is_single_file else ()
-            w = 2.2 if edge.is_single_file else 1.2
+            w = 2.0 if edge.is_single_file else 1.0
             self.canvas.create_line(nu.x, nu.y, nv.x, nv.y, fill=color, width=w, dash=dash)
 
         # 3. Draw Nodes & Trolley Depots
         for nid, n in self.layout.graph.nodes.items():
             if n.is_docking_bay:
-                self.canvas.create_oval(n.x - 11, n.y - 11, n.x + 11, n.y + 11, fill="#10b981", outline="#ffffff", width=1.8)
-                self.canvas.create_text(n.x, n.y + 18, text="TROLLEY DEPOT", fill="#10b981", font=("Segoe UI", 8, "bold"))
+                self.canvas.create_oval(n.x - 9, n.y - 9, n.x + 9, n.y + 9, fill="#10b981", outline="#ffffff", width=1.5)
+                self.canvas.create_text(n.x, n.y + 14, text="TROLLEY DEPOT", fill="#10b981", font=("Segoe UI", 7, "bold"))
             else:
                 self.canvas.create_oval(n.x - 3, n.y - 3, n.x + 3, n.y + 3, fill="#38bdf8", outline="")
 
@@ -240,19 +243,19 @@ class AirportSimApp:
             if len(path) > 1:
                 if a.target_node:
                     tn = self.layout.graph.get_node(a.target_node)
-                    self.canvas.create_line(a.x, a.y, tn.x, tn.y, fill=clr, width=1.8, dash=(2, 2))
+                    self.canvas.create_line(a.x, a.y, tn.x, tn.y, fill=clr, width=1.5, dash=(2, 2))
                 for p_idx in range(len(path) - 1):
                     p_u = self.layout.graph.get_node(path[p_idx])
                     p_v = self.layout.graph.get_node(path[p_idx + 1])
-                    self.canvas.create_line(p_u.x, p_u.y, p_v.x, p_v.y, fill=clr, width=1.8, dash=(3, 3))
+                    self.canvas.create_line(p_u.x, p_u.y, p_v.x, p_v.y, fill=clr, width=1.5, dash=(3, 3))
 
         # 5. Draw Passengers with Gaussian Halos
         for h in self.humans:
-            self.canvas.create_oval(h.x - 40, h.y - 40, h.x + 40, h.y + 40,
+            self.canvas.create_oval(h.x - 36, h.y - 36, h.x + 36, h.y + 36,
                                    outline="#f59e0b", width=1, dash=(3, 3))
-            self.canvas.create_oval(h.x - 18, h.y - 18, h.x + 18, h.y + 18,
+            self.canvas.create_oval(h.x - 16, h.y - 16, h.x + 16, h.y + 18,
                                    fill="#78350f", outline="")
-            self.canvas.create_oval(h.x - 6, h.y - 6, h.x + 6, h.y + 6,
+            self.canvas.create_oval(h.x - 5, h.y - 5, h.x + 5, h.y + 5,
                                    fill="#fbbf24", outline="#ffffff", width=1.5)
 
         # 6. Draw Directional Luggage Trolley Chassis
@@ -269,13 +272,12 @@ class AirportSimApp:
                 color = "#7c3aed"
                 badge_text = "PIER LOCK"
 
-            # Heavy Luggage Cart Chassis Polygon
             cart_poly = [
-                (14, 0),     # Front nose
-                (11, 9),     # Front right frame
-                (-11, 9),    # Rear right
-                (-11, -9),   # Rear left
-                (11, -9),    # Front left frame
+                (12, 0),     # Front nose
+                (9, 7),      # Front right frame
+                (-9, 7),     # Rear right
+                (-9, -7),    # Rear left
+                (9, -7),     # Front left frame
             ]
 
             world_poly = []
@@ -283,25 +285,25 @@ class AirportSimApp:
                 wx, wy = self._rotate_point(lx, ly, a.x, a.y, a.heading)
                 world_poly.extend([wx, wy])
 
-            self.canvas.create_polygon(world_poly, fill=color, outline="#ffffff", width=1.8)
+            self.canvas.create_polygon(world_poly, fill=color, outline="#ffffff", width=1.6)
 
-            # Draw 2 stacked luggage suitcases inside cart
-            s1_p = self._rotate_point(-4, 0, a.x, a.y, a.heading)
-            s2_p = self._rotate_point(4, 0, a.x, a.y, a.heading)
-            self.canvas.create_rectangle(s1_p[0] - 3, s1_p[1] - 4, s1_p[0] + 3, s1_p[1] + 4, fill="#ffffff", outline="")
-            self.canvas.create_rectangle(s2_p[0] - 3, s2_p[1] - 4, s2_p[0] + 3, s2_p[1] + 4, fill="#ffffff", outline="")
+            # 2 luggage suitcases inside cart
+            s1_p = self._rotate_point(-3, 0, a.x, a.y, a.heading)
+            s2_p = self._rotate_point(3, 0, a.x, a.y, a.heading)
+            self.canvas.create_rectangle(s1_p[0] - 2.5, s1_p[1] - 3, s1_p[0] + 2.5, s1_p[1] + 3, fill="#ffffff", outline="")
+            self.canvas.create_rectangle(s2_p[0] - 2.5, s2_p[1] - 3, s2_p[0] + 2.5, s2_p[1] + 3, fill="#ffffff", outline="")
 
             # Rear push handle
-            h1 = self._rotate_point(-12, -7, a.x, a.y, a.heading)
-            h2 = self._rotate_point(-12, 7, a.x, a.y, a.heading)
-            self.canvas.create_line(h1[0], h1[1], h2[0], h2[1], fill="#e5e7eb", width=2.5)
+            h1 = self._rotate_point(-10, -6, a.x, a.y, a.heading)
+            h2 = self._rotate_point(-10, 6, a.x, a.y, a.heading)
+            self.canvas.create_line(h1[0], h1[1], h2[0], h2[1], fill="#e5e7eb", width=2.0)
 
-            # Label
-            self.canvas.create_text(a.x, a.y - 18, text=f"T{a.agent_id}",
-                                   fill="#ffffff", font=("Segoe UI", 9, "bold"))
+            # Labels
+            self.canvas.create_text(a.x, a.y - 15, text=f"T{a.agent_id}",
+                                   fill="#ffffff", font=("Segoe UI", 8, "bold"))
             if badge_text:
-                self.canvas.create_text(a.x, a.y + 18, text=badge_text,
-                                       fill=color, font=("Segoe UI", 8, "bold"))
+                self.canvas.create_text(a.x, a.y + 15, text=badge_text,
+                                       fill=color, font=("Segoe UI", 7, "bold"))
 
         # 7. Telemetry Display
         replans = sum(a.replan_count for a in self.agents)
@@ -309,7 +311,7 @@ class AirportSimApp:
         docked = sum(1 for a in self.agents if a.is_docked)
         yielding = sum(1 for a in self.agents if a.state == "YIELDING_HUMAN")
         
-        telemetry_text = f"Airport Sim Time: {self.sim_time:.1f}s | Replans: {replans} | V2V Mesh: {packets} | Yielding: {yielding} | Stacked at Depot: {docked}/{len(self.agents)}"
+        telemetry_text = f"Airport Time: {self.sim_time:.1f}s | Replans: {replans} | V2V Packets: {packets} | Yielding: {yielding} | Stacked: {docked}/{len(self.agents)}"
         self.telemetry_lbl.configure(text=telemetry_text)
 
 
