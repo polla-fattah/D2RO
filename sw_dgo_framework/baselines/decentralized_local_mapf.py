@@ -7,6 +7,7 @@ WITHOUT multi-hop V2V mesh broadcasts and WITHOUT continuous Gaussian social pro
 
 from __future__ import annotations
 import math
+import time
 from math import hypot as math_hypot, atan2 as math_atan2
 from typing import List, Tuple, Optional, Dict
 from ..core.graph import TopologicalGraph, Node
@@ -58,6 +59,7 @@ class DecentralizedLocalMAPFAgent:
         self.deadlock_count: int = 0
         self.proxemic_violations: int = 0
         self.is_docked: bool = False
+        self.last_compute_time_ms: float = 0.0
 
     @property
     def current_pos(self) -> Tuple[float, float]:
@@ -96,6 +98,7 @@ class DecentralizedLocalMAPFAgent:
         if self.is_docked:
             return
 
+        t0 = time.perf_counter()
         self.travel_time += dt
 
         # Check goal arrival
@@ -103,6 +106,7 @@ class DecentralizedLocalMAPFAgent:
         if math_hypot(self.x - goal_obj.x, self.y - goal_obj.y) < 14.0:
             self.is_docked = True
             self.speed = 0.0
+            self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0
             return
 
         # Check human proxemic violations (< 0.8 meters / 26.67 px)
@@ -112,6 +116,7 @@ class DecentralizedLocalMAPFAgent:
                 break
 
         if not self.target_node:
+            self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0
             return
 
         target_obj = self.graph.get_node(self.target_node)
@@ -141,6 +146,7 @@ class DecentralizedLocalMAPFAgent:
                 self.path_index = 0
                 self.target_node = self.path[1] if len(self.path) > 1 else None
                 self.yield_timer = 0.0
+            self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0
             return
         else:
             self.yield_timer = 0.0
@@ -155,6 +161,7 @@ class DecentralizedLocalMAPFAgent:
                 self.target_node = None
                 self.is_docked = True
                 self.speed = 0.0
+                self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0
                 return
 
         # 3. Kinematic Step
@@ -167,3 +174,4 @@ class DecentralizedLocalMAPFAgent:
         self.x += self.speed * math.cos(self.heading) * dt
         self.y += self.speed * math.sin(self.heading) * dt
         self.total_distance += step_len
+        self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0

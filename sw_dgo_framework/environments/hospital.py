@@ -138,27 +138,25 @@ class HospitalLayout:
         self.graph.add_edge("N_MRI_CT", "N_ICU_DISCHARGE", is_single_file=True, bidirectional=True)
 
         # 3. CLINICAL ROOMS & SOLID WALL FIXTURES
-        # Emergency Department Rooms (Left)
-        self.rooms.append(HospitalRoom(30, 40, 180, 140, name="ER Triage Bay", dept_type="er"))
-        self.rooms.append(HospitalRoom(30, 320, 180, 140, name="Trauma Resus 1", dept_type="er"))
-        self.rooms.append(HospitalRoom(30, 600, 180, 140, name="Ambulance Bay", dept_type="er"))
+        # Emergency Department Rooms (Left wing between corridors)
+        self.rooms.append(HospitalRoom(20, 160, 90, 180, name="ER Triage Bay", dept_type="er"))
+        self.rooms.append(HospitalRoom(20, 440, 90, 180, name="Ambulance Bay", dept_type="er"))
 
-        # Inpatient Ward Rooms Block A
-        self.rooms.append(HospitalRoom(250, 160, 140, 180, name="Ward 101-104", dept_type="ward"))
-        self.rooms.append(HospitalRoom(250, 440, 140, 180, name="Ward 105-108", dept_type="ward"))
+        # Inpatient Ward Rooms Block A (Between x_er and x_ward_a)
+        self.rooms.append(HospitalRoom(190, 160, 100, 180, name="Ward 101-104", dept_type="ward"))
+        self.rooms.append(HospitalRoom(190, 440, 100, 180, name="Ward 105-108", dept_type="ward"))
 
-        # Central Hub Fixtures (Nurse Station & Elevators)
-        self.rooms.append(HospitalRoom(500, 160, 160, 90, name="Elevator Bank", dept_type="nurse_station"))
-        self.rooms.append(HospitalRoom(500, 520, 160, 90, name="Pharmacy & Lab", dept_type="nurse_station"))
+        # Central Hub Fixtures (Elevators & Pharmacy between Ward A and Central Concourse)
+        self.rooms.append(HospitalRoom(420, 160, 100, 180, name="Elevator Bank", dept_type="nurse_station"))
+        self.rooms.append(HospitalRoom(420, 440, 100, 180, name="Pharmacy & Lab", dept_type="nurse_station"))
 
-        # Inpatient Ward Rooms Block B
-        self.rooms.append(HospitalRoom(750, 160, 140, 180, name="Ward 201-204", dept_type="ward"))
-        self.rooms.append(HospitalRoom(750, 440, 140, 180, name="Ward 205-208", dept_type="ward"))
+        # Inpatient Ward Rooms Block B (Between Central Concourse and Ward B)
+        self.rooms.append(HospitalRoom(680, 160, 100, 180, name="Ward 201-204", dept_type="ward"))
+        self.rooms.append(HospitalRoom(680, 440, 100, 180, name="Ward 205-208", dept_type="ward"))
 
-        # Surgical OR & Radiology Wing (Right)
-        self.rooms.append(HospitalRoom(940, 40, 180, 140, name="Operating OR-1", dept_type="or"))
-        self.rooms.append(HospitalRoom(940, 320, 180, 140, name="MRI & CT Suite", dept_type="mri"))
-        self.rooms.append(HospitalRoom(940, 600, 180, 140, name="ICU Intensive Care", dept_type="icu"))
+        # Surgical OR & Radiology Wing (Right wing beyond x_or_mri)
+        self.rooms.append(HospitalRoom(1060, 160, 80, 180, name="Operating OR-1", dept_type="or"))
+        self.rooms.append(HospitalRoom(1060, 440, 80, 180, name="ICU Intensive Care", dept_type="icu"))
 
 
 class HospitalScenarioSuite:

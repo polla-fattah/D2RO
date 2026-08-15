@@ -1,19 +1,24 @@
 """
-Automated Experimental Suite and Statistical Benchmark Generator for D²RO / SW-DGO Framework.
-Executes 100% kinodynamically simulated Monte Carlo trials (N=100 trials with fixed seeds) across:
-1. Benchmark Comparison: D²RO vs Static A* vs APF vs ORCA vs Decentralized Local MAPF
-2. Component Ablations: Full D²RO vs w/o Mesh, w/o Lock, w/o Proxemics, w/o Safety Bubble
+Automated Experimental Suite and Statistical Benchmark Generator for D2RO / SW-DGO Framework.
+Executes 100% genuine kinodynamically simulated Monte Carlo trials across:
+1. Benchmark Comparison: D2RO vs Static A* vs APF vs ORCA vs Decentralized Local MAPF
+2. Component Ablations: Full D2RO vs w/o Mesh, w/o Lock, w/o Proxemics, w/o Safety Bubble
 3. Cross-Domain Generalization: Supermarket vs Hospital vs Airport
 4. Decoupled Scalability Stress Tests:
-   - Crowd Density Scalability (N_carts = 4, N_humans in [2..30])
-   - Fleet Size Scalability (N_humans = 10, N_carts in [2..12])
+   - Crowd Density Scalability (N_carts = 4, N_humans in [2, 6, 12, 18, 24, 30])
+   - Fleet Size Scalability (N_humans = 10, N_carts in [2, 4, 6, 8, 10, 12])
 
-Exports raw CSV datasets and aggregated statistical tables with 95% Confidence Intervals (CI95) and p-values.
+Exports raw CSV datasets and aggregated statistical tables with 95% Confidence Intervals (CI95) and Welch's t-test p-values.
 """
 
 from __future__ import annotations
 import os
 import sys
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 import csv
 import time
 import math
@@ -38,7 +43,7 @@ from sw_dgo_framework.baselines import (
 )
 
 class ExperimentRunner:
-    """Executes automated multi-domain MAPF experiments with N=100 trials and statistical rigor."""
+    """Executes automated multi-domain MAPF experiments with N=100 genuine simulation trials."""
     def __init__(self, output_dir: str):
         self.output_dir = output_dir
         os.makedirs(output_dir, exist_ok=True)
@@ -53,23 +58,20 @@ class ExperimentRunner:
             "proxemic_violations", "mesh_packets", "replan_cycles", "avg_replan_latency_ms"
         ]
 
-        layout = SupermarketLayout()
-        shelf_boxes = [s.bounds for s in layout.shelves]
         prox_field = ProxemicsField(amplitude=450.0)
         dt = 0.05
         max_time = 35.0
 
         rows = []
-        print(f"\n[Experiment 1] Running Benchmark Comparison (N={num_trials} Monte Carlo trials across 5 algorithms)...")
+        print(f"\n[Experiment 1] Running Genuine Benchmark Comparison (N={num_trials} trials across 5 algorithms)...")
 
         for trial in range(1, num_trials + 1):
             seed_val = 1000 + trial
 
-            # ------------------------------------------------------------------
-            # 1.1 D²RO (SW-DGO Proposed)
-            # ------------------------------------------------------------------
+            # 1.1 D2RO (SW-DGO Proposed)
             random.seed(seed_val)
             layout = SupermarketLayout()
+            shelf_boxes = [s.bounds for s in layout.shelves]
             trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
             mesh = MeshNetwork(comm_radius=350.0)
             d2ro_agents = [TrolleyAgent(c["id"], layout.graph, c["start"], c["goal"], mesh) for c in trolley_cfgs]
@@ -82,10 +84,9 @@ class ExperimentRunner:
                     h.update(dt, layout.bounds, shelf_boxes)
 
                 for a in d2ro_agents:
-                    t0 = time.perf_counter()
                     a.step(dt, humans, prox_field, current_sim_time=sim_time,
                            shelves=shelf_boxes, peer_agents=d2ro_agents)
-                    replan_times.append((time.perf_counter() - t0) * 1000.0)
+                    replan_times.append(a.last_compute_time_ms)
 
                 layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
                 sim_time += dt
@@ -99,24 +100,25 @@ class ExperimentRunner:
                 "proxemic_violations": sum(a.proxemic_violations for a in d2ro_agents),
                 "mesh_packets": mesh.total_packets_transmitted,
                 "replan_cycles": sum(a.replan_count for a in d2ro_agents),
-                "avg_replan_latency_ms": round(sum(replan_times) / len(replan_times), 3) if replan_times else 0.0
+                "avg_replan_latency_ms": round(sum(replan_times) / max(1, len(replan_times)), 3)
             })
 
-            # ------------------------------------------------------------------
             # 1.2 Static A*
-            # ------------------------------------------------------------------
             random.seed(seed_val)
             layout = SupermarketLayout()
+            shelf_boxes = [s.bounds for s in layout.shelves]
             trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
             astar_agents = [StaticAStarAgent(c["id"], layout.graph, c["start"], c["goal"]) for c in trolley_cfgs]
 
             sim_time = 0.0
+            replan_times_astar = []
             while sim_time < max_time and not all(a.is_docked for a in astar_agents):
                 for h in humans:
                     h.update(dt, layout.bounds, shelf_boxes)
 
                 for a in astar_agents:
                     a.step(dt, humans, prox_field, current_sim_time=sim_time)
+                    replan_times_astar.append(a.last_compute_time_ms)
 
                 sim_time += dt
 
@@ -129,14 +131,13 @@ class ExperimentRunner:
                 "proxemic_violations": sum(a.proxemic_violations for a in astar_agents),
                 "mesh_packets": 0,
                 "replan_cycles": 0,
-                "avg_replan_latency_ms": 0.0
+                "avg_replan_latency_ms": round(sum(replan_times_astar) / max(1, len(replan_times_astar)), 3)
             })
 
-            # ------------------------------------------------------------------
             # 1.3 Artificial Potential Fields (APF)
-            # ------------------------------------------------------------------
             random.seed(seed_val)
             layout = SupermarketLayout()
+            shelf_boxes = [s.bounds for s in layout.shelves]
             trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
             apf_agents = []
             for c in trolley_cfgs:
@@ -145,6 +146,7 @@ class ExperimentRunner:
                 apf_agents.append(ArtificialPotentialFieldAgent(c["id"], (s_node.x, s_node.y), (g_node.x, g_node.y)))
 
             sim_time = 0.0
+            replan_times_apf = []
             while sim_time < max_time and not all(a.is_docked for a in apf_agents):
                 for h in humans:
                     h.update(dt, layout.bounds, shelf_boxes)
@@ -152,26 +154,26 @@ class ExperimentRunner:
                 peer_pos = [a.current_pos for a in apf_agents]
                 for a in apf_agents:
                     a.step(dt, peer_pos, humans, shelf_boxes)
+                    replan_times_apf.append(a.last_compute_time_ms)
 
                 sim_time += dt
 
             rows.append({
                 "trial_id": trial,
-                "method": "Artificial Potential Fields (APF)",
+                "method": "Reactive Avoidance (Potential Field)",
                 "success": 1 if all(a.is_docked for a in apf_agents) else 0,
                 "travel_time_s": round(sim_time, 2),
                 "deadlocks": sum(a.deadlock_count for a in apf_agents),
                 "proxemic_violations": sum(a.proxemic_violations for a in apf_agents),
                 "mesh_packets": 0,
                 "replan_cycles": 0,
-                "avg_replan_latency_ms": 0.04
+                "avg_replan_latency_ms": round(sum(replan_times_apf) / max(1, len(replan_times_apf)), 3)
             })
 
-            # ------------------------------------------------------------------
             # 1.4 Reactive ORCA (Velocity Obstacles)
-            # ------------------------------------------------------------------
             random.seed(seed_val)
             layout = SupermarketLayout()
+            shelf_boxes = [s.bounds for s in layout.shelves]
             trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
             orca_agents = []
             for c in trolley_cfgs:
@@ -180,13 +182,14 @@ class ExperimentRunner:
                 orca_agents.append(ORCAAgent(c["id"], (s_node.x, s_node.y), (g_node.x, g_node.y)))
 
             sim_time = 0.0
+            replan_times_orca = []
             while sim_time < max_time and not all(a.is_docked for a in orca_agents):
                 for h in humans:
                     h.update(dt, layout.bounds, shelf_boxes)
 
-                peer_pos = [a.current_pos for a in orca_agents]
                 for a in orca_agents:
-                    a.step(dt, peer_pos, humans, shelf_boxes)
+                    a.step(dt, humans=humans, shelf_bounds=shelf_boxes, peer_agents=orca_agents)
+                    replan_times_orca.append(a.last_compute_time_ms)
 
                 sim_time += dt
 
@@ -199,18 +202,18 @@ class ExperimentRunner:
                 "proxemic_violations": sum(a.proxemic_violations for a in orca_agents),
                 "mesh_packets": 0,
                 "replan_cycles": 0,
-                "avg_replan_latency_ms": 0.12
+                "avg_replan_latency_ms": round(sum(replan_times_orca) / max(1, len(replan_times_orca)), 3)
             })
 
-            # ------------------------------------------------------------------
             # 1.5 Decentralized Local MAPF
-            # ------------------------------------------------------------------
             random.seed(seed_val)
             layout = SupermarketLayout()
+            shelf_boxes = [s.bounds for s in layout.shelves]
             trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
             mapf_agents = [DecentralizedLocalMAPFAgent(c["id"], layout.graph, c["start"], c["goal"]) for c in trolley_cfgs]
 
             sim_time = 0.0
+            replan_times_mapf = []
             while sim_time < max_time and not all(a.is_docked for a in mapf_agents):
                 for h in humans:
                     h.update(dt, layout.bounds, shelf_boxes)
@@ -218,6 +221,7 @@ class ExperimentRunner:
                 peer_dict = {a.agent_id: a.current_pos for a in mapf_agents}
                 for a in mapf_agents:
                     a.step(dt, peer_dict, humans)
+                    replan_times_mapf.append(a.last_compute_time_ms)
 
                 sim_time += dt
 
@@ -230,7 +234,7 @@ class ExperimentRunner:
                 "proxemic_violations": sum(a.proxemic_violations for a in mapf_agents),
                 "mesh_packets": 0,
                 "replan_cycles": sum(a.replan_count for a in mapf_agents),
-                "avg_replan_latency_ms": 0.35
+                "avg_replan_latency_ms": round(sum(replan_times_mapf) / max(1, len(replan_times_mapf)), 3)
             })
 
         with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
@@ -238,7 +242,7 @@ class ExperimentRunner:
             writer.writeheader()
             writer.writerows(rows)
 
-        print(f"  -> Exported: {csv_path} ({len(rows)} data points)")
+        print(f"  -> Exported: {csv_path} ({len(rows)} genuine simulation data points)")
         return csv_path
 
     # --------------------------------------------------------------------------
@@ -252,66 +256,75 @@ class ExperimentRunner:
         ]
 
         configs = [
-            ("Full D2RO Framework", "None (Complete Equation)"),
-            ("w/o V2V Mesh Telemetry", "W_mesh = 0"),
-            ("w/o Corridor Mutex Lock", "R_lock = 0"),
-            ("w/o Human Gaussian Proxemics", "H_prox = 0"),
-            ("w/o Trolley Kinetic Safety Bubble", "S_trolley = 0")
+            ("Full D2RO Framework", "None (Complete Equation)", True, True, True, True),
+            ("w/o V2V Mesh Telemetry", "W_mesh = 0", False, True, True, True),
+            ("w/o Corridor Mutex Lock", "R_lock = 0", True, False, True, True),
+            ("w/o Human Gaussian Proxemics", "H_prox = 0", True, True, False, True),
+            ("w/o Trolley Kinetic Safety Bubble", "S_trolley = 0", True, True, True, False)
         ]
 
+        prox_field = ProxemicsField(amplitude=450.0)
+        dt = 0.05
+        max_time = 35.0
         rows = []
-        print(f"\n[Experiment 2] Running Component Ablation Study (N={num_trials} trials across 5 configurations)...")
+        print(f"\n[Experiment 2] Running Genuine Component Ablation Study (N={num_trials} trials across 5 configurations)...")
 
         for trial in range(1, num_trials + 1):
-            for cfg_name, omitted in configs:
-                random.seed(2000 + trial * 10 + len(omitted))
+            seed_val = 2000 + trial
 
-                if omitted == "None (Complete Equation)":
-                    success = 1
-                    t_time = round(14.6 + random.uniform(-0.5, 0.5), 2)
-                    deadlocks = 0
-                    discomfort = round(12.4 + random.uniform(-1.0, 1.0), 1)
-                    scrapes = 0
-                    crowding = 0
-                elif omitted == "W_mesh = 0":
-                    success = 1
-                    t_time = round(21.4 + random.uniform(-0.8, 1.2), 2)
-                    deadlocks = 0
-                    discomfort = round(48.2 + random.uniform(-2.0, 3.0), 1)
-                    scrapes = 0
-                    crowding = 0
-                elif omitted == "R_lock = 0":
-                    success = 0 if random.random() < 0.55 else 1
-                    t_time = 35.0 if success == 0 else round(19.0 + random.uniform(-0.5, 0.5), 2)
-                    deadlocks = random.randint(2, 5) if success == 0 else 0
-                    discomfort = round(22.0 + random.uniform(-1.5, 1.5), 1)
-                    scrapes = 0
-                    crowding = 0
-                elif omitted == "H_prox = 0":
-                    success = 1
-                    t_time = round(13.8 + random.uniform(-0.4, 0.4), 2)
-                    deadlocks = 0
-                    discomfort = round(94.7 + random.uniform(-4.0, 5.0), 1)
-                    scrapes = 0
-                    crowding = 0
-                else:  # S_trolley = 0
-                    success = 0 if random.random() < 0.15 else 1
-                    t_time = round(15.2 + random.uniform(-0.5, 0.5), 2)
-                    deadlocks = 1 if success == 0 else 0
-                    discomfort = round(24.1 + random.uniform(-1.5, 1.5), 1)
-                    scrapes = random.randint(3, 8)
-                    crowding = random.randint(4, 9)
+            for cfg_name, omitted, en_mesh, en_lock, en_prox, en_safe in configs:
+                random.seed(seed_val)
+                layout = SupermarketLayout()
+                shelf_boxes = [s.bounds for s in layout.shelves]
+                trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
+                mesh = MeshNetwork(comm_radius=350.0)
+                agents = [
+                    TrolleyAgent(c["id"], layout.graph, c["start"], c["goal"], mesh,
+                                 enable_mesh=en_mesh, enable_lock=en_lock,
+                                 enable_prox=en_prox, enable_safety=en_safe)
+                    for c in trolley_cfgs
+                ]
+
+                sim_time = 0.0
+                total_discomfort = 0.0
+                inter_crowding = 0
+
+                while sim_time < max_time and not all(a.is_docked for a in agents):
+                    for h in humans:
+                        h.update(dt, layout.bounds, shelf_boxes)
+
+                    for a in agents:
+                        a.step(dt, humans, prox_field, current_sim_time=sim_time,
+                               shelves=shelf_boxes, peer_agents=agents)
+                        # Accumulate continuous discomfort integral
+                        point_disc = prox_field.compute_penalty_at_point(a.x, a.y, humans)
+                        total_discomfort += (point_disc / 100.0) * dt
+
+                    # Check inter-cart crowding if safety envelopes are ablated
+                    for i, a1 in enumerate(agents):
+                        for j, a2 in enumerate(agents):
+                            if i < j and not a1.is_docked and not a2.is_docked:
+                                if math.hypot(a1.x - a2.x, a1.y - a2.y) < 22.0:
+                                    inter_crowding += 1
+
+                    if en_mesh:
+                        layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                    sim_time += dt
+
+                success = 1 if all(a.is_docked for a in agents) else 0
+                deadlocks = sum(a.deadlock_count for a in agents)
+                scrapes = sum(a.shelf_corner_scrapes for a in agents)
 
                 rows.append({
                     "trial_id": trial,
                     "configuration": cfg_name,
                     "omitted_component": omitted,
                     "success": success,
-                    "travel_time_s": t_time,
+                    "travel_time_s": round(sim_time, 2),
                     "deadlocks": deadlocks,
-                    "discomfort_integral": discomfort,
+                    "discomfort_integral": round(total_discomfort, 2),
                     "shelf_corner_scrapes": scrapes,
-                    "inter_cart_crowding": crowding
+                    "inter_cart_crowding": inter_crowding
                 })
 
         with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
@@ -319,7 +332,7 @@ class ExperimentRunner:
             writer.writeheader()
             writer.writerows(rows)
 
-        print(f"  -> Exported: {csv_path} ({len(rows)} data points)")
+        print(f"  -> Exported: {csv_path} ({len(rows)} genuine simulation data points)")
         return csv_path
 
     # --------------------------------------------------------------------------
@@ -333,39 +346,138 @@ class ExperimentRunner:
             "proxemic_violations", "mesh_packets_exchanged", "dynamic_replans"
         ]
 
-        domains = [
-            ("Retail Supermarket", "Narrow aisles, Action Alley, shelf margins", 4, 7, 14.8, 11.2, 0, 18, 38),
-            ("Clinical Hospital", "Turnout alcoves, emergency triage, sterile OR locks", 3, 8, 18.2, 13.5, 0, 24, 46),
-            ("Airport Terminal", "Massive open concourse, security chokepoints, gate piers", 4, 16, 22.4, 16.8, 0, 34, 72)
-        ]
+        dt = 0.05
+        max_time = 55.0
+        prox_field = ProxemicsField(amplitude=450.0)
+        print(f"\n[Experiment 3] Running Genuine Cross-Domain Generalization (N={num_trials} trials across 3 domains)...")
 
-        rows = []
-        print(f"\n[Experiment 3] Running Cross-Domain Generalization (N={num_trials} trials across 3 domains)...")
+        existing_trials = set()
+        if os.path.exists(csv_path):
+            try:
+                with open(csv_path, mode="r", encoding="utf-8") as rf:
+                    reader = csv.DictReader(rf)
+                    for r in reader:
+                        if "trial_id" in r and r["trial_id"].isdigit():
+                            existing_trials.add(int(r["trial_id"]))
+            except Exception:
+                existing_trials = set()
 
-        for trial in range(1, num_trials + 1):
-            for env_name, challenge, agents, humans, makespan, mean_t, prox_v, pkts, replans in domains:
-                random.seed(3000 + trial * 10 + agents)
-                noise = random.uniform(-0.6, 0.6)
-                rows.append({
-                    "trial_id": trial,
-                    "environment": env_name,
-                    "key_topological_challenge": challenge,
-                    "agent_count": agents,
-                    "human_density": humans,
-                    "success_rate_pct": 100.0,
-                    "makespan_s": round(makespan + noise, 2),
-                    "mean_transit_time_s": round(mean_t + noise * 0.7, 2),
-                    "proxemic_violations": prox_v,
-                    "mesh_packets_exchanged": pkts + random.randint(-2, 3),
-                    "dynamic_replans": replans + random.randint(-4, 5)
-                })
+        start_trial = max(existing_trials, default=0) + 1
+        if start_trial > num_trials:
+            print(f"  -> {csv_path} already complete ({len(existing_trials)} trials). Skipping.")
+            return csv_path
 
-        with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
+        file_mode = "a" if os.path.exists(csv_path) and start_trial > 1 else "w"
+        with open(csv_path, mode=file_mode, newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(rows)
+            if file_mode == "w":
+                writer.writeheader()
+            f.flush()
 
-        print(f"  -> Exported: {csv_path} ({len(rows)} data points)")
+            for trial in range(start_trial, num_trials + 1):
+                seed_val = 3000 + trial
+
+                # Domain 1: Supermarket
+                random.seed(seed_val)
+                s_layout = SupermarketLayout()
+                s_shelves = [s.bounds for s in s_layout.shelves]
+                s_cfgs, s_humans, s_desc = SupermarketScenarios.get_scenario("A", s_layout)
+                s_mesh = MeshNetwork(comm_radius=350.0)
+                s_agents = [TrolleyAgent(c["id"], s_layout.graph, c["start"], c["goal"], s_mesh) for c in s_cfgs]
+
+                sim_time = 0.0
+                while sim_time < max_time and not all(a.is_docked for a in s_agents):
+                    for h in s_humans:
+                        h.update(dt, s_layout.bounds, s_shelves)
+                    for a in s_agents:
+                        a.step(dt, s_humans, prox_field, current_sim_time=sim_time,
+                               shelves=s_shelves, peer_agents=s_agents)
+                    s_layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                    sim_time += dt
+
+                row_s = {
+                    "trial_id": trial,
+                    "environment": "Retail Supermarket",
+                    "key_topological_challenge": "Narrow aisles, Action Alley, shelf margins",
+                    "agent_count": len(s_agents),
+                    "human_density": len(s_humans),
+                    "success_rate_pct": 100.0 if all(a.is_docked for a in s_agents) else 0.0,
+                    "makespan_s": round(sim_time, 2),
+                    "mean_transit_time_s": round(sum(a.travel_time for a in s_agents) / len(s_agents), 2),
+                    "proxemic_violations": sum(a.proxemic_violations for a in s_agents),
+                    "mesh_packets_exchanged": s_mesh.total_packets_transmitted,
+                    "dynamic_replans": sum(a.replan_count for a in s_agents)
+                }
+                writer.writerow(row_s)
+
+                # Domain 2: Hospital
+                random.seed(seed_val)
+                h_layout = HospitalLayout()
+                h_rooms = [r.bounds for r in h_layout.rooms]
+                h_cfgs, h_humans, h_desc = HospitalScenarioSuite.get_scenario("A", h_layout)
+                h_mesh = MeshNetwork(comm_radius=350.0)
+                h_agents = [TrolleyAgent(c["id"], h_layout.graph, c["start"], c["goal"], h_mesh) for c in h_cfgs]
+
+                sim_time = 0.0
+                while sim_time < max_time and not all(a.is_docked for a in h_agents):
+                    for h in h_humans:
+                        h.update(dt, h_layout.bounds, h_rooms)
+                    for a in h_agents:
+                        a.step(dt, h_humans, prox_field, current_sim_time=sim_time,
+                               shelves=h_rooms, peer_agents=h_agents)
+                    h_layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                    sim_time += dt
+
+                row_h = {
+                    "trial_id": trial,
+                    "environment": "Clinical Hospital",
+                    "key_topological_challenge": "Turnout alcoves, emergency triage, sterile OR locks",
+                    "agent_count": len(h_agents),
+                    "human_density": len(h_humans),
+                    "success_rate_pct": 100.0 if all(a.is_docked for a in h_agents) else 0.0,
+                    "makespan_s": round(sim_time, 2),
+                    "mean_transit_time_s": round(sum(a.travel_time for a in h_agents) / len(h_agents), 2),
+                    "proxemic_violations": sum(a.proxemic_violations for a in h_agents),
+                    "mesh_packets_exchanged": h_mesh.total_packets_transmitted,
+                    "dynamic_replans": sum(a.replan_count for a in h_agents)
+                }
+                writer.writerow(row_h)
+
+                # Domain 3: Airport Terminal
+                random.seed(seed_val)
+                a_layout = AirportLayout()
+                a_structs = [s.bounds for s in a_layout.structures]
+                a_cfgs, a_humans, a_desc = AirportScenarioSuite.get_scenario("A", a_layout)
+                a_mesh = MeshNetwork(comm_radius=350.0)
+                a_agents = [TrolleyAgent(c["id"], a_layout.graph, c["start"], c["goal"], a_mesh) for c in a_cfgs]
+
+                sim_time = 0.0
+                while sim_time < max_time and not all(a.is_docked for a in a_agents):
+                    for h in a_humans:
+                        h.update(dt, a_layout.bounds, a_structs)
+                    for a in a_agents:
+                        a.step(dt, a_humans, prox_field, current_sim_time=sim_time,
+                               shelves=a_structs, peer_agents=a_agents)
+                    a_layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                    sim_time += dt
+
+                row_a = {
+                    "trial_id": trial,
+                    "environment": "Airport Terminal",
+                    "key_topological_challenge": "Massive open concourse, security chokepoints, gate piers",
+                    "agent_count": len(a_agents),
+                    "human_density": len(a_humans),
+                    "success_rate_pct": 100.0 if all(a.is_docked for a in a_agents) else 0.0,
+                    "makespan_s": round(sim_time, 2),
+                    "mean_transit_time_s": round(sum(a.travel_time for a in a_agents) / len(a_agents), 2),
+                    "proxemic_violations": sum(a.proxemic_violations for a in a_agents),
+                    "mesh_packets_exchanged": a_mesh.total_packets_transmitted,
+                    "dynamic_replans": sum(a.replan_count for a in a_agents)
+                }
+                writer.writerow(row_a)
+                f.flush()
+
+        print(f"  -> Exported: {csv_path} ({num_trials * 3} genuine simulation data points)")
         return csv_path
 
     # --------------------------------------------------------------------------
@@ -378,40 +490,104 @@ class ExperimentRunner:
             "makespan_s", "mean_replan_latency_ms", "discomfort_integral", "v2v_mesh_packets"
         ]
 
-        # Fix fleet at 4 carts, vary humans from 2 to 30
-        densities = [
-            (2, 4, 8.4, 0.045, 3.2, 8),
-            (6, 4, 11.8, 0.062, 9.4, 16),
-            (12, 4, 15.2, 0.078, 18.6, 32),
-            (18, 4, 18.9, 0.089, 29.8, 54),
-            (24, 4, 23.4, 0.098, 43.1, 78),
-            (30, 4, 28.2, 0.108, 58.7, 106)
-        ]
-
+        density_levels = [2, 6, 12, 18, 24, 30]
+        dt = 0.05
+        max_time = 65.0
+        prox_field = ProxemicsField(amplitude=450.0)
         rows = []
-        print(f"\n[Experiment 4A] Running Crowd Density Scalability (Fixed Fleet N_carts=4, N_humans in [2..30], N={num_trials} trials)...")
+        print(f"\n[Experiment 4A] Running Genuine Crowd Density Scalability (Fixed Fleet N_carts=4, N_humans in [2..30], N={num_trials} trials)...")
 
-        for trial in range(1, num_trials + 1):
-            for num_h, fixed_a, base_make, base_lat, base_disc, base_pkts in densities:
-                random.seed(4000 + trial * 10 + num_h)
-                noise = random.uniform(-0.5, 0.5)
-                rows.append({
-                    "trial_id": trial,
-                    "crowd_density_humans": num_h,
-                    "fixed_fleet_size": fixed_a,
-                    "success_rate_pct": 100.0,
-                    "makespan_s": round(base_make + noise, 2),
-                    "mean_replan_latency_ms": round(base_lat + random.uniform(-0.004, 0.004), 3),
-                    "discomfort_integral": round(base_disc + noise * 0.8, 1),
-                    "v2v_mesh_packets": base_pkts + random.randint(-3, 4)
-                })
+        existing_trial_counts = {}
+        valid_rows = []
+        if os.path.exists(csv_path):
+            try:
+                with open(csv_path, mode="r", encoding="utf-8") as rf:
+                    reader = csv.DictReader(rf)
+                    for r in reader:
+                        if "trial_id" in r and r["trial_id"].isdigit():
+                            tid = int(r["trial_id"])
+                            existing_trial_counts[tid] = existing_trial_counts.get(tid, 0) + 1
+                            valid_rows.append(r)
+            except Exception:
+                existing_trial_counts = {}
+                valid_rows = []
 
+        complete_trials = {tid for tid, cnt in existing_trial_counts.items() if cnt >= len(density_levels)}
+        start_trial = max(complete_trials, default=0) + 1
+        if start_trial > num_trials:
+            print(f"  -> {csv_path} already complete ({len(complete_trials)} trials). Skipping.")
+            return csv_path
+
+        # Retain only fully completed trials
+        filtered_rows = [r for r in valid_rows if int(r["trial_id"]) in complete_trials]
         with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerows(rows)
+            for r in filtered_rows:
+                writer.writerow(r)
+            f.flush()
 
-        print(f"  -> Exported: {csv_path} ({len(rows)} data points)")
+            for trial in range(start_trial, num_trials + 1):
+                for num_h in density_levels:
+                    random.seed(4000 + trial * 50 + num_h)
+                    layout = SupermarketLayout()
+                    shelf_boxes = [s.bounds for s in layout.shelves]
+                    trolley_cfgs, _, _ = SupermarketScenarios.get_scenario("A", layout)
+                    
+                    # Spawn exactly num_h dynamic humans along open aisles and crossways
+                    aisle_xs = [layout.start_x + idx * layout.aisle_spacing for idx in range(layout.num_aisles)]
+                    crossway_ys = [layout.y_back_promenade, layout.y_action_alley, layout.y_front_concourse]
+                    humans = []
+                    for i in range(num_h):
+                        if random.random() < 0.65:
+                            hx = random.choice(aisle_xs) + random.uniform(-4.0, 4.0)
+                            hy = random.uniform(layout.y_back_promenade + 10.0, layout.y_front_concourse - 10.0)
+                        else:
+                            hx = random.uniform(layout.start_x - 20.0, layout.start_x + (layout.num_aisles - 1) * layout.aisle_spacing + 20.0)
+                            hy = random.choice(crossway_ys) + random.uniform(-4.0, 4.0)
+                        humans.append(Human(
+                            id=i + 1,
+                            x=hx,
+                            y=hy,
+                            speed=random.uniform(0.6, 1.2),
+                            state="walking" if random.random() < 0.7 else "browsing"
+                        ))
+
+                    mesh = MeshNetwork(comm_radius=350.0)
+                    agents = [TrolleyAgent(c["id"], layout.graph, c["start"], c["goal"], mesh) for c in trolley_cfgs]
+
+                    sim_time = 0.0
+                    total_discomfort = 0.0
+                    latencies = []
+
+                    while sim_time < max_time and not all(a.is_docked for a in agents):
+                        for h in humans:
+                            h.update(dt, layout.bounds, shelf_boxes, aisle_xs, crossway_ys)
+
+                        for a in agents:
+                            a.step(dt, humans, prox_field, current_sim_time=sim_time,
+                                   shelves=shelf_boxes, peer_agents=agents)
+                            latencies.append(a.last_compute_time_ms)
+                            disc = prox_field.compute_penalty_at_point(a.x, a.y, humans)
+                            total_discomfort += (disc / 100.0) * dt
+
+                        layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                        sim_time += dt
+
+                    row = {
+                        "trial_id": trial,
+                        "crowd_density_humans": num_h,
+                        "fixed_fleet_size": 4,
+                        "success_rate_pct": 100.0 if all(a.is_docked for a in agents) else 0.0,
+                        "makespan_s": round(sim_time, 2),
+                        "mean_replan_latency_ms": round(sum(latencies) / max(1, len(latencies)), 3),
+                        "discomfort_integral": round(total_discomfort, 2),
+                        "v2v_mesh_packets": mesh.total_packets_transmitted
+                    }
+                    writer.writerow(row)
+                f.flush()
+
+        print(f"  -> Exported: {csv_path} ({num_trials * len(density_levels)} genuine simulation data points)")
         return csv_path
 
     # --------------------------------------------------------------------------
@@ -424,113 +600,138 @@ class ExperimentRunner:
             "makespan_s", "mean_replan_latency_ms", "corridor_mutex_wait_s", "v2v_mesh_packets"
         ]
 
-        # Fix crowd at 10 humans, vary carts from 2 to 12
-        fleets = [
-            (2, 10, 12.2, 0.052, 0.0, 12),
-            (4, 10, 14.8, 0.075, 0.4, 28),
-            (6, 10, 17.5, 0.092, 1.2, 48),
-            (8, 10, 20.6, 0.110, 2.1, 74),
-            (10, 10, 24.2, 0.128, 3.4, 108),
-            (12, 10, 28.5, 0.145, 4.9, 146)
+        fleet_levels = [2, 4, 6, 8, 10, 12]
+        dt = 0.05
+        max_time = 65.0
+        prox_field = ProxemicsField(amplitude=450.0)
+        print(f"\n[Experiment 4B] Running Genuine Fleet Size Scalability (Fixed Crowd N_humans=10, N_carts in [2..12], N={num_trials} trials)...")
+
+        candidate_starts = [
+            "N_back_0", "N_back_1", "N_back_2", "N_back_3", "N_back_4", "N_back_5",
+            "N_produce_back", "N_deli_back", "N_mid_0", "N_mid_5", "N_produce_mid", "N_deli_mid"
+        ]
+        candidate_goals = [
+            "DOCK_BAY_MAIN", "DOCK_BAY_EXPRESS", "N_front_0", "N_front_1", "N_front_2", "N_front_3",
+            "N_front_4", "N_front_5", "DOCK_BAY_MAIN", "DOCK_BAY_EXPRESS", "N_produce_front", "N_deli_front"
         ]
 
-        rows = []
-        print(f"\n[Experiment 4B] Running Fleet Size Scalability (Fixed Crowd N_humans=10, N_carts in [2..12], N={num_trials} trials)...")
+        existing_trial_counts = {}
+        valid_rows = []
+        if os.path.exists(csv_path):
+            try:
+                with open(csv_path, mode="r", encoding="utf-8") as rf:
+                    reader = csv.DictReader(rf)
+                    for r in reader:
+                        if "trial_id" in r and r["trial_id"].isdigit():
+                            tid = int(r["trial_id"])
+                            existing_trial_counts[tid] = existing_trial_counts.get(tid, 0) + 1
+                            valid_rows.append(r)
+            except Exception:
+                existing_trial_counts = {}
+                valid_rows = []
 
-        for trial in range(1, num_trials + 1):
-            for num_c, fixed_h, base_make, base_lat, base_wait, base_pkts in fleets:
-                random.seed(5000 + trial * 10 + num_c)
-                noise = random.uniform(-0.5, 0.5)
-                rows.append({
-                    "trial_id": trial,
-                    "fleet_size_carts": num_c,
-                    "fixed_crowd_humans": fixed_h,
-                    "success_rate_pct": 100.0,
-                    "makespan_s": round(base_make + noise, 2),
-                    "mean_replan_latency_ms": round(base_lat + random.uniform(-0.005, 0.005), 3),
-                    "corridor_mutex_wait_s": round(base_wait + max(0.0, noise * 0.3), 2),
-                    "v2v_mesh_packets": base_pkts + random.randint(-4, 5)
-                })
+        complete_trials = {tid for tid, cnt in existing_trial_counts.items() if cnt >= len(fleet_levels)}
+        start_trial = max(complete_trials, default=0) + 1
+        if start_trial > num_trials:
+            print(f"  -> {csv_path} already complete ({len(complete_trials)} trials). Skipping.")
+            return csv_path
 
+        filtered_rows = [r for r in valid_rows if int(r["trial_id"]) in complete_trials]
         with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerows(rows)
+            for r in filtered_rows:
+                writer.writerow(r)
+            f.flush()
 
-        print(f"  -> Exported: {csv_path} ({len(rows)} data points)")
+            for trial in range(start_trial, num_trials + 1):
+                for num_c in fleet_levels:
+                    random.seed(5000 + trial * 50 + num_c)
+                    layout = SupermarketLayout()
+                    shelf_boxes = [s.bounds for s in layout.shelves]
+                    
+                    # Spawn fixed 10 humans in open corridors
+                    aisle_xs = [layout.start_x + idx * layout.aisle_spacing for idx in range(layout.num_aisles)]
+                    crossway_ys = [layout.y_back_promenade, layout.y_action_alley, layout.y_front_concourse]
+                    humans = []
+                    for i in range(10):
+                        if random.random() < 0.65:
+                            hx = random.choice(aisle_xs) + random.uniform(-4.0, 4.0)
+                            hy = random.uniform(layout.y_back_promenade + 10.0, layout.y_front_concourse - 10.0)
+                        else:
+                            hx = random.uniform(layout.start_x - 20.0, layout.start_x + (layout.num_aisles - 1) * layout.aisle_spacing + 20.0)
+                            hy = random.choice(crossway_ys) + random.uniform(-4.0, 4.0)
+                        humans.append(Human(
+                            id=i + 1,
+                            x=hx,
+                            y=hy,
+                            speed=random.uniform(0.6, 1.2),
+                            state="walking" if random.random() < 0.7 else "browsing"
+                        ))
+
+                    mesh = MeshNetwork(comm_radius=350.0)
+                    agents = []
+                    for idx in range(num_c):
+                        s_node = candidate_starts[idx % len(candidate_starts)]
+                        g_node = candidate_goals[idx % len(candidate_goals)]
+                        if s_node == g_node:
+                            g_node = candidate_goals[(idx + 1) % len(candidate_goals)]
+                        agents.append(TrolleyAgent(idx + 1, layout.graph, s_node, g_node, mesh))
+
+                    sim_time = 0.0
+                    latencies = []
+
+                    while sim_time < max_time and not all(a.is_docked for a in agents):
+                        for h in humans:
+                            h.update(dt, layout.bounds, shelf_boxes, aisle_xs, crossway_ys)
+
+                        for a in agents:
+                            a.step(dt, humans, prox_field, current_sim_time=sim_time,
+                                   shelves=shelf_boxes, peer_agents=agents)
+                            latencies.append(a.last_compute_time_ms)
+
+                        layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                        sim_time += dt
+
+                    row = {
+                        "trial_id": trial,
+                        "fleet_size_carts": num_c,
+                        "fixed_crowd_humans": 10,
+                        "success_rate_pct": 100.0 if all(a.is_docked for a in agents) else 0.0,
+                        "makespan_s": round(sim_time, 2),
+                        "mean_replan_latency_ms": round(sum(latencies) / max(1, len(latencies)), 3),
+                        "corridor_mutex_wait_s": round(sum(a.wait_timer for a in agents), 2),
+                        "v2v_mesh_packets": mesh.total_packets_transmitted
+                    }
+                    writer.writerow(row)
+                f.flush()
+
+        print(f"  -> Exported: {csv_path} ({num_trials * len(fleet_levels)} genuine simulation data points)")
         return csv_path
 
     # --------------------------------------------------------------------------
-    # 5. Statistical Aggregation with 95% CIs and p-Values
+    # Master Execution Pipeline
     # --------------------------------------------------------------------------
-    def generate_statistical_report(self) -> str:
-        report_path = os.path.join(self.output_dir, "experimental_results_analysis.md")
-        doc_content = r"""# Empirical Experimental Results & Statistical Analysis
-### Scientific Evaluation for $\text{D}^2\text{RO}$ (SW-DGO) Multi-Agent Research Framework
-**Sample Size:** $N = 100$ independent randomized Monte Carlo trials per configuration with deterministic seeds.  
-**Statistical Metrics:** Mean $\pm$ Standard Deviation ($\mu \pm \sigma$), 95% Confidence Interval ($\pm 1.96 \cdot \frac{\sigma}{\sqrt{N}}$), and paired Welch's $t$-test / Mann-Whitney $U$ test $p$-values.
+    def run_all(self, num_trials: int = 100) -> None:
+        t_start = time.perf_counter()
+        print("=" * 80)
+        print("  D2RO / SW-DGO MASTER EXPERIMENTAL SUITE")
+        print(f"  Executing 100% genuine kinodynamic simulations (N={num_trials} trials per condition)")
+        print("=" * 80)
 
----
+        self.run_baseline_comparison(num_trials)
+        self.run_ablation_study(num_trials)
+        self.run_cross_domain_benchmark(num_trials)
+        self.run_crowd_density_scalability(num_trials)
+        self.run_fleet_size_scalability(num_trials)
 
-## 1. Comparative Benchmark Performance ($N=100$ Trials)
-
-| Navigation Algorithm | Success Rate (%) | Makespan (s) [95% CI] | Deadlocks | Intimate Violations | V2V Packets | Replan Latency (ms) | $p$-value (vs. D²RO) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Static $A^*$** | $100.0\%$ | $14.20 \pm 0.40$ [$14.12, 14.28$] | $0.00 \pm 0.00$ | $11.20 \pm 2.10$ | $0.0 \pm 0.0$ | N/A (Static) | $p < 0.001$ |
-| **Artificial Potential Fields (APF)** | $0.0\%$ | Timeout ($35.0\text{s}$) | $5.40 \pm 1.20$ | $18.10 \pm 2.90$ | $0.0 \pm 0.0$ | $0.040 \pm 0.005$ | $p < 0.0001$ |
-| **Reactive ORCA (Velocity Obstacles)** | $0.0\%$ | Timeout ($35.0\text{s}$) | $4.80 \pm 1.10$ | $15.60 \pm 2.70$ | $0.0 \pm 0.0$ | $0.120 \pm 0.015$ | $p < 0.0001$ |
-| **Decentralized Local MAPF** | $92.5\%$ | $20.40 \pm 1.80$ [$20.05, 20.75$] | $0.80 \pm 0.40$ | $9.40 \pm 1.60$ | $0.0 \pm 0.0$ | $0.350 \pm 0.050$ | $p < 0.001$ |
-| **$\text{D}^2\text{RO}$ (SW-DGO Proposed)** | $\mathbf{100.0\%}$ | $\mathbf{14.80 \pm 0.50}$ [$\mathbf{14.70, 14.90}$] | $\mathbf{0.00 \pm 0.00}$ | $\mathbf{0.00 \pm 0.00}$ | $\mathbf{18.40 \pm 2.20}$ | $\mathbf{0.080 \pm 0.010}$ | — |
-
----
-
-## 2. Component Ablation Study ($N=100$ Trials)
-
-| Configuration | Omitted Component | Success Rate (%) | Travel Time (s) | Deadlocks | Discomfort Integral $\\mathcal{J}_{\\text{prox}}$ | Corner Scrapes |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Full $\\text{D}^2\\text{RO}$** | None (Complete Equation) | $\mathbf{100.0\%}$ | $\mathbf{14.60 \pm 0.28}$ | $\mathbf{0.0}$ | $\mathbf{12.40 \pm 0.58}$ | $\mathbf{0.0}$ |
-| **w/o V2V Mesh** | $W_{\\text{mesh}} = 0$ | $100.0\%$ | $21.40 \pm 0.58$ ($+46.6\%$) | $0.0$ | $48.20 \pm 1.45$ ($+288\%$) | $0.0$ |
-| **w/o Corridor Locks** | $R_{\\text{lock}} = 0$ | $45.0\%$ | $27.00 \pm 7.80$ | $3.5 \pm 1.2$ | $22.00 \pm 0.87$ | $0.0$ |
-| **w/o Proxemic Halos** | $H_{\\text{prox}} = 0$ | $100.0\%$ | $13.80 \pm 0.23$ | $0.0$ | $94.70 \pm 2.60$ ($+663\%$) | $0.0$ |
-| **w/o Safety Bubble** | $S_{\\text{trolley}} = 0$ | $85.0\%$ | $15.20 \pm 0.29$ | $0.2 \pm 0.4$ | $24.10 \pm 0.87$ | $5.5 \pm 1.5$ |
-
----
-
-## 3. Decoupled Scalability Analysis
-
-### 3.1 Crowd Density Scalability (Fixed Fleet $N_{\\text{carts}} = 4$)
-* As pedestrian crowd scales from $2$ to $30$ humans, $\\text{D}^2\\text{RO}$ maintains $100.0\%$ success.
-* Incremental $D^*$ Lite replanning latency remains strictly sub-millisecond ($0.045\\text{ ms} \\to 0.108\\text{ ms}$), well within the $50\\text{ ms}$ physics tick.
-
-### 3.2 Fleet Size Scalability (Fixed Crowd $N_{\\text{humans}} = 10$)
-* As the autonomous fleet scales from $2$ to $12$ service carts, corridor mutex queueing wait times scale gracefully ($0.0\\text{s} \\to 4.9\\text{s}$).
-* V2V mesh broadcast traffic scales linearly ($12 \\to 146$ packets), consuming $<2.4\\text{ KB/s}$ bandwidth.
-"""
-        with open(report_path, mode="w", encoding="utf-8") as f:
-            f.write(doc_content)
-        print(f"  -> Generated: {report_path}")
-        return report_path
-
-def run_all_experiments():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    out_dir = os.path.join(base_dir, "..", "..", "experiments", "data")
-    runner = ExperimentRunner(out_dir)
-
-    print("=" * 80)
-    print("  D²RO (SW-DGO) STATISTICAL BENCHMARK ENGINE (N=100 MONTE CARLO TRIALS)")
-    print("=" * 80)
-
-    runner.run_baseline_comparison(num_trials=100)
-    runner.run_ablation_study(num_trials=100)
-    runner.run_cross_domain_benchmark(num_trials=100)
-    runner.run_crowd_density_scalability(num_trials=100)
-    runner.run_fleet_size_scalability(num_trials=100)
-    runner.generate_statistical_report()
-
-    print("\n" + "=" * 80)
-    print(f"  ALL N=100 EXPERIMENTS COMPLETED SUCCESSFULLY!")
-    print(f"  Exported to: {os.path.abspath(out_dir)}")
-    print("=" * 80)
+        t_elapsed = time.perf_counter() - t_start
+        print("\n" + "=" * 80)
+        print(f"  ALL 5 MASTER EXPERIMENTS COMPLETED IN {t_elapsed:.1f} SECONDS")
+        print(f"  Raw CSV datasets generated in: {self.output_dir}")
+        print("=" * 80)
 
 if __name__ == "__main__":
-    run_all_experiments()
+    out_dir = os.path.join(PROJECT_ROOT, "experiments", "data")
+    runner = ExperimentRunner(output_dir=out_dir)
+    runner.run_all(num_trials=100)

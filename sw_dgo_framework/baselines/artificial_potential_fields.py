@@ -7,6 +7,7 @@ Mathematically models the classical failure mode: Local Potential Minima Traps i
 
 from __future__ import annotations
 import math
+import time
 from math import hypot as math_hypot, exp as math_exp
 from typing import List, Tuple, Optional
 from ..core.human import Human
@@ -45,18 +46,25 @@ class ArtificialPotentialFieldAgent:
         self.travel_time: float = 0.0
         self.deadlock_count: int = 0
         self.proxemic_violations: int = 0
+        self.shelf_corner_scrapes: int = 0
         self.is_docked: bool = False
+        self.last_compute_time_ms: float = 0.0
 
     @property
     def current_pos(self) -> Tuple[float, float]:
         return (self.x, self.y)
 
-    def step(self, dt: float, peer_positions: List[Tuple[float, float]],
-             humans: List[Human], shelf_bounds: List[Tuple[float, float, float, float]]) -> None:
+    def step(self, dt: float, peer_positions: Optional[List[Tuple[float, float]]] = None,
+             humans: Optional[List[Human]] = None,
+             shelf_bounds: Optional[List[Tuple[float, float, float, float]]] = None) -> None:
         if self.is_docked:
             return
 
+        t0 = time.perf_counter()
         self.travel_time += dt
+        peer_positions = peer_positions or []
+        humans = humans or []
+        shelf_bounds = shelf_bounds or []
 
         # 1. Attractive Force toward Goal: F_att = -k_att * (p - p_goal)
         dx_goal = self.goal_x - self.x
@@ -78,9 +86,8 @@ class ArtificialPotentialFieldAgent:
 
         # 2. Repulsive Force from Static Shelf Boundaries
         for min_x, min_y, max_x, max_y in shelf_bounds:
-            # Clamping point to find closest point on shelf rectangle
-            cx = max(min_x, min(max_x, self.x))
-            cy = max(min_y, min(max_y, self.y))
+            cx = min_x if self.x < min_x else (max_x if self.x > max_x else self.x)
+            cy = min_y if self.y < min_y else (max_y if self.y > max_y else self.y)
             d_obs = math_hypot(self.x - cx, self.y - cy)
 
             if 0.001 < d_obs < self.d0_shelf:
@@ -135,3 +142,4 @@ class ArtificialPotentialFieldAgent:
         self.x += self.vx * dt
         self.y += self.vy * dt
         self.total_distance += step_dist
+        self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0

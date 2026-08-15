@@ -4,11 +4,10 @@ Models dynamic shoppers that strictly respect supermarket shelf boundaries,
 navigate through aisles/crossways, and possess directional asymmetric Gaussian personal-space fields.
 """
 
-from __future__ import annotations
+import math
 import random
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
-from math import exp, hypot, cos, sin, atan2, pi, sqrt
+from typing import List, Tuple, Optional, Any
 
 from sw_dgo_framework.core.units import (
     PX_TO_M, M_TO_PX, HUMAN_RADIUS_PX,
@@ -70,19 +69,19 @@ class Human:
                     for sx1, sy1, sx2, sy2 in shelves:
                         cx = (sx1 + sx2) / 2.0
                         cy = (sy1 + sy2) / 2.0
-                        d = hypot(self.x - cx, self.y - cy)
+                        d = math.hypot(self.x - cx, self.y - cy)
                         if d < min_dist:
                             min_dist = d
-                            self.heading = atan2(cy - self.y, cx - self.x)
+                            self.heading = math.atan2(cy - self.y, cx - self.x)
 
         if self.state == "walking":
             dx = self.target_x - self.x
             dy = self.target_y - self.y
-            dist = hypot(dx, dy)
+            dist = math.hypot(dx, dy)
             if dist > 6.0:
                 self.vx = (dx / dist) * self.speed
                 self.vy = (dy / dist) * self.speed
-                self.heading = atan2(self.vy, self.vx)
+                self.heading = math.atan2(self.vy, self.vx)
                 self.x += self.vx * dt * 30.0
                 self.y += self.vy * dt * 30.0
             else:
@@ -153,61 +152,72 @@ class ProxemicsField:
         self.sigma_side = sigma_side
         self.sigma_rear = sigma_rear
 
-    def compute_penalty_at_point(self, x: float, y: float, humans: List[Human]) -> float:
+    def compute_penalty_at_point(self, x: float, y: float, humans: Any) -> float:
         """
         Evaluates the asymmetric anisotropic 2D Gaussian discomfort at coordinate (x, y)
         transformed into each pedestrian's local body orientation frame.
         """
-        total_penalty = 0.0
         if humans is None:
             return 0.0
-        if not hasattr(humans, '__iter__') or isinstance(humans, (str, bytes)):
-            humans = [humans]
+        if isinstance(humans, list):
+            human_list = humans
+        elif isinstance(humans, (tuple, set)):
+            human_list = list(humans)
+        else:
+            human_list = [humans]
 
-        for human in humans:
-            if not isinstance(human, Human):
+        sig_f = self.sigma_front
+        sig_r = self.sigma_rear
+        sig_s = self.sigma_side
+        amp = self.amplitude
+
+        total_penalty = 0.0
+        max_cutoff = 3.5 * sig_f
+        max_cutoff_sq = max_cutoff * max_cutoff
+
+        for h in human_list:
+            if not (hasattr(h, 'x') and hasattr(h, 'y') and hasattr(h, 'heading')):
                 continue
-            dx = x - human.x
-            dy = y - human.y
+            dx = x - h.x
+            dy = y - h.y
             raw_dist_sq = dx * dx + dy * dy
 
-            # Bounding box cutoff check at 3.5 * sigma_front (~4.7 meters)
-            max_cutoff = 3.5 * self.sigma_front
-            if raw_dist_sq > max_cutoff * max_cutoff:
+            if raw_dist_sq > max_cutoff_sq:
                 continue
 
-            # Transform into human's local body frame via 2D rotation matrix R(theta_h)
-            h_ang = human.heading
-            cos_h = cos(h_ang)
-            sin_h = sin(h_ang)
-            x_local = dx * cos_h + dy * sin_h   # Longitudinal axis (+front / -rear)
-            y_local = -dx * sin_h + dy * cos_h  # Lateral axis (+left / -right)
+            cos_h = math.cos(h.heading)
+            sin_h = math.sin(h.heading)
+            x_ego = -sin_h * dx + cos_h * dy
+            y_ego = cos_h * dx + sin_h * dy
 
-            # Asymmetric longitudinal variance
-            sigma_x = self.sigma_front if x_local >= 0.0 else self.sigma_rear
-            sigma_y = self.sigma_side
+            sigma_long = sig_f if y_ego >= 0.0 else sig_r
+            sigma_lat = sig_s
 
-            exponent = -0.5 * ((x_local / sigma_x) ** 2 + (y_local / sigma_y) ** 2)
-            if exponent > -18.0:  # Numerical underflow guard
-                total_penalty += self.amplitude * exp(exponent)
+            term1 = x_ego / sigma_lat
+            term2 = y_ego / sigma_long
+            exponent = -0.5 * (term1 * term1 + term2 * term2)
+            if exponent > -12.0:
+                total_penalty += amp * math.exp(exponent)
 
         return total_penalty
 
     def compute_edge_segment_penalty(self, p1: Tuple[float, float], p2: Tuple[float, float],
-                                     humans: List[Human], num_samples: int = 6) -> float:
+                                     humans: Any, num_samples: int = 6) -> float:
         """
         Integrates the continuous 2D anisotropic Gaussian discomfort field along corridor segment (p1 -> p2).
         Returns the peak discomfort sampled along the segment.
         """
+        if not humans:
+            return 0.0
+
         max_penalty = 0.0
         x1, y1 = p1[0], p1[1]
         x2, y2 = p2[0], p2[1]
-        n_samp = int(num_samples)
 
-        for step_idx in range(n_samp + 1):
-            tau = step_idx / n_samp
-            sx = (1.0 - tau) * x1 + tau * x2
-            sy = (1.0 - tau) * y1 + tau * y2
+        for step_idx in range(num_samples + 1):
+            t_val = step_idx / float(num_samples)
+            sx = (1.0 - t_val) * x1 + t_val * x2
+            sy = (1.0 - t_val) * y1 + t_val * y2
             pt_penalty = self.compute_penalty_at_point(sx, sy, humans)
             if pt_penalty > max_penalty:
                 max_penalty = pt_penalty

@@ -188,20 +188,20 @@ class TopologicalGraph:
     def decay_mesh_penalties(self, dt: float, decay_rate: float = 2.0) -> List[Tuple[str, str]]:
         """Decays mesh congestion penalties over time."""
         changed_edges = []
-        for (u, v), edge in self.edges.items():
+        for key, edge in list(self.edges.items()):
             if isinstance(edge, Edge) and edge.w_mesh > 0.0:
                 old_val = edge.w_mesh
                 edge.w_mesh = max(0.0, edge.w_mesh - decay_rate * dt)
-                if abs(old_val - edge.w_mesh) > 0.1:
-                    changed_edges.append((u, v))
+                if math.fabs(old_val - edge.w_mesh) > 0.1:
+                    changed_edges.append((edge.u, edge.v))
         return changed_edges
 
     def clean_expired_locks(self, current_time: float) -> List[Tuple[str, str]]:
         """Releases expired corridor locks."""
         unlocked_edges = []
-        for (u, v), edge in self.edges.items():
+        for key, edge in list(self.edges.items()):
             if isinstance(edge, Edge) and edge.lock_owner is not None and current_time >= edge.lock_expiry:
                 edge.lock_owner = None
                 edge.r_lock = 0.0
-                unlocked_edges.append((u, v))
+                unlocked_edges.append((edge.u, edge.v))
         return unlocked_edges

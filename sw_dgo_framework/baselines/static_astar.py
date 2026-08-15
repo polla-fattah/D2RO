@@ -5,6 +5,7 @@ Only plans on baseline physical distances D(u, v) and does not receive V2V mesh 
 
 from __future__ import annotations
 import math
+import time
 import heapq
 from typing import Dict, List, Tuple, Optional
 from ..core.graph import TopologicalGraph
@@ -43,6 +44,7 @@ class StaticAStarAgent:
         self.deadlock_count: int = 0
         self.proxemic_violations: int = 0
         self.is_docked: bool = False
+        self.last_compute_time_ms: float = 0.0
 
     @property
     def current_pos(self) -> Tuple[float, float]:
@@ -84,6 +86,7 @@ class StaticAStarAgent:
         if self.is_docked:
             return
 
+        t0 = time.perf_counter()
         self.travel_time += dt
 
         # Comfort violation check (close to humans)
@@ -94,6 +97,7 @@ class StaticAStarAgent:
 
         if self.path_index >= len(self.path) - 1:
             self.is_docked = True
+            self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0
             return
 
         target_node_id = self.path[self.path_index + 1]
@@ -113,3 +117,5 @@ class StaticAStarAgent:
             self.x += math.cos(self.heading) * step_dist
             self.y += math.sin(self.heading) * step_dist
             self.total_distance += step_dist
+
+        self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0

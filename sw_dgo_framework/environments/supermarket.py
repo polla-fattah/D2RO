@@ -58,6 +58,14 @@ class SupermarketLayout:
         self._build_realistic_store()
 
     @property
+    def width(self) -> float:
+        return self.bounds[2]
+
+    @property
+    def height(self) -> float:
+        return self.bounds[3]
+
+    @property
     def shelf_bounds(self) -> List[Tuple[float, float, float, float]]:
         return [s.bounds for s in self.shelves]
 

@@ -7,6 +7,7 @@ Constraint Infeasibility / Velocity Oscillation (mutual stop v -> 0).
 
 from __future__ import annotations
 import math
+import time
 from math import hypot as math_hypot, sqrt as math_sqrt, atan2 as math_atan2, cos as math_cos, sin as math_sin
 from typing import List, Tuple, Optional
 from ..core.human import Human
@@ -107,12 +108,17 @@ class ORCAAgent:
 
         return ((point_x, point_y), (n_x, n_y))
 
-    def step(self, dt: float, peer_positions: List[Tuple[float, float]],
-             humans: List[Human], shelf_bounds: List[Tuple[float, float, float, float]]) -> None:
+    def step(self, dt: float, peer_positions: Optional[List[Tuple[float, float]]] = None,
+             humans: Optional[List[Human]] = None,
+             shelf_bounds: Optional[List[Tuple[float, float, float, float]]] = None,
+             peer_agents: Optional[List[ORCAAgent]] = None) -> None:
         if self.is_docked:
             return
 
+        t0 = time.perf_counter()
         self.travel_time += dt
+        humans = humans or []
+        shelf_bounds = shelf_bounds or []
 
         # 1. Preferred Velocity toward Goal: v_pref
         dx_goal = self.goal_x - self.x
@@ -123,6 +129,7 @@ class ORCAAgent:
             self.is_docked = True
             self.vx = 0.0
             self.vy = 0.0
+            self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0
             return
 
         v_pref_x = (dx_goal / dist_goal) * self.max_speed
@@ -131,15 +138,27 @@ class ORCAAgent:
         orca_lines = []
 
         # 2. Build ORCA Half-Planes from Peer Trolleys (Reciprocity = 0.5)
-        for px, py in peer_positions:
-            rel_pos = (px - self.x, py - self.y)
-            rel_vel = (self.vx, self.vy)  # Assuming peer moving at current velocity
-            combined_r = self.radius * 2.2
-            if math_hypot(rel_pos[0], rel_pos[1]) < 80.0:
-                line = self._compute_orca_halfplane(rel_pos, rel_vel, combined_r, self.time_horizon, reciprocity=0.5)
-                orca_lines.append(line)
+        if peer_agents:
+            for peer in peer_agents:
+                if peer.agent_id == self.agent_id or peer.is_docked:
+                    continue
+                rel_pos = (peer.x - self.x, peer.y - self.y)
+                rel_vel = (self.vx - peer.vx, self.vy - peer.vy)
+                combined_r = self.radius * 2.2
+                if 0.001 < math_hypot(rel_pos[0], rel_pos[1]) < 80.0:
+                    line = self._compute_orca_halfplane(rel_pos, rel_vel, combined_r, self.time_horizon, reciprocity=0.5)
+                    orca_lines.append(line)
+        elif peer_positions:
+            for px, py in peer_positions:
+                rel_pos = (px - self.x, py - self.y)
+                d_peer = math_hypot(rel_pos[0], rel_pos[1])
+                if 0.001 < d_peer < 80.0:  # Exclude self
+                    rel_vel = (self.vx, self.vy)
+                    combined_r = self.radius * 2.2
+                    line = self._compute_orca_halfplane(rel_pos, rel_vel, combined_r, self.time_horizon, reciprocity=0.5)
+                    orca_lines.append(line)
 
-        # 3. Build ORCA Half-Planes from Dynamic Humans (Reciprocity = 1.0, treating human as non-reciprocating)
+        # 3. Build ORCA Half-Planes from Dynamic Humans (Reciprocity = 1.0, non-reciprocating)
         for human in humans:
             d_h = math_hypot(self.x - human.x, self.y - human.y)
             if d_h < 26.67:  # < 0.8 meters intimate boundary
@@ -154,8 +173,8 @@ class ORCAAgent:
 
         # 4. Build ORCA Half-Planes from Static Shelf Fixtures (Reciprocity = 1.0, stationary)
         for min_x, min_y, max_x, max_y in shelf_bounds:
-            cx = max(min_x, min(max_x, self.x))
-            cy = max(min_y, min(max_y, self.y))
+            cx = min_x if self.x < min_x else (max_x if self.x > max_x else self.x)
+            cy = min_y if self.y < min_y else (max_y if self.y > max_y else self.y)
             obs_dist = math_hypot(self.x - cx, self.y - cy)
             if obs_dist < 40.0:
                 rel_pos = (cx - self.x, cy - self.y)
@@ -169,9 +188,7 @@ class ORCAAgent:
         feasible = True
 
         for (px, py), (nx, ny) in orca_lines:
-            # Check if current best_v satisfies half-plane constraint
             if ((best_vx - px) * nx + (best_vy - py) * ny) < 0.0:
-                # Project best_v onto the line: v_proj = v + ((p - v).n) * n
                 dot = (px - best_vx) * nx + (py - best_vy) * ny
                 best_vx += dot * nx
                 best_vy += dot * ny
@@ -204,3 +221,4 @@ class ORCAAgent:
         self.x += self.vx * dt
         self.y += self.vy * dt
         self.total_distance += step_dist
+        self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0
