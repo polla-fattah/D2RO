@@ -317,9 +317,9 @@ whose stamp ends in `-dirty` as **not submittable**.
 | B1 | Weight sensitivity (21 configs, disjoint seeds) | **done** | **Yes** |
 | B2 | Communication robustness sweep (4x4 channels) | **done** | No |
 | B3 | Demote ORCA/MAPF to supplementary | **done** | **Yes** |
-| C | Single regeneration + analysis | ~1 h wall | **Yes** |
-| D | Manuscript revision | 2–3 d | **Yes** |
-| E | Reference audit (automated) | 0.5 d | **Yes** |
+| C | Single regeneration + analysis | **done** | **Yes** |
+| D | Manuscript revision | **done** | **Yes** |
+| E | Reference audit (automated, tool built) | **done — 21 entries flagged, fixes outstanding** | **Yes** |
 | F | CI + build gate + tagged release | 0.5 d | **Yes** |
 
 **Roughly 8–11 working days**, dominated by A1, B1 and D.
