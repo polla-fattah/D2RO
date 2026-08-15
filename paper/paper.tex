@@ -10,6 +10,10 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{subcaption}
+
+% Commit the artefacts were generated from, derived from git at generation time
+% rather than typed by hand. Defines \PaperCommitSHA.
+\input{generated/commit}
 \usepackage[pagebackref=false,breaklinks=true,colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 
 % Math command shortcuts
@@ -544,9 +548,7 @@ The limitations above define the immediate agenda; the last two items are longer
 \end{enumerate}
 
 \section*{Data and Code Availability}
-All simulation source code, experimental harnesses, test suites, raw CSV datasets and vector figures are available at \url{https://github.com/polla-fattah/D2RO}. Every number, table and figure in this paper is produced from the committed raw data by a single analysis pipeline; none is entered by hand. Table~\ref{tab:provenance} records the provenance status of each dataset backing the results reported above.
-
-\input{generated/table_provenance}
+All simulation source code, experimental harnesses, test suites, raw CSV datasets and vector figures are available at \url{https://github.com/polla-fattah/D2RO}. Every number, table and figure in this paper is generated programmatically from the committed raw data by a single analysis pipeline; none is entered by hand. The results reported here correspond to release \texttt{v2.0-review2}, commit \texttt{\PaperCommitSHA}. Each dataset carries a provenance stamp recording the SHA-256 fingerprint of the simulation source that produced it, and the analysis pipeline refuses to emit a table or figure for any dataset whose fingerprint does not match the committed code.
 
 \section*{Acknowledgment}
 The authors thank the Autonomous Systems and Robotics Laboratory for hardware access and computing support.

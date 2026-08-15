@@ -546,39 +546,31 @@ def figure_fleet_size(res: Dict[str, Any]) -> bool:
         "fig:scalability_fleet")
 
 
-def table_availability(results: Dict[str, Any]) -> None:
-    """A table recording which datasets back the manuscript, and which do not."""
-    L = [
-        "% GENERATED FILE - do not edit by hand.",
-        "\\begin{table}[t]",
-        "\\centering",
-        "\\caption{Provenance of the reported results. Every entry marked "
-        "\\emph{complete} is regenerated from the committed raw data by the "
-        "analysis pipeline; entries marked otherwise are not reported in this "
-        "manuscript.}",
-        "\\label{tab:provenance}",
-        "\\begin{tabular}{ll}",
-        "\\toprule",
-        "\\textbf{Experiment} & \\textbf{Dataset status} \\\\",
-        "\\midrule",
-    ]
-    pretty = {
-        "benchmark": "Comparative benchmark",
-        "ablation": "Component ablation",
-        "cross_domain": "Cross-domain generalisation",
-        "crowd_density": "Crowd-density scalability",
-        "fleet_size": "Fleet-size scalability",
-        "mesh_anticipation": "Mechanism A: mesh anticipation",
-        "corridor_lock": "Mechanism B: corridor mutex",
-    }
-    for key, label in pretty.items():
-        status = results.get(key, {}).get("status", "missing")
-        word = "complete" if status == "ok" else status.replace("_", " ")
-        L.append(f"{label} & {word} \\\\")
-    L += ["\\bottomrule", "\\end{tabular}", "\\end{table}", ""]
-    with open(os.path.join(TAB_DIR, "table_provenance.tex"), "w", encoding="utf-8") as f:
-        f.write("\n".join(L))
-    print("  [ok]   generated/table_provenance.tex")
+def commit_stamp() -> None:
+    """
+    Records the exact commit the artefacts were generated from, as a LaTeX macro
+    the manuscript can cite.
+
+    The reviewer's first required revision was that the submitted PDF and the
+    repository must be the same, verifiable thing. Writing the SHA by hand is how
+    that guarantee decays, so it is derived from git at generation time. A dirty
+    working tree is reported as such: a manuscript generated from uncommitted code
+    is not reproducible and should say so rather than cite a commit it does not
+    match.
+    """
+    import subprocess
+    try:
+        sha = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"],
+                                      cwd=PROJECT_ROOT, text=True).strip()
+        dirty = subprocess.check_output(["git", "status", "--porcelain"],
+                                        cwd=PROJECT_ROOT, text=True).strip()
+        stamp = f"{sha}-dirty" if dirty else sha
+    except Exception:
+        stamp = "unknown"
+    with open(os.path.join(TAB_DIR, "commit.tex"), "w", encoding="utf-8") as f:
+        f.write("% GENERATED FILE - do not edit by hand.\n"
+                f"\\newcommand{{\\PaperCommitSHA}}{{{stamp}}}\n")
+    print(f"  [ok]   generated/commit.tex ({stamp})")
 
 
 def main() -> None:
@@ -586,7 +578,7 @@ def main() -> None:
     print("Generating manuscript artefacts from analysis_results.json\n")
     bench_ok = figure_benchmark(results.get("benchmark", {}))
     table_benchmark(results.get("benchmark", {}))
-    table_availability(results)
+    commit_stamp()
 
     # Each generator emits its artefact when the dataset is usable and a
     # placeholder recording the reason when it is not, so a missing experiment can
