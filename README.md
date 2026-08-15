@@ -81,19 +81,28 @@ The framework includes **three native desktop GUI simulators** built in pure Pyt
 
 ### 1. Running the Simulators
 
-#### Run the Supermarket Autonomous Trolley Simulator:
+#### 🚀 Interactive Desktop Simulators (60 FPS Native Python GUI)
+
+#### 🌟 Launch the Master Unified Simulator (All Domains & Algorithms):
 ```powershell
-python -m sw_dgo_framework.run_simulation
+python main.py
 ```
 
-#### Run the Hospital Autonomous Pushchair Simulator:
+#### Launch Specific Domain Simulators:
 ```powershell
-python -m sw_dgo_framework.run_hospital_simulation
+# 1. Supermarket Int-Cart Fleet:
+python sw_dgo_framework/run_simulation.py
+
+# 2. Hospital Emergency & Turnout Alcove Simulator:
+python sw_dgo_framework/run_hospital_simulation.py
+
+# 3. Airport Terminal Luggage Trolley Simulator:
+python sw_dgo_framework/run_airport_simulation.py
 ```
 
-#### Run the Airport Autonomous Luggage Trolley Simulator:
+#### Run Automated Physical Experiments & Export CSV Datasets:
 ```powershell
-python -m sw_dgo_framework.run_airport_simulation
+python -m sw_dgo_framework.sim.run_experiments
 ```
 
 ### 2. Interactive GUI Controls
