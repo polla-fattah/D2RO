@@ -1,38 +1,56 @@
-# Microsoft Office temporary files
-~$*.docx
-~$*.doc
-~$*.xlsx
-~$*.pptx
-*.tmp
-
-# Agent & IDE workspace configurations
-.agents/
-.gemini/
-*/.agents/
-*/.gemini/
-
-# Operating System files
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-.DS_Store
-
-# Python artifacts
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
-.pytest_cache/
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+*.whl
 
-# LaTeX auxiliary files
-*.aux
-*.bbl
-*.blg
+# Virtual environments
+.venv/
+venv/
+env/
+.env/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.lof
+paper/*.lot
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+paper/*.run.xml
+
+# Scratch / debug files
 *.log
-*.out
-*.toc
-*.lof
-*.lot
-*.synctex.gz
-*.fls
-*.fdb_latexmk
+debug_*.py
+test_trial*.py
+run_exp*.py
+parallel_*.py
+trial_*.log
+exp*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Antigravity IDE internals
+.agents/
+.gemini/
