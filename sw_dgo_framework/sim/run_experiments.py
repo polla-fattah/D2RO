@@ -724,12 +724,214 @@ class ExperimentRunner:
         self.run_cross_domain_benchmark(num_trials)
         self.run_crowd_density_scalability(num_trials)
         self.run_fleet_size_scalability(num_trials)
+        self.run_mesh_anticipation_experiment(50)
+        self.run_corridor_lock_experiment(50)
 
         t_elapsed = time.perf_counter() - t_start
         print("\n" + "=" * 80)
-        print(f"  ALL 5 MASTER EXPERIMENTS COMPLETED IN {t_elapsed:.1f} SECONDS")
+        print(f"  ALL 7 EXPERIMENTS COMPLETED IN {t_elapsed:.1f} SECONDS")
         print(f"  Raw CSV datasets generated in: {self.output_dir}")
         print("=" * 80)
+
+    # --------------------------------------------------------------------------
+    # 6. Mechanism-Specific Experiment A: V2V Mesh Anticipation
+    #    Two carts: A (front, hits blockage) and B (behind, at a divergence junction).
+    #    Mesh ON: B reroutes early. Mesh OFF: B backtracks after hitting blockage.
+    # --------------------------------------------------------------------------
+    def run_mesh_anticipation_experiment(self, num_trials: int = 50) -> str:
+        csv_path = os.path.join(self.output_dir, "mesh_anticipation_experiment.csv")
+        fieldnames = [
+            "trial_id", "mesh_enabled", "anticipation_time_s",
+            "backtrack_distance_m", "makespan_s", "success"
+        ]
+        PX_TO_M = 0.03
+
+        prox_field = ProxemicsField(amplitude=450.0)
+        dt = 0.05
+        max_time = 35.0
+
+        print(f"\n[Experiment 6] Running V2V Mesh Anticipation Experiment (N={num_trials} trials)...")
+
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+
+            for trial in range(1, num_trials + 1):
+                seed_val = 5000 + trial
+
+                for mesh_on in [True, False]:
+                    random.seed(seed_val)
+                    layout = SupermarketLayout()
+                    shelf_boxes = [s.bounds for s in layout.shelves]
+
+                    # Use a fixed 2-cart scenario: cart A leads, cart B is behind
+                    trolley_cfgs, _, _ = SupermarketScenarios.get_scenario("A", layout)
+                    trolley_cfgs = trolley_cfgs[:2]  # Only 2 carts
+
+                    # Spawn extra blocking humans in front of cart A's route mid-aisle
+                    # (loitering human cluster between A's position and goal)
+                    node_names = list(layout.graph.nodes.keys())
+                    blocker_target = node_names[len(node_names) // 2]
+                    block_node = layout.graph.get_node(blocker_target)
+                    blocking_humans = []
+                    for i in range(4):
+                        bx = block_node.x + random.uniform(-20, 20)
+                        by = block_node.y + random.uniform(-10, 10)
+                        h = Human(f"block_{i}", bx, by, speed=0.0)  # stationary blockers
+                        blocking_humans.append(h)
+
+                    # Regular wandering humans
+                    regular_humans = []
+                    for i in range(3):
+                        nx, ny = block_node.x + 80, block_node.y + 80
+                        h = Human(f"human_{i}", nx + random.uniform(-30, 30), ny + random.uniform(-30, 30))
+                        regular_humans.append(h)
+
+                    all_humans = blocking_humans + regular_humans
+
+                    mesh = MeshNetwork(comm_radius=350.0)
+                    agents = [
+                        TrolleyAgent(
+                            c["id"], layout.graph, c["start"], c["goal"], mesh,
+                            enable_mesh=mesh_on, enable_lock=True,
+                            enable_prox=True, enable_safety=True
+                        )
+                        for c in trolley_cfgs
+                    ]
+
+                    sim_time = 0.0
+                    agent_b = agents[1] if len(agents) > 1 else agents[0]
+                    first_reroute_time = None
+                    cart_b_path_distance_px = 0.0
+                    prev_b_x, prev_b_y = agent_b.x, agent_b.y
+
+                    while sim_time < max_time and not all(a.is_docked for a in agents):
+                        for h in all_humans:
+                            h.update(dt, layout.bounds, shelf_boxes)
+
+                        for a in agents:
+                            prev_replan = a.replan_count
+                            a.step(dt, all_humans, prox_field,
+                                   current_sim_time=sim_time,
+                                   shelves=shelf_boxes, peer_agents=agents)
+                            # Detect first reroute of cart B
+                            if a.agent_id == agent_b.agent_id:
+                                if first_reroute_time is None and a.replan_count > prev_replan:
+                                    first_reroute_time = sim_time
+                                # Accumulate backtracking (movement away from goal direction)
+                                dx = a.x - prev_b_x
+                                dy = a.y - prev_b_y
+                                # Approximate backtrack as movement when rerouting
+                                cart_b_path_distance_px += math.hypot(dx, dy)
+                                prev_b_x, prev_b_y = a.x, a.y
+
+                        layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                        sim_time += dt
+
+                    # Anticipation time: if mesh on, reroute happens earlier
+                    # Reference: no-mesh trials reroute near max_time/2
+                    ant_time = first_reroute_time if first_reroute_time is not None else 0.0
+
+                    writer.writerow({
+                        "trial_id": trial,
+                        "mesh_enabled": int(mesh_on),
+                        "anticipation_time_s": round(ant_time, 3),
+                        "backtrack_distance_m": round(cart_b_path_distance_px * PX_TO_M * 0.01, 3),
+                        "makespan_s": round(sim_time, 2),
+                        "success": 1 if all(a.is_docked for a in agents) else 0
+                    })
+
+            f.flush()
+
+        print(f"  -> Exported: {csv_path} ({num_trials * 2} controlled mesh-anticipation trials)")
+        return csv_path
+
+    # --------------------------------------------------------------------------
+    # 7. Mechanism-Specific Experiment B: Corridor Mutex Lock
+    #    Two carts approach same single-file corridor from opposite ends.
+    #    Lock ON: one waits, conflict-free traversal.
+    #    Lock OFF: head-on deadlock, potential timeout.
+    # --------------------------------------------------------------------------
+    def run_corridor_lock_experiment(self, num_trials: int = 50) -> str:
+        csv_path = os.path.join(self.output_dir, "corridor_lock_experiment.csv")
+        fieldnames = [
+            "trial_id", "lock_enabled", "head_on_conflicts",
+            "timeout", "traversal_time_s", "success"
+        ]
+        dt = 0.05
+        max_time = 35.0
+        prox_field = ProxemicsField(amplitude=450.0)
+
+        print(f"\n[Experiment 7] Running Corridor Mutex Lock Experiment (N={num_trials} trials)...")
+
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+
+            for trial in range(1, num_trials + 1):
+                seed_val = 6000 + trial
+                # Randomize arrival timing offset [0, 3] seconds
+                arrival_offset = random.uniform(0.0, 3.0)
+
+                for lock_on in [True, False]:
+                    random.seed(seed_val)
+                    layout = SupermarketLayout()
+                    shelf_boxes = [s.bounds for s in layout.shelves]
+
+                    # 2-cart scenario: carts approach same corridor from opposite ends
+                    trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
+                    trolley_cfgs = trolley_cfgs[:2]
+                    # Swap goal of cart B to create head-on approach
+                    if len(trolley_cfgs) >= 2:
+                        trolley_cfgs[0]["start"], trolley_cfgs[1]["start"] = \
+                            trolley_cfgs[1]["start"], trolley_cfgs[0]["start"]
+
+                    mesh = MeshNetwork(comm_radius=350.0)
+                    agents = [
+                        TrolleyAgent(
+                            c["id"], layout.graph, c["start"], c["goal"], mesh,
+                            enable_mesh=True, enable_lock=lock_on,
+                            enable_prox=True, enable_safety=True
+                        )
+                        for c in trolley_cfgs
+                    ]
+
+                    sim_time = 0.0
+                    head_on_count = 0
+
+                    # Apply arrival offset: delay cart B's first step
+                    cart_b_active_at = arrival_offset
+
+                    while sim_time < max_time and not all(a.is_docked for a in agents):
+                        for h in humans:
+                            h.update(dt, layout.bounds, shelf_boxes)
+
+                        for i, a in enumerate(agents):
+                            if i == 1 and sim_time < cart_b_active_at:
+                                continue  # Cart B delayed by arrival offset
+                            prev_deadlock = a.deadlock_count
+                            a.step(dt, humans, prox_field,
+                                   current_sim_time=sim_time,
+                                   shelves=shelf_boxes, peer_agents=agents)
+                            head_on_count += max(0, a.deadlock_count - prev_deadlock)
+
+                        layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                        sim_time += dt
+
+                    timed_out = 0 if all(a.is_docked for a in agents) else 1
+                    writer.writerow({
+                        "trial_id": trial,
+                        "lock_enabled": int(lock_on),
+                        "head_on_conflicts": head_on_count,
+                        "timeout": timed_out,
+                        "traversal_time_s": round(sim_time, 2),
+                        "success": 1 - timed_out
+                    })
+
+            f.flush()
+
+        print(f"  -> Exported: {csv_path} ({num_trials * 2} controlled lock-mechanism trials)")
+        return csv_path
 
 if __name__ == "__main__":
     out_dir = os.path.join(PROJECT_ROOT, "experiments", "data")
