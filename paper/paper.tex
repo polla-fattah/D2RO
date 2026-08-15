@@ -67,7 +67,7 @@ Classical continuous collision avoidance methods—such as Optimal Reciprocal Co
 
 However, in realistic retail and hospital layouts filled with orthogonal $90^\circ$ shelf corners, end-cap displays, and narrow U-bays, reactive methods experience \textbf{catastrophic local potential minima traps}. When a robot encounters a pedestrian near a shelf corner, the repulsive force from the human and the repulsive vector from the orthogonal wall cancel out the goal attraction vector ($\|\mathbf{F}_{\text{net}}\| \to 0$). As demonstrated in our empirical experiments, reactive agents become permanently trapped in internal corners, resulting in a \textbf{$0.0\%$ mission success rate}.
 
-\subsubsection{Social Blindness of Static Shortest-Path Solvers (The $A^*$ Flaw)}
+\subsubsection{Social Blindness of Static Shortest-Path Solvers (The \texorpdfstring{$A^*$}{A*} Flaw)}
 Traditional discrete graph planners (e.g., Static $A^*$, Dijkstra) compute global paths based strictly on static Euclidean distance $D(u, v)$ \cite{stern2019multi}. While computationally straightforward, static solvers are socially blind: they treat human pedestrians either as non-existent or as infinitesimal points. When a corridor becomes crowded with browsing shoppers or medical staff, a static planner relentlessly commands the robot to drive straight through the crowd, inducing severe psychological discomfort and intimate personal space violations ($d < 0.8\text{ m}$).
 
 \subsubsection{Symmetrical Live-Locks in Single-File Corridors}
@@ -85,12 +85,13 @@ The proposed framework is purposefully designed for multi-agent service fleet co
     \item \textbf{Public Facilities \& Micro-Fulfillment Stacks:} AGVs operating in narrow book stacks and vertical shelving units where physical clearances are tight.
 \end{enumerate}
 
-\subsection{The Proposed Solution: The $\text{D}^2\text{RO}$ Framework}
-To overcome these bottlenecks, this paper proposes the \textbf{Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$)} framework powered by \textbf{Socially-Weighted Distributed Graph Optimization (SW-DGO)}. $\text{D}^2\text{RO}$ introduces a unified, 5-component edge traversal cost function:
-\begin{equation}
+\subsection{The Proposed Solution: The \texorpdfstring{$\text{D}^2\text{RO}$}{D2RO} Framework}
+To overcome these bottlenecks, this paper proposes the \textbf{Distributed Dynamic Route Optimization (\texorpdfstring{$\text{D}^2\text{RO}$}{D2RO})} framework powered by \textbf{Socially-Weighted Distributed Graph Optimization (SW-DGO)}. $\text{D}^2\text{RO}$ introduces a unified, 5-component edge traversal cost function:
+\begin{multline}
 \label{eq:sw_dgo_master}
-C(u, v, t) = D(u, v) + W_{\text{mesh}}(u, v, t) + H_{\text{prox}}(v, t) + R_{\text{lock}}(u, v, t) + S_{\text{trolley}}(v, t)
-\end{equation}
+C(u, v, t) = D(u, v) + W_{\text{mesh}}(u, v, t) + H_{\text{prox}}(v, t) \\
++ R_{\text{lock}}(u, v, t) + S_{\text{trolley}}(v, t)
+\end{multline}
 coupling incremental $\text{D}^*$ Lite heuristic search \cite{koenig2002dstar} with event-driven V2V mesh telemetry, continuous Gaussian proxemics \cite{havln2024benchmark}, directional corridor mutex locks, and non-holonomic vehicle clearance envelopes ($S_{\text{trolley}}$).
 
 \subsection{Key Contributions}
@@ -149,31 +150,33 @@ Recent benchmark frameworks, such as HA-VLN 2.0 \cite{havln2024benchmark}, empha
 Let the indoor facility floorplan be represented by an undirected planar topological graph $G = (V, E)$, where $V = \{v_1, v_2, \dots, v_n\}$ denotes navigable topological waypoints (e.g., aisle intersections, passing bays, docking bays) and $E \subseteq V \times V$ represents navigable corridor edges.
 
 Each autonomous service cart $i \in \{1, \dots, N_{\text{carts}}\}$ is governed by non-holonomic unicycle kinematics:
-\begin{equation}
-\dot{x}_i(t) = v_i(t) \cos \theta_i(t), \quad \dot{y}_i(t) = v_i(t) \sin \theta_i(t), \quad \dot{\theta}_i(t) = \omega_i(t)
-\end{equation}
+\begin{align}
+\dot{x}_i(t) &= v_i(t) \cos \theta_i(t), \nonumber \\
+\dot{y}_i(t) &= v_i(t) \sin \theta_i(t), \quad \dot{\theta}_i(t) = \omega_i(t)
+\end{align}
 subject to physical actuator bounds $|v_i(t)| \le v_{\max}$ and $|\omega_i(t)| \le \omega_{\max}$.
 
 \subsection{The 5-Component SW-DGO Traversal Cost Function}
 Each edge $e = (u, v) \in E$ is assigned a dynamic scalar traversal cost $C(u, v, t)$ evaluated as:
-\begin{equation}
-C(u, v, t) = D(u, v) + W_{\text{mesh}}(u, v, t) + H_{\text{prox}}(v, t) + R_{\text{lock}}(u, v, t) + S_{\text{trolley}}(v, t)
-\end{equation}
+\begin{multline}
+C(u, v, t) = D(u, v) + W_{\text{mesh}}(u, v, t) + H_{\text{prox}}(v, t) \\
++ R_{\text{lock}}(u, v, t) + S_{\text{trolley}}(v, t)
+\end{multline}
 
-\subsubsection{1. Kinematic Euclidean Distance $D(u, v)$}
+\subsubsection{1. Kinematic Euclidean Distance \texorpdfstring{$D(u, v)$}{D(u, v)}}
 \begin{equation}
 D(u, v) = \|\mathbf{p}_u - \mathbf{p}_v\|_2 + \alpha_{\text{turn}} |\Delta \theta|
 \end{equation}
 where $\alpha_{\text{turn}}$ penalizes angular steering deviations to favour straight corridors.
 
-\subsubsection{2. Event-Driven V2V Mesh Telemetry $W_{\text{mesh}}(u, v, t)$}
+\subsubsection{2. Event-Driven V2V Mesh Telemetry \texorpdfstring{$W_{\text{mesh}}(u, v, t)$}{W\_mesh(u, v, t)}}
 When a leading cart encounters a local bottleneck, it broadcasts an event-driven `CONGESTION\_ALERT` packet over the ad-hoc mesh with an exponential decay rate $\lambda_{\text{decay}}$:
 \begin{equation}
 W_{\text{mesh}}(u, v, t) = \sum_{k \in \mathcal{M}(u, v, t)} \gamma_k \cdot \exp\left(-\lambda_{\text{decay}} (t - t_k)\right)
 \end{equation}
 where $\mathcal{M}(u, v, t)$ is the set of active mesh alerts received for edge $(u, v)$, $\gamma_k$ is the initial penalty amplitude, and $\text{TTL} = 3$ multi-hop forwarding bounds packet propagation.
 
-\subsubsection{3. Continuous 2D Gaussian Human Proxemics $H_{\text{prox}}(v, t)$}
+\subsubsection{3. Continuous 2D Gaussian Human Proxemics \texorpdfstring{$H_{\text{prox}}(v, t)$}{H\_prox(v, t)}}
 Pedestrian personal space discomfort is modeled via an anisotropic 2D Gaussian potential field:
 \begin{equation}
 H_{\text{prox}}(\mathbf{p}, t) = \sum_{j=1}^{N_{\text{humans}}} A \cdot \exp\left( -\frac{\|\mathbf{p} - \mathbf{h}_j(t)\|^2}{2\sigma^2} \right)
@@ -183,13 +186,13 @@ The edge penalty is computed by integrating $H_{\text{prox}}$ along the corridor
 H_{\text{prox}}(u, v, t) = \int_{0}^{1} H_{\text{prox}}((1-\tau)\mathbf{p}_u + \tau \mathbf{p}_v, t) \, d\tau
 \end{equation}
 
-\subsubsection{4. Directional Corridor Mutex Lock $R_{\text{lock}}(u, v, t)$}
+\subsubsection{4. Directional Corridor Mutex Lock \texorpdfstring{$R_{\text{lock}}(u, v, t)$}{R\_lock(u, v, t)}}
 In single-file corridors ($W_{\text{corridor}} < 2 r_{\text{safety}}$), mutual exclusion is enforced by setting:
 \begin{equation}
-R_{\text{lock}}(u, v, t) = \begin{cases} \infty, & \text{if opposing edge } (v, u) \text{ is locked by peer cart } j \neq i \\ 0, & \text{otherwise} \end{cases}
+R_{\text{lock}}(u, v, t) = \begin{cases} \infty, & \text{if edge } (v, u) \text{ is locked by peer } j \neq i \\ 0, & \text{otherwise} \end{cases}
 \end{equation}
 
-\subsubsection{5. Kinetic Chassis Safety Clearance Envelope $S_{\text{trolley}}(v, t)$}
+\subsubsection{5. Kinetic Chassis Safety Clearance Envelope \texorpdfstring{$S_{\text{trolley}}(v, t)$}{S\_trolley(v, t)}}
 To prevent corner scrapes and multi-cart tailgating:
 \begin{equation}
 S_{\text{trolley}}(\mathbf{p}, t) = \sum_{j \neq i} A_{\text{trolley}} \cdot \exp\left( -\frac{\|\mathbf{p} - \mathbf{p}_j(t)\|^2}{2\sigma_{\text{trolley}}^2} \right)

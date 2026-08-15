@@ -23,3 +23,16 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+
+# LaTeX auxiliary files
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.synctex.gz
+*.fls
+*.fdb_latexmk
