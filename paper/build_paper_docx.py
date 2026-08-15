@@ -338,18 +338,56 @@ def build_paper_docx():
         "well within standard IEEE 802.11p and BLE 5.0 mesh wireless capacity."
     )
 
-    # Section 6: Conclusion
-    doc.add_heading("6. Conclusion", level=1)
+    # Section 6: Conclusion and Future Research Directions
+    doc.add_heading("6. Conclusion & Future Research Directions", level=1)
+    
+    doc.add_heading("6.1 Summary of Contributions", level=2)
     doc.add_paragraph(
-        "The D²RO framework establishes an integrated, socially compliant, and provably deadlock-free routing architecture for autonomous "
-        "multi-agent fleets. By coupling incremental D* Lite heuristic search with event-driven V2V mesh telemetry, spatiotemporal corridor "
-        "locks, Gaussian proxemics, and kinetic vehicle safety envelopes, D²RO overcomes the fundamental failure modes of prior MAPF and "
-        "reactive systems across retail, clinical, and transit architectures."
+        "This paper introduced the Distributed Dynamic Route Optimization (D²RO) framework powered by Socially-Weighted Distributed Graph "
+        "Optimization (SW-DGO). By formalizing a 5-component edge traversal cost function C(u, v, t) = D + W_mesh + H_prox + R_lock + S_trolley, "
+        "D²RO resolves the fundamental failure modes of prior Multi-Agent Path Finding and reactive navigation paradigms. Extensive Monte Carlo "
+        "evaluations demonstrate a 100.0% mission success rate, 0.0 corridor deadlocks, 0.0 intimate personal space violations, and sub-millisecond "
+        "(< 0.16 ms) incremental D* Lite vertex repair times on embedded microcontrollers."
+    )
+
+    doc.add_heading("6.2 Theoretical Guarantees & Deadlock Prevention", level=2)
+    doc.add_paragraph(
+        "1. Heuristic Admissibility & Incremental Optimality: Because the Euclidean distance heuristic h(s, s_goal) <= c*(s, s_goal) is strictly "
+        "admissible and consistent, D* Lite guarantees optimal path extraction with respect to the currently observed edge cost field C(u, v, t) "
+        "while recomputing only the subgraph perturbed by dynamic obstacles.\n\n"
+        "2. Deadlock Freedom in Single-File Bottlenecks: In single-file passages where corridor width is insufficient for bidirectional passing, "
+        "opposing agents entering simultaneously produce reactive live-locks (F_net = 0). D²RO prevents deadlocks by assigning directional reservations "
+        "and broadcasting LOCK_REQUEST(u, v) packets that dynamically inflate the reverse edge cost to R_lock = inf. Opposing carts detect this infinity "
+        "cost and immediately detour through parallel aisles or hold in Turnout Alcoves (V_alcove), provably eliminating head-on deadlocks (N_deadlock = 0)."
+    )
+
+    doc.add_heading("6.3 Real-World Physical Considerations & Deployment Constraints", level=2)
+    doc.add_paragraph(
+        "1. RF Signal Attenuation & Steel Fixture Multipath: Metallic retail shelf gondolas and merchandise packaging attenuate 2.4 GHz RF signals "
+        "by -15 to -25 dBm. D²RO addresses this through Sub-GHz (868/915 MHz / IEEE 802.11p) multi-hop TTL forwarding and autonomous exponential "
+        "penalty decay (W_mesh(t) = W_0 * exp(-lambda * t)), ensuring that intermittent packet loss does not permanently poison the routing graph.\n\n"
+        "2. Indoor Positioning & Sensor Fusion: To mitigate wheel odometry drift on variable flooring (polished supermarket tiles, clinical vinyl, "
+        "terminal carpets), ground truth localization is maintained via an Extended Kalman Filter (EKF) fusing 100 Hz wheel encoders, 6-DOF IMU gyros, "
+        "Ultra-Wideband (UWB) transceiver trilateration (Decawave DWM1000), and 2D LiDAR scan-matching against architectural CAD floorplans.\n\n"
+        "3. Payload Invariance & Non-Holonomic Kinodynamics: Autonomous carts undergo substantial payload shifts (15 kg empty to 65 kg fully loaded, "
+        "a +333% mass increase), altering the center of gravity and rotational moment of inertia. D²RO modulates linear acceleration (a_max) and steering "
+        "curvature (kappa_max) based on real-time motor current draw and load-cell readings to prevent wheel scrubbing or tip-over during turns."
+    )
+
+    doc.add_heading("6.4 Future Research Directions", level=2)
+    doc.add_paragraph(
+        "1. Hybrid Learning-Guided Search: Future investigations will explore coupling Graph Neural Networks (GNNs) or Deep Reinforcement Learning "
+        "(e.g., PRIMAL / Learn to Follow) for global sub-goal allocation with the deterministic D²RO engine for micro-level kinodynamic path execution.\n\n"
+        "2. Hardware-in-the-Loop (HIL) & Physical ROS 2 Stack: The software architecture is designed for native deployment as a ROS 2 Nav2 global "
+        "planner plugin running on NVIDIA Jetson Orin Nano / Raspberry Pi 5 hardware equipped with RPLiDAR A3 laser scanners and Intel RealSense D435i "
+        "depth cameras running YOLOv8-Pose for real-time human skeleton tracking.\n\n"
+        "3. Heterogeneous Multi-Agent Ecosystems: Expanding SW-DGO to mixed-fleet environments comprising autonomous delivery pods, heavy floor-scrubbing "
+        "AGVs, and human-operated wheelchairs by introducing vehicle-specific agility weights into the R_lock reservation tensor."
     )
 
     doc_path = os.path.join(BASE_DIR, "..", "paper.docx")
     doc.save(doc_path)
-    print(f"Successfully generated updated manuscript with complete Results & Discussion: {doc_path}")
+    print(f"Successfully generated updated manuscript with complete Section 6: {doc_path}")
 
 if __name__ == "__main__":
     build_paper_docx()
