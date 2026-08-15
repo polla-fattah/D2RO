@@ -285,8 +285,8 @@ To contextualize the architectural design of $\text{D}^2\text{RO}$, we contrast 
     \item \textbf{Classical 2D Grid-World MAPF (CBS, PBS, EECBS):} Assumes synchronous discrete time steps and point holonomic agents. Ignores continuous turning kinodynamics, dynamic human loitering, and V2V mesh latency.
     \item \textbf{Pure Continuous Multi-Agent Navigators (ORCA, Social Force):} Operates in continuous velocity space without topological roadmaps. Lacks global awareness, causing catastrophic $0.0\%$ failure traps in $90^\circ$ shelf corridors.
     \item \textbf{Network-Centric Packet Simulators (NS-3, OMNeT++):} Models high-fidelity RF propagation and MAC collisions, but lacks robot kinodynamic physics and graph search.
-    \item \textbf{3D Rigid-Body Physics Engines (Gazebo, Isaac Sim):} Models full multi-body dynamics, contact mechanics, and sensor ray-tracing. However, executing 20 Monte Carlo randomized trials across multi-agent fleets is computationally prohibitive ($>100\times$ slower than real time).
-    \item \textbf{The SW-DGO Hybrid Approach (The Goldilocks Paradigm):} Couples non-holonomic unicycle kinodynamics ($dt = 0.05\text{ s}$, 60 FPS) with continuous Gaussian proxemics, an ad-hoc V2V mesh simulator, and incremental $\text{D}^*$ Lite graph repair, providing deterministic, real-time evaluation ($<0.16\text{ ms}$).
+    \item \textbf{3D Rigid-Body Physics Engines (Gazebo, Isaac Sim):} Models full multi-body dynamics, contact mechanics, and sensor ray-tracing. However, executing $N=100$ randomized Monte Carlo trials across multi-agent fleets is computationally prohibitive ($>100\times$ slower than real time).
+    \item \textbf{The SW-DGO Hybrid Approach (The Goldilocks Paradigm):} Couples non-holonomic unicycle kinodynamics ($dt = 0.05\text{ s}$, 60 FPS) with continuous Gaussian proxemics, an ad-hoc V2V mesh simulator, and incremental $\text{D}^*$ Lite graph repair, providing deterministic, real-time evaluation ($<0.15\text{ ms}$).
 \end{enumerate}
 
 % ==============================================================================
@@ -529,7 +529,7 @@ This paper introduced the Distributed Dynamic Route Optimization ($\text{D}^2\te
 
 \subsection{Theoretical Guarantees \& Deadlock Prevention}
 \begin{enumerate}
-    \item \textbf{Heuristic Admissibility \& Incremental Optimality:} Because the Euclidean distance heuristic $h(s, s_{\text{goal}}) \le c^*(s, s_{\text{goal}})$ is strictly admissible and consistent, $\text{D}^*$ Lite guarantees optimal path extraction with respect to the currently observed edge cost field $C(u, v, t)$ while recomputing only the subgraph perturbed by dynamic obstacles.
+    \item \textbf{Heuristic Admissibility \& Incremental Optimality:} Because the Euclidean distance heuristic $h(s, s_{\text{goal}}) \le c^*(s, s_{\text{goal}})$ is strictly admissible and consistent, $\text{D}^*$ Lite guarantees optimal path extraction with respect to the currently observed edge cost field $C(u, v, t)$ while recomputing only the subgraph perturbed by dynamic obstacles \cite{koenig2002dstar}.
     \item \textbf{Deadlock Freedom in Single-File Bottlenecks:} In single-file passages where corridor width is insufficient for bidirectional passing, opposing agents entering simultaneously produce reactive live-locks ($\mathbf{F}_{\text{net}} = 0$). $\text{D}^2\text{RO}$ prevents deadlocks by assigning directional reservations and broadcasting `LOCK\_REQUEST` packets that dynamically inflate the reverse edge cost to $R_{\text{lock}} = \infty$. Opposing carts detect this infinity cost and immediately detour through parallel aisles or hold in Turnout Alcoves ($V_{\text{alcove}}$), provably eliminating head-on deadlocks ($N_{\text{deadlock}} \equiv 0$).
 \end{enumerate}
 
