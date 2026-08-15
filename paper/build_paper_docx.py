@@ -108,13 +108,27 @@ def build_paper_docx():
         "4. Public Facilities & Micro-Fulfillment: Material handling AGVs operating in narrow book stacks and urban distribution centers."
     )
 
-    doc.add_heading("1.3 The Proposed Solution: D²RO Framework", level=2)
+    doc.add_heading("1.3 The Proposed Solution & Core Contributions", level=2)
     doc.add_paragraph(
         "To overcome these bottlenecks, this paper proposes the Distributed Dynamic Route Optimization (D²RO) framework powered by Socially-Weighted "
-        "Distributed Graph Optimization (SW-DGO). D²RO introduces a unified 5-component cost function:\n\n"
-        "C(u, v, t) = w_D * D(u, v) + w_M * W_mesh(u, v, t) + w_H * H_prox(v, t) + w_R * R_lock(u, v, t) + w_S * S_trolley(v, t)\n\n"
-        "coupling incremental D* Lite heuristic search with event-driven V2V mesh telemetry, continuous Gaussian proxemics, directional corridor "
-        "mutex locks, and non-holonomic vehicle clearance envelopes."
+        "Distributed Graph Optimization (SW-DGO). Rather than treating routing as isolated reactive avoidance or purely local search, D²RO establishes "
+        "a distributed, time-varying graph-cost field C_i(e, t) shared across peer agents:\n\n"
+        "C_i(e, t) = w_D * C_geom(e) + w_M * C_mesh(e, t) + w_H * C_social(e, t) + w_R * C_mutex(e, t) + w_S * C_kinematic(i, e, t)\n\n"
+        "The primary scientific contributions of this research are:\n\n"
+        "1. Distributed Anticipatory Edge-Cost Propagation & Horizon Extension: We formalize a distributed graph-cost field wherein localized perturbations "
+        "observed by leading agents are transformed into peer-to-peer, time-decayed edge penalties C_mesh(e, t). This mathematically extends each robot's "
+        "effective planning horizon (O_i^effective) far beyond its onboard line-of-sight sensing radius, enabling proactive global rerouting before "
+        "encountering bottlenecks and eliminating +48.3% in deadheading makespan inflation.\n\n"
+        "2. Distributed Directional Bottleneck Reservation Protocol: We formalize an explicit distributed protocol for single-file topological "
+        "bottlenecks (W_corridor < 2 * r_safety) via directional reservation tuples L_e = <owner, dir, t_acquire, t_expire, priority> and Turnout "
+        "Alcoves (V_alcove), guaranteeing single-direction exclusivity and empirical deadlock elimination (N_deadlock = 0.00 ± 0.00) under bounded latency.\n\n"
+        "3. Kinodynamically & Socially Conditioned Incremental Optimization: We unify asymmetric human proxemic discomfort fields (C_social) and "
+        "vehicle-specific clearance envelopes (C_kinematic) directly into an incremental D* Lite graph repair engine, executing sub-millisecond updates "
+        "(0.045 to 0.145 ms) without global re-heapification and completely eliminating the 0.0% failure mode of classical reactive avoidance (ORCA/APF) "
+        "in concave 90-degree shelf fixtures.\n\n"
+        "4. Multi-Domain Empirical Benchmark Suite: We validate the framework across three distinct architectural topologies (Retail Supermarket, "
+        "Clinical Hospital, and Airport Terminal) over N = 100 randomized Monte Carlo simulation trials per condition (2,500 total runs), providing "
+        "10 publication-ready 300 DPI figures and 5 open-access CSV datasets under the MIT license."
     )
 
     # Section 2: Literature Review
@@ -170,10 +184,17 @@ def build_paper_docx():
     # Section 3: Mathematical Formulation
     doc.add_heading("3. Mathematical Formulation & System Architecture", level=1)
     doc.add_paragraph(
-        "The complete 5-Component SW-DGO Traversal Cost Function is formalized as:\n\n"
-        "C(u, v, t) = w_D * D(u, v) + w_M * W_mesh(u, v, t) + w_H * H_prox(v, t) + w_R * R_lock(u, v, t) + w_S * S_trolley(v, t)\n\n"
+        "The complete Distributed Dynamic Edge-Cost Field is formalized as:\n\n"
+        "C_i(u, v, t) = w_D * C_geom(u, v) + w_M * C_mesh(u, v, t) + w_H * C_social(v, t) + w_R * C_mutex(u, v, t) + w_S * C_kinematic(i, v, t)\n\n"
         "where calibrated dimensionless weights w = [1.0, 1.5, 2.0, 1.0, 1.2] balance metric progress, collaborative V2V routing, human comfort, "
-        "corridor mutual exclusion, and vehicle safety envelopes."
+        "corridor mutual exclusion, and vehicle safety envelopes.\n\n"
+        "Key Formulation Elements:\n"
+        "1. Intrinsic Metric Geometry C_geom(u, v): Baseline Euclidean distance and angular steering penalty.\n"
+        "2. Effective Perception Horizon Extension C_mesh(u, v, t): Extends local obstacle horizon O_i^effective(t) = O_i^local(t) U (U_j O_j(t - tau_ij)) "
+        "via decaying V2V telemetry C_mesh(t) = sum gamma_k * exp(-lambda * (t - t_k)).\n"
+        "3. Continuous 2D Asymmetric Gaussian Proxemics C_social(v, t): Direction-dependent front (1.35m), rear (0.60m), and lateral (0.90m) discomfort fields.\n"
+        "4. Distributed Directional Bottleneck Reservation L_e(t): Directional reservation tuple <AgentID, dir, t_acquire, t_expire, priority> setting reverse cost to infinity.\n"
+        "5. Kinetic Chassis Safety Envelope C_kinematic(i, v, t): Enforcing 0.54m shelf clearance and 1.08m dynamic following gaps."
     )
 
     # Section 4: Multi-Domain Environments & Snapshots

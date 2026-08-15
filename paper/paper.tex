@@ -85,23 +85,21 @@ The proposed framework is purposefully designed for multi-agent service fleet co
 \end{enumerate}
 
 \subsection{The Proposed Solution: The \texorpdfstring{$\text{D}^2\text{RO}$}{D2RO} Framework}
-To overcome these bottlenecks, this paper proposes the \textbf{Distributed Dynamic Route Optimization (\texorpdfstring{$\text{D}^2\text{RO}$}{D2RO})} framework powered by \textbf{Socially-Weighted Distributed Graph Optimization (SW-DGO)}. $\text{D}^2\text{RO}$ introduces a unified, 5-component edge traversal cost function:
+To overcome these bottlenecks, this paper proposes the \textbf{Distributed Dynamic Route Optimization (\texorpdfstring{$\text{D}^2\text{RO}$}{D2RO})} framework powered by \textbf{Socially-Weighted Distributed Graph Optimization (SW-DGO)}. Rather than treating navigation as isolated reactive avoidance or purely local search, $\text{D}^2\text{RO}$ establishes a \textbf{distributed, time-varying graph-cost field} $C_i(e, t)$ shared across peer agents:
 \begin{multline}
 \label{eq:sw_dgo_master_intro}
-C(u, v, t) = w_D \cdot D(u, v) + w_M \cdot W_{\text{mesh}}(u, v, t) + w_H \cdot H_{\text{prox}}(v, t) \\
-+ w_R \cdot R_{\text{lock}}(u, v, t) + w_S \cdot S_{\text{trolley}}(v, t)
+C_i(e, t) = w_D \cdot C_{\text{geom}}(e) + w_M \cdot C_{\text{mesh}}(e, t) + w_H \cdot C_{\text{social}}(e, t) \\
++ w_R \cdot C_{\text{mutex}}(e, t) + w_S \cdot C_{\text{kinematic}}(i, e, t)
 \end{multline}
-coupling incremental $\text{D}^*$ Lite heuristic search \cite{koenig2002dstar} with event-driven V2V mesh telemetry, continuous Gaussian proxemics \cite{kruse2013human, chen2020relational}, directional corridor mutex locks, and non-holonomic vehicle clearance envelopes ($S_{\text{trolley}}$).
+seamlessly unifying incremental heuristic graph repair ($\text{D}^*$ Lite) \cite{koenig2002dstar} with distributed anticipatory cost propagation, continuous Gaussian proxemics \cite{kruse2013human, chen2020relational}, directional corridor reservation protocols, and non-holonomic vehicle clearance envelopes.
 
 \subsection{Key Contributions}
 The primary scientific contributions of this research are:
 \begin{enumerate}
-    \item \textbf{A Unified 5-Component Cost Formulation:} We formulate the SW-DGO traversal cost metric combining physical distance ($w_D D$), V2V mesh telemetry ($w_M W_{\text{mesh}}$), continuous Gaussian proxemics ($w_H H_{\text{prox}}$), corridor locks ($w_R R_{\text{lock}}$), and vehicle clearance envelopes ($w_S S_{\text{trolley}}$) into a single scalar cost evaluated locally by incremental heuristic search.
-    \item \textbf{Elimination of Concave Fixture Traps:} We demonstrate theoretically and empirically that anchoring non-holonomic kinematics to an incrementally repaired topological graph ($\text{D}^*$ Lite) eliminates the $0.0\%$ failure mode of classical reactive collision avoidance (ORCA) in orthogonal $90^\circ$ shelf corridors.
-    \item \textbf{Deadlock Prevention in Single-File Bottlenecks:} We introduce directional corridor mutex locks and Turnout Alcoves ($V_{\text{alcove}}$), empirically eliminating head-on corridor deadlocks across all evaluated trials ($N_{\text{deadlock}} = 0.00 \pm 0.00$).
-    \item \textbf{Social Compliance with Zero Intimate Violations:} We demonstrate through $N=100$ randomized Monte Carlo kinodynamic simulation trials that $\text{D}^2\text{RO}$ achieves $0.00 \pm 0.00$ intimate personal space violations, compared to $4.00 \pm 0.00$ in Static $A^*$, $226.39 \pm 69.25$ in APF, and $102.44 \pm 15.00$ in Local MAPF ($p < 0.001$).
-    \item \textbf{Sub-Millisecond Replan Feasibility:} We demonstrate that $\text{D}^*$ Lite incremental vertex repairs execute in $0.045\text{ ms}$ to $0.108\text{ ms}$ across dynamic crowd scaling, consuming $<2.5\text{ KB/s}$ wireless mesh bandwidth and demonstrating high computational efficiency for embedded ROS 2 deployment.
-    \item \textbf{Multi-Domain Empirical Validation:} We validate the framework across three distinct architectural topologies (Retail Supermarket, Clinical Hospital, and Airport Terminal), providing 10 camera-ready 300 DPI figures and 5 open-access CSV benchmark datasets.
+    \item \textbf{Distributed Anticipatory Edge-Cost Propagation \& Horizon Extension:} We formalize the concept of a distributed dynamic graph-cost field wherein localized physical and social perturbations observed by leading agents are transformed into peer-to-peer, time-decayed edge penalties $C_{\text{mesh}}(e, t)$. This mathematically extends each robot's effective planning horizon ($\mathcal{O}_i^{\text{effective}}(t)$) far beyond its onboard line-of-sight sensing radius ($R_s$), enabling proactive global rerouting before encountering bottlenecks and eliminating $+48.3\%$ in deadheading makespan inflation.
+    \item \textbf{Distributed Directional Bottleneck Reservation Protocol:} We formalize an explicit distributed protocol for single-file topological bottlenecks ($W_{\text{corridor}} < 2 r_{\text{safety}}$) via directional reservation tuples $\mathcal{L}_e = \langle \text{owner}, \vec{d}, t_{\text{acquire}}, t_{\text{expire}}, \text{priority} \rangle$ and Turnout Alcoves ($V_{\text{alcove}}$), guaranteeing single-direction exclusivity and empirical deadlock elimination ($N_{\text{deadlock}} = 0.00 \pm 0.00$) under bounded network latency.
+    \item \textbf{Kinodynamically \& Socially Conditioned Incremental Optimization:} We unify asymmetric human proxemic discomfort fields ($C_{\text{social}}$) and vehicle-specific clearance envelopes ($C_{\text{kinematic}}$) directly into an incremental $\text{D}^*$ Lite graph repair engine, executing sub-millisecond updates ($0.045\text{--}0.145\text{ ms}$) without global re-heapification and completely eliminating the $0.0\%$ failure mode of classical reactive collision avoidance (ORCA/APF) in concave $90^\circ$ shelf fixtures.
+    \item \textbf{Comprehensive Multi-Domain Empirical Benchmark Suite:} We validate the framework across three distinct architectural topologies (Retail Supermarket, Clinical Hospital, and Airport Terminal) over $N=100$ randomized Monte Carlo simulation trials per condition ($2,500$ total trials), providing 10 publication-ready 300 DPI figures and 5 open-access CSV datasets under the MIT license.
 \end{enumerate}
 
 % ==============================================================================
@@ -155,36 +153,41 @@ Each autonomous service cart $i \in \{1, \dots, N_{\text{carts}}\}$ is governed 
 \end{align}
 subject to physical actuator bounds $|v_i(t)| \le v_{\max}$ and $|\omega_i(t)| \le \omega_{\max}$.
 
-\subsection{The Calibrated 5-Component SW-DGO Traversal Cost Function}
-Each edge $e = (u, v) \in E$ is assigned a dynamic scalar traversal cost $C(u, v, t)$ evaluated as a dimensionally weighted linear combination:
+\subsection{The Distributed Dynamic Edge-Cost Field Formulation}
+Rather than relying on centralized graph allocation or isolated myopic sensing, SW-DGO establishes a **distributed, time-varying edge-cost field** $C_i(u, v, t)$ maintained locally by each autonomous agent $i$. The edge traversal cost $e = (u, v) \in E$ is formalized as:
 \begin{multline}
 \label{eq:sw_dgo_master}
-C(u, v, t) = w_D \cdot D(u, v) + w_M \cdot W_{\text{mesh}}(u, v, t) + w_H \cdot H_{\text{prox}}(v, t) \\
-+ w_R \cdot R_{\text{lock}}(u, v, t) + w_S \cdot S_{\text{trolley}}(v, t)
-where the calibrated dimensionless weights $\mathbf{w} = [w_D, w_M, w_H, w_R, w_S] = [1.0, 1.5, 2.0, 1.0, 1.2]$ balance physical metric progress against social and inter-robot constraints. Specifically:
+C_i(u, v, t) = w_D \cdot C_{\text{geom}}(u, v) + w_M \cdot C_{\text{mesh}}(u, v, t) + w_H \cdot C_{\text{social}}(v, t) \\
++ w_R \cdot C_{\text{mutex}}(u, v, t) + w_S \cdot C_{\text{kinematic}}(i, v, t)
+\end{multline}
+where the calibrated dimensionless weights $\mathbf{w} = [w_D, w_M, w_H, w_R, w_S] = [1.0, 1.5, 2.0, 1.0, 1.2]$ balance physical metric progress against social proxemics, collaborative telemetry, and vehicle clearance:
 \begin{itemize}
-    \item $w_D = 1.0$: Serves as the normalized physical Euclidean distance baseline ($\text{m}$).
-    \item $w_M = 1.5$: Weights collaborative V2V congestion alerts $1.5\times$ higher than direct distance, ensuring trailing carts proactively reroute through clear parallel corridors rather than queuing behind blocked aisles.
-    \item $w_H = 2.0$: Prioritizes pedestrian personal-space comfort $2.0\times$ above travel distance, enforcing compliant yielding and wide berths around browsing shoppers.
-    \item $w_R = 1.0$: Modulates binary spatiotemporal corridor mutex locks ($R_{\text{lock}} = \infty$ during active head-on contention and $0$ otherwise), guaranteeing deadlock-free single-file traversal.
-    \item $w_S = 1.2$: Penalizes proximity to peer carts and orthogonal shelf corners ($1.2\times$ baseline), preventing chassis corner scrapes and anti-tailgating violations.
+    \item $w_D = 1.0$: Baseline Euclidean physical distance ($C_{\text{geom}}$ in meters).
+    \item $w_M = 1.5$: Weights collaborative V2V congestion alerts $1.5\times$ higher than metric distance, ensuring trailing carts proactively reroute through clear parallel corridors rather than deadheading into blocked aisles.
+    \item $w_H = 2.0$: Prioritizes pedestrian personal-space comfort $2.0\times$ above travel distance, enforcing compliant yielding and wide social berths.
+    \item $w_R = 1.0$: Directional corridor mutex multiplier ($C_{\text{mutex}} = \infty$ during active contention, $0$ otherwise), guaranteeing single-direction exclusivity.
+    \item $w_S = 1.2$: Kinetic clearance penalty preventing chassis corner scrapes ($1.2\times$ baseline) and anti-tailgating violations.
 \end{itemize}
 
-\subsubsection{1. Kinematic Euclidean Distance \texorpdfstring{$D(u, v)$}{D(u, v)}}
+\subsubsection{1. Intrinsic Metric Geometry \texorpdfstring{$C_{\text{geom}}(u, v)$}{C\_geom(u, v)}}
 \begin{equation}
-D(u, v) = \|\mathbf{p}_u - \mathbf{p}_v\|_2 + \alpha_{\text{turn}} |\Delta \theta|
+C_{\text{geom}}(u, v) = \|\mathbf{p}_u - \mathbf{p}_v\|_2 + \alpha_{\text{turn}} |\Delta \theta|
 \end{equation}
-where $\alpha_{\text{turn}}$ penalizes angular steering deviations to favour straight corridors.
+where $\alpha_{\text{turn}}$ penalizes sharp angular steering deviations to favor smooth corridor alignment.
 
-\subsubsection{2. Event-Driven V2V Mesh Telemetry \texorpdfstring{$W_{\text{mesh}}(u, v, t)$}{W\_mesh(u, v, t)}}
-When a leading cart encounters a local bottleneck, it broadcasts an event-driven `CONGESTION\_ALERT` packet over the ad-hoc mesh with an exponential decay rate $\lambda_{\text{decay}}$:
+\subsubsection{2. Distributed Anticipatory Cost Propagation \& Horizon Extension \texorpdfstring{$C_{\text{mesh}}(u, v, t)$}{C\_mesh(u, v, t)}}
+In decentralized multi-agent systems, myopic line-of-sight sensing restricts an agent's local obstacle horizon to $\mathcal{O}_i^{\text{local}}(t) = \{\mathbf{x} \mid \|\mathbf{x} - \mathbf{p}_i(t)\| \le R_s\}$. To eliminate the severe makespan penalty of deadheading into remote blockages, SW-DGO formalizes an **effective perception horizon extension**:
 \begin{equation}
-W_{\text{mesh}}(u, v, t) = \sum_{k \in \mathcal{M}(u, v, t)} \gamma_k \cdot \exp\left(-\lambda_{\text{decay}} (t - t_k)\right)
+\mathcal{O}_i^{\text{effective}}(t) = \mathcal{O}_i^{\text{local}}(t) \cup \bigcup_{j \in \mathcal{N}_i} \mathcal{O}_j(t - \tau_{ij})
 \end{equation}
-where $\mathcal{M}(u, v, t)$ is the set of active mesh alerts received for edge $(u, v)$, $\gamma_k$ is the initial penalty amplitude, and $\text{TTL} = 3$ multi-hop forwarding bounds packet propagation.
+When agent $j$ discovers a congestion event at edge $(u, v)$ at timestamp $t_k$, it broadcasts a localized event-driven telemetry packet over the ad-hoc mesh with bounded time-to-live ($\text{TTL} = 3$). The received penalty decays exponentially over time:
+\begin{equation}
+C_{\text{mesh}}(u, v, t) = \sum_{k \in \mathcal{M}(u, v, t)} \gamma_k \cdot \exp\left(-\lambda_{\text{decay}} (t - t_k)\right)
+\end{equation}
+where $\gamma_k$ is the initial congestion penalty amplitude and $\lambda_{\text{decay}}$ is the temporal decay rate, guaranteeing that stale congestion information naturally attenuates without permanently poisoning the routing topology.
 
-\subsubsection{3. Continuous 2D Asymmetric Anisotropic Proxemics \texorpdfstring{$H_{\text{prox}}(v, t)$}{H\_prox(v, t)}}
-To model human psychological personal space (Hall's Proxemics / HA-VLN 2.0), we formulate an \textbf{asymmetric directional Gaussian potential field} aligned with pedestrian orientation heading $\theta_h$:
+\subsubsection{3. Continuous 2D Asymmetric Human Proxemics \texorpdfstring{$C_{\text{social}}(v, t)$}{C\_social(v, t)}}
+To model human psychological personal space (Hall's Proxemics), we formulate an **asymmetric directional Gaussian potential field** aligned with pedestrian heading $\theta_h$:
 \begin{equation}
 H_{\text{prox}}(\mathbf{p}, \mathbf{h}_j, \theta_h) = A_j \cdot \exp\left( -\frac{1}{2} \left[ \left(\frac{x_{\text{local}}}{\sigma_x}\right)^2 + \left(\frac{y_{\text{local}}}{\sigma_y}\right)^2 \right] \right)
 \end{equation}
@@ -192,27 +195,32 @@ where relative coordinates are transformed into the pedestrian's local body fram
 \begin{equation}
 \begin{bmatrix} x_{\text{local}} \\ y_{\text{local}} \end{bmatrix} = \begin{bmatrix} \cos\theta_h & \sin\theta_h \\ -\sin\theta_h & \cos\theta_h \end{bmatrix} \begin{bmatrix} x - x_j \\ y - y_j \end{bmatrix}
 \end{equation}
-and the asymmetric longitudinal variance reflects expanded front personal space:
+with asymmetric longitudinal variance reflecting expanded front personal space:
 \begin{equation}
 \sigma_x = \begin{cases} \sigma_{\text{front}} = 1.35\text{ m}, & \text{if } x_{\text{local}} \ge 0 \ (\text{Front}) \\ \sigma_{\text{rear}} = 0.60\text{ m}, & \text{if } x_{\text{local}} < 0 \ (\text{Rear}) \end{cases}, \quad \sigma_y = 0.90\text{ m}
 \end{equation}
-The edge penalty is computed by integrating $H_{\text{prox}}$ along the corridor line segment:
+The continuous social edge penalty is integrated along the edge trajectory segment:
 \begin{equation}
-H_{\text{prox}}(u, v, t) = \int_{0}^{1} H_{\text{prox}}((1-\tau)\mathbf{p}_u + \tau \mathbf{p}_v, t) \, d\tau
+C_{\text{social}}(u, v, t) = \int_{0}^{1} H_{\text{prox}}((1-\tau)\mathbf{p}_u + \tau \mathbf{p}_v, t) \, d\tau
 \end{equation}
 
-\subsubsection{4. Directional Corridor Mutex Lock \texorpdfstring{$R_{\text{lock}}(u, v, t)$}{R\_lock(u, v, t)}}
-In single-file corridors ($W_{\text{corridor}} < 2 r_{\text{safety}}$), mutual exclusion is enforced by setting:
+\subsubsection{4. Distributed Directional Bottleneck Reservation Protocol \texorpdfstring{$C_{\text{mutex}}(u, v, t)$}{C\_mutex(u, v, t)}}
+In single-file architectural passages where aisle width cannot accommodate bidirectional passing ($W_{\text{corridor}} < 2 r_{\text{safety}}$), mutual exclusion is coordinated via a directional reservation tuple:
 \begin{equation}
-R_{\text{lock}}(u, v, t) = \begin{cases} \infty, & \text{if edge } (v, u) \text{ is locked by peer } j \neq i \\ 0, & \text{otherwise} \end{cases}
+\mathcal{L}_e(t) = \langle \text{AgentID}, \vec{d}_{\text{traversal}}, t_{\text{acquire}}, t_{\text{expire}}, \text{Priority} \rangle
 \end{equation}
+When agent $i$ claims edge $(u, v)$, the reverse edge cost for opposing agents is set to:
+\begin{equation}
+C_{\text{mutex}}(v, u, t) = \begin{cases} \infty, & \text{if edge } (u, v) \text{ is reserved by peer } j \neq i \\ 0, & \text{otherwise} \end{cases}
+\end{equation}
+Opposing agents detect this infinity cost and hold in Turnout Alcoves ($V_{\text{alcove}}$) or detour through parallel aisles, preventing head-on deadlocks ($N_{\text{deadlock}} = 0.00 \pm 0.00$).
 
-\subsubsection{5. Kinetic Chassis Safety Clearance Envelope \texorpdfstring{$S_{\text{trolley}}(v, t)$}{S\_trolley(v, t)}}
-To prevent corner scrapes and multi-cart tailgating:
+\subsubsection{5. Kinetic Chassis Safety Clearance Envelope \texorpdfstring{$C_{\text{kinematic}}(i, v, t)$}{C\_kinematic(i, v, t)}}
+To prevent chassis scrapes against orthogonal shelf corners and enforce dynamic following gaps:
 \begin{equation}
-S_{\text{trolley}}(\mathbf{p}, t) = \sum_{j \neq i} A_{\text{trolley}} \cdot \exp\left( -\frac{\|\mathbf{p} - \mathbf{p}_j(t)\|^2}{2\sigma_{\text{trolley}}^2} \right)
+C_{\text{kinematic}}(i, \mathbf{p}, t) = \sum_{j \neq i} A_{\text{trolley}} \cdot \exp\left( -\frac{\|\mathbf{p} - \mathbf{p}_j(t)\|^2}{2\sigma_{\text{trolley}}^2} \right)
 \end{equation}
-enforcing an $18\text{ px}$ ($0.54\text{ m}$) shelf margin buffer and a $36\text{ px}$ ($1.08\text{ m}$) forward following distance.
+enforcing an $18\text{ px}$ ($0.54\text{ m}$) shelf clearance buffer and a $36\text{ px}$ ($1.08\text{ m}$) anti-tailgating following distance.
 
 \begin{table}[t]
 \centering
@@ -407,6 +415,9 @@ Both APF and ORCA suffer catastrophic $0.0\%$ mission success in the supermarket
 
 \subsubsection{Failure Mechanism of Decentralized Local MAPF}
 Decentralized Local MAPF employs windowed spatial conflict arbitration and token-passing. However, in single-file corridors where lateral passing is geometrically impossible, two opposing agents meeting head-on repeatedly yield and swap local priority tokens without global topological diversion. Because the baseline lacks multi-hop V2V mesh routing, neither agent can command an early detour into parallel aisles or Turnout Alcoves, locking both carts into permanent token-swapping live-locks until reaching the $35.0\text{ s}$ timeout ($0.0\%$ success, $102.44 \pm 15.00$ intimate space violations, $p < 0.001$).
+
+\subsubsection{Anticipatory Horizon Extension vs. Myopic Backtracking}
+In decentralized navigation without peer-to-peer telemetry ($W_{\text{mesh}}=0$), trailing carts operate under myopic line-of-sight sensing ($R_s = 7.2\text{ m}$). When an unexpected pedestrian cluster blocks an inner aisle, trailing units travel all the way to the blocked entrance before sensing the obstruction locally. This forces full vehicle reversals and complete path re-computation, inflating fleet makespan by $+48.3\%$ ($14.57\text{ s} \to 21.61\text{ s}$). Under $\text{D}^2\text{RO}$'s distributed anticipatory cost propagation ($\mathcal{O}_i^{\text{effective}}$), the lead cart's V2V alert allows trailing units to calculate optimal topological detours at upstream junction nodes $\Delta T_{\text{anticipation}} = 7.04\text{ s}$ earlier, eliminating deadheading and backtracking entirely.
 
 \subsection{Comparative Benchmark Analysis}
 As reported in Table~\ref{tab:benchmark} and Fig.~\ref{fig:benchmark}:

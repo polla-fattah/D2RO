@@ -56,6 +56,18 @@ Below, we provide a detailed, point-by-point response explaining how every major
 
 ---
 
+### Major Comment 5: Novelty Repositioning & Distinct Algorithmic Principles
+> **Reviewer Comment:** *"The novelty needs to be defined much more carefully... The issue is not necessarily that the work has no novelty; the issue is that the manuscript currently makes the contribution look like an integration of known components... What is the new reusable algorithmic idea?"*
+
+* **Author Response:** We thank the reviewer for this profoundly insightful critique. Rather than describing $\text{D}^2\text{RO}$ as a loose integration of five pre-existing modules, we have completely restructured the intellectual framing and contributions around **three core reusable algorithmic principles** (Section I-B, Section III):
+  1. **Distributed Anticipatory Edge-Cost Field & Perception Horizon Extension:** We formalize the mechanism wherein local perturbations observed by leading agents are transformed into peer-to-peer, time-decayed graph penalties $C_{\text{mesh}}(e, t)$. This mathematically expands the robot's effective planning horizon ($\mathcal{O}_i^{\text{effective}}(t) = \mathcal{O}_i^{\text{local}}(t) \cup \bigcup_j \mathcal{O}_j(t-\tau_{ij})$) far beyond line-of-sight sensors ($R_s = 7.2\text{ m}$), enabling proactive global rerouting at upstream junction nodes $\Delta T_{\text{anticipation}} = 7.04\text{ s}$ earlier and eliminating $+48.3\%$ in deadheading makespan inflation.
+  2. **Distributed Directional Bottleneck Reservation Protocol ($\mathcal{L}_e$):** We formalize an explicit distributed reservation tuple $\mathcal{L}_e = \langle \text{owner}, \vec{d}, t_{\text{acquire}}, t_{\text{expire}}, \text{priority} \rangle$ for single-file topological bottlenecks ($W_{\text{corridor}} < 2 r_{\text{safety}}$), coordinating dynamic yield maneuvers into Turnout Alcoves ($V_{\text{alcove}}$) with empirical deadlock elimination ($N_{\text{deadlock}} = 0.00 \pm 0.00$) under bounded network latency.
+  3. **Kinodynamically & Socially Conditioned Incremental Graph Optimization Engine:** We unify continuous asymmetric human proxemic fields and non-holonomic vehicle clearance envelopes directly into an incremental $\text{D}^*$ Lite graph repair framework, executing sub-millisecond updates ($0.045\text{--}0.145\text{ ms}$) without global re-heapification and eliminating 100% of concave fixture traps.
+
+The three architectural environments (Supermarket, Hospital, Airport) are now presented strictly as **empirical validation domains**, highlighting how the unified distributed cost field instantiates across different real-world operational constraints.
+
+---
+
 # Part II: Response to Reviewer #2
 
 ### Major Concern 1: Literature Reference Accuracy & Citation Integrity
