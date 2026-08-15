@@ -25,8 +25,7 @@
 
 \author{Polla~Fattah,~\IEEEmembership{Senior Member,~IEEE,}
         and~Research~Collaborators%
-\thanks{P. Fattah is with the Department of Computer Science and Robotics, Faculty of Engineering and Applied Sciences. (e-mail: polla.fattah@research.org).}%
-\thanks{Manuscript received August 15, 2026; revised October 20, 2026.}}
+\thanks{P. Fattah is with the Department of Computer Science and Robotics, Faculty of Engineering and Applied Sciences. (e-mail: polla.fattah@research.org).}}
 
 \markboth{IEEE Transactions on Robotics,~Vol.~42, No.~1, 2026}%
 {Fattah \MakeLowercase{\textit{et al.}}: Socially-Weighted Distributed Graph Optimization ($\text{D}^2\text{RO}$)}
@@ -34,7 +33,7 @@
 \maketitle
 
 \begin{abstract}
-The continuous routing of autonomous service fleets—such as retail shopping carts (\textit{Int-Cart}), clinical hospital pushchairs, and airport luggage trolleys—in crowded, human-shared public environments poses fundamental multi-agent coordination challenges. Existing Multi-Agent Path Finding (MAPF) and reactive collision avoidance methods suffer from local potential minima traps in orthogonal $90^\circ$ shelf fixtures (Artificial Potential Fields: $0.0\%$ success), velocity obstacle constraint infeasibility in narrow single-file corridors (ORCA: $0.0\%$ success), delayed backtracking (Decentralized Local MAPF: $+21.8\%$ makespan penalty), and social discomfort violations (Static $A^*$: $4.00 \pm 0.00$ violations). This paper proposes the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). $\text{D}^2\text{RO}$ formalizes a dimensionally weighted 5-component edge traversal cost function $C(u, v, t) = w_D D(u, v) + w_M W_{\text{mesh}}(u, v, t) + w_H H_{\text{prox}}(v, t) + w_R R_{\text{lock}}(u, v, t) + w_S S_{\text{trolley}}(v, t)$, seamlessly unifying incremental heuristic graph repair ($\text{D}^*$ Lite), event-driven Vehicle-to-Vehicle (V2V) ad-hoc mesh telemetry with exponential decay, continuous 2D asymmetric Gaussian human proxemics, spatiotemporal directional corridor mutex locks, and non-holonomic vehicle safety clearance envelopes ($S_{\text{trolley}}$). Evaluated across $N=100$ randomized Monte Carlo kinodynamic simulation trials in retail supermarket, clinical hospital (featuring Turnout Alcoves), and airport terminal concourses, $\text{D}^2\text{RO}$ achieves a $100.0\%$ mission success rate with $0.00 \pm 0.00$ corridor deadlocks and $0.00 \pm 0.00$ intimate personal space violations ($p < 0.001$), while executing incremental vertex repairs in under $0.15\text{ ms}$ on low-cost embedded hardware.
+The continuous routing of autonomous service fleets—such as retail shopping carts (\textit{Int-Cart}), clinical hospital pushchairs, and airport luggage trolleys—in crowded, human-shared public environments poses fundamental multi-agent coordination challenges. Existing Multi-Agent Path Finding (MAPF) and reactive collision avoidance methods suffer from local potential minima traps in orthogonal $90^\circ$ shelf fixtures (Artificial Potential Fields: $0.0\%$ success), velocity obstacle constraint infeasibility in narrow single-file corridors (ORCA: $0.0\%$ success), live-lock timeouts in narrow corridors (Decentralized Local MAPF: $0.0\%$ success, 35.0 s timeout), and social discomfort violations (Static $A^*$: $4.00 \pm 0.00$ violations). This paper proposes the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). $\text{D}^2\text{RO}$ formalizes a dimensionally weighted 5-component edge traversal cost function $C(u, v, t) = w_D D(u, v) + w_M W_{\text{mesh}}(u, v, t) + w_H H_{\text{prox}}(v, t) + w_R R_{\text{lock}}(u, v, t) + w_S S_{\text{trolley}}(v, t)$, seamlessly unifying incremental heuristic graph repair ($\text{D}^*$ Lite), event-driven Vehicle-to-Vehicle (V2V) ad-hoc mesh telemetry with exponential decay, continuous 2D asymmetric Gaussian human proxemics, spatiotemporal directional corridor mutex locks, and non-holonomic vehicle safety clearance envelopes ($S_{\text{trolley}}$). Evaluated across $N=100$ randomized Monte Carlo kinodynamic simulation trials in retail supermarket, clinical hospital (featuring Turnout Alcoves), and airport terminal concourses, $\text{D}^2\text{RO}$ achieves a $100.0\%$ mission success rate with $0.00 \pm 0.00$ corridor deadlocks and $0.00 \pm 0.00$ intimate personal space violations ($p < 0.001$), while executing incremental vertex repairs in under $0.15\text{ ms}$ on modern host processors (extrapolating to real-time embedded execution).
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -74,7 +73,7 @@ Traditional discrete graph planners (e.g., Static $A^*$, Dijkstra) compute globa
 In narrow architectural passages (e.g., supermarket grocery aisles, clinical hospital corridors) where corridor width $W_{\text{aisle}}$ is less than twice the robot's safety envelope ($W_{\text{aisle}} < 2 \cdot r_{\text{safety}}$), bidirectional passing is geometrically impossible. When two opposing agents enter a single-file aisle simultaneously, reactive avoidance algorithms oscillate in place, producing permanent symmetrical live-locks \cite{dergachev2021distributed}.
 
 \subsubsection{Information Isolation and Delayed Fleet Backtracking}
-In decentralized multi-agent systems without communication, robots operate with myopic, line-of-sight sensing. When a lead cart encounters an unexpected aisle blockage, trailing carts remain unaware of the obstruction. Trailing units travel all the way to the blocked entrance before sensing the congestion locally, forcing complete reversals and causing a $+46.5\%$ inflation in fleet makespan \cite{gielis2022codesign}.
+In decentralized multi-agent systems without communication, robots operate with myopic, line-of-sight sensing. When a lead cart encounters an unexpected aisle blockage, trailing carts remain unaware of the obstruction. Trailing units travel all the way to the blocked entrance before sensing the congestion locally, forcing complete reversals and causing severe inflation in fleet makespan \cite{gielis2022codesign}.
 
 \subsection{Target Application Fields}
 The proposed framework is purposefully designed for multi-agent service fleet coordination across four key human-shared application domains:
@@ -88,21 +87,21 @@ The proposed framework is purposefully designed for multi-agent service fleet co
 \subsection{The Proposed Solution: The \texorpdfstring{$\text{D}^2\text{RO}$}{D2RO} Framework}
 To overcome these bottlenecks, this paper proposes the \textbf{Distributed Dynamic Route Optimization (\texorpdfstring{$\text{D}^2\text{RO}$}{D2RO})} framework powered by \textbf{Socially-Weighted Distributed Graph Optimization (SW-DGO)}. $\text{D}^2\text{RO}$ introduces a unified, 5-component edge traversal cost function:
 \begin{multline}
-\label{eq:sw_dgo_master}
-C(u, v, t) = D(u, v) + W_{\text{mesh}}(u, v, t) + H_{\text{prox}}(v, t) \\
-+ R_{\text{lock}}(u, v, t) + S_{\text{trolley}}(v, t)
+\label{eq:sw_dgo_master_intro}
+C(u, v, t) = w_D \cdot D(u, v) + w_M \cdot W_{\text{mesh}}(u, v, t) + w_H \cdot H_{\text{prox}}(v, t) \\
++ w_R \cdot R_{\text{lock}}(u, v, t) + w_S \cdot S_{\text{trolley}}(v, t)
 \end{multline}
-coupling incremental $\text{D}^*$ Lite heuristic search \cite{koenig2002dstar} with event-driven V2V mesh telemetry, continuous Gaussian proxemics \cite{havln2024benchmark}, directional corridor mutex locks, and non-holonomic vehicle clearance envelopes ($S_{\text{trolley}}$).
+coupling incremental $\text{D}^*$ Lite heuristic search \cite{koenig2002dstar} with event-driven V2V mesh telemetry, continuous Gaussian proxemics \cite{kruse2013human, chen2020relational}, directional corridor mutex locks, and non-holonomic vehicle clearance envelopes ($S_{\text{trolley}}$).
 
 \subsection{Key Contributions}
 The primary scientific contributions of this research are:
 \begin{enumerate}
-    \item \textbf{A Unified 5-Component Cost Formulation:} We formulate the SW-DGO traversal cost metric combining physical distance, V2V mesh telemetry, continuous Gaussian proxemics, corridor locks, and vehicle clearance envelopes into a single scalar cost evaluated locally by incremental heuristic search.
-    \item \textbf{Elimination of Concave Fixture Traps:} We prove theoretically and empirically that anchoring non-holonomic kinematics to an incrementally repaired topological graph ($\text{D}^*$ Lite) eliminates the $0.0\%$ failure mode of classical reactive collision avoidance (ORCA) in orthogonal $90^\circ$ shelf corridors.
-    \item \textbf{Provable Deadlock Freedom in Single-File Bottlenecks:} We introduce directional corridor mutex locks and Turnout Alcoves ($V_{\text{alcove}}$), guaranteeing zero head-on corridor deadlocks ($N_{\text{deadlock}} \equiv 0$).
-    \item \textbf{Social Compliance with Zero Intimate Violations:} We demonstrate through 20 randomized Monte Carlo physical trials that $\text{D}^2\text{RO}$ achieves $0.0$ intimate personal space violations, compared to $46.2 \pm 3.2$ violations in Static $A^*$.
-    \item \textbf{Sub-Millisecond Embedded Real-Time Feasibility:} We demonstrate that $\text{D}^*$ Lite incremental vertex repairs execute in $0.04\text{ ms}$ to $0.11\text{ ms}$ across a $12\times$ scaling in obstacle density, consuming $<2.5\text{ KB/s}$ wireless mesh bandwidth and guaranteeing deterministic 60 FPS control on low-power microcontrollers (Raspberry Pi 5, Jetson Orin Nano).
-    \item \textbf{Multi-Domain Empirical Validation:} We validate the framework across three distinct architectural topologies (Retail Supermarket, Clinical Hospital, and Airport Terminal), providing 10 camera-ready 300 DPI figures and 4 open-access CSV datasets.
+    \item \textbf{A Unified 5-Component Cost Formulation:} We formulate the SW-DGO traversal cost metric combining physical distance ($w_D D$), V2V mesh telemetry ($w_M W_{\text{mesh}}$), continuous Gaussian proxemics ($w_H H_{\text{prox}}$), corridor locks ($w_R R_{\text{lock}}$), and vehicle clearance envelopes ($w_S S_{\text{trolley}}$) into a single scalar cost evaluated locally by incremental heuristic search.
+    \item \textbf{Elimination of Concave Fixture Traps:} We demonstrate theoretically and empirically that anchoring non-holonomic kinematics to an incrementally repaired topological graph ($\text{D}^*$ Lite) eliminates the $0.0\%$ failure mode of classical reactive collision avoidance (ORCA) in orthogonal $90^\circ$ shelf corridors.
+    \item \textbf{Deadlock Prevention in Single-File Bottlenecks:} We introduce directional corridor mutex locks and Turnout Alcoves ($V_{\text{alcove}}$), empirically eliminating head-on corridor deadlocks across all evaluated trials ($N_{\text{deadlock}} = 0.00 \pm 0.00$).
+    \item \textbf{Social Compliance with Zero Intimate Violations:} We demonstrate through $N=100$ randomized Monte Carlo kinodynamic simulation trials that $\text{D}^2\text{RO}$ achieves $0.00 \pm 0.00$ intimate personal space violations, compared to $4.00 \pm 0.00$ in Static $A^*$, $226.39 \pm 69.25$ in APF, and $102.44 \pm 15.00$ in Local MAPF ($p < 0.001$).
+    \item \textbf{Sub-Millisecond Replan Feasibility:} We demonstrate that $\text{D}^*$ Lite incremental vertex repairs execute in $0.045\text{ ms}$ to $0.108\text{ ms}$ across dynamic crowd scaling, consuming $<2.5\text{ KB/s}$ wireless mesh bandwidth and demonstrating high computational efficiency for embedded ROS 2 deployment.
+    \item \textbf{Multi-Domain Empirical Validation:} We validate the framework across three distinct architectural topologies (Retail Supermarket, Clinical Hospital, and Airport Terminal), providing 10 camera-ready 300 DPI figures and 5 open-access CSV benchmark datasets.
 \end{enumerate}
 
 % ==============================================================================
@@ -364,28 +363,29 @@ Fig.~\ref{fig:streamlines} demonstrates 2D velocity streamlines around high-dens
 % SECTION VI: EXPERIMENTAL RESULTS & DISCUSSION
 % ==============================================================================
 \section{Experimental Results \& Discussion}
-We conducted extensive kinodynamic simulation experiments across four distinct baselines:
-\begin{enumerate}
-    \item \textbf{Static $A^*$:} Pure static topological shortest path planning.
-    \item \textbf{Artificial Potential Fields (APF):} Continuous force-gradient reactive navigation (Khatib 1986).
-    \item \textbf{Reactive ORCA:} Velocity-obstacle half-plane linear programming (van den Berg et al. 2008).
-    \item \textbf{Decentralized Local MAPF:} Windowed local conflict arbitration and token-passing (Dergachev \& Yakovlev 2021).
-    \item \textbf{$\text{D}^2\text{RO}$ (SW-DGO Proposed):} Socially-weighted distributed graph optimization with multi-hop V2V mesh telemetry.
-\end{enumerate}
+
+\subsection{Experimental Setup \& Randomization Protocol}
+All experiments were conducted using the decoupled 2D kinodynamic simulation framework integrating non-holonomic unicycle dynamics ($\Delta t = 0.05\text{ s}$, 20 Hz control loop) across $1200 \times 800\text{ px}$ ($36.0\text{ m} \times 24.0\text{ m}$) floorplans. To ensure statistical rigor and reproducibility:
+\begin{itemize}
+    \item \textbf{Random Seed Policy:} Each evaluation executed $N=100$ independent Monte Carlo trials seeded deterministically ($\text{seed} = \text{trial\_idx} + 1000$).
+    \item \textbf{Dynamic Pedestrian Behavior:} Pedestrians move with stochastic velocities $v_h \in [0.8, 1.2]\text{ m/s}$, random waypoint heading deflections, and a $30\%$ browsing loitering probability ($p_{\text{loiter}} = 0.30$) generating dynamic Gaussian discomfort Halos.
+    \item \textbf{Timeout Threshold:} A strict mission timeout threshold of $T_{\max} = 35.0\text{ s}$ was enforced; runs exceeding $T_{\max}$ due to livelocks were logged as mission failures.
+    \item \textbf{Statistical Significance Testing:} Comparative metrics are reported as sample mean $\pm$ standard deviation ($\mu \pm \sigma$) alongside exact two-sided $95\%$ Confidence Intervals ($[\mu \pm t_{0.975, \nu} \cdot \text{SEM}]$). Pairwise hypothesis testing was conducted via two-tailed Welch's unequal-variance $t$-tests ($H_0: \mu_{\text{D2RO}} = \mu_{\text{baseline}}$, significance threshold $\alpha = 0.01$, with Satterthwaite degrees of freedom $\nu$).
+\end{itemize}
 
 \begin{table*}[t]
 \centering
-\caption{Comparative Performance Benchmark over $N=100$ Randomized Monte Carlo Trials (Mean $\pm$ Std. Dev. [95\% CI]).}
+\caption{Comparative Performance Benchmark over $N=100$ Randomized Monte Carlo Trials (Mean $\pm$ Std. Dev. [95\% Confidence Interval]).}
 \label{tab:benchmark}
 \begin{tabular}{lcccccc}
 \toprule
-\textbf{Navigation Algorithm} & \textbf{Success Rate (\%)} & \textbf{Makespan (s)} & \textbf{Deadlocks} & \textbf{Intimate Violations} & \textbf{V2V Packets} & \textbf{Avg Replan (ms)} \\
+\textbf{Navigation Algorithm} & \textbf{Success Rate (\%)} & \textbf{Makespan (s) [95\% CI]} & \textbf{Deadlocks} & \textbf{Intimate Violations} & \textbf{V2V Packets} & \textbf{Avg Replan (ms)} \\
 \midrule
-Static $A^*$ & 100.0\% & 0.80 $\pm$ 0.00 & 0.00 $\pm$ 0.00 & 4.00 $\pm$ 0.00 & 0.0 $\pm$ 0.0 & N/A (Static) \\
+Static $A^*$ & 100.0\% & 0.80 $\pm$ 0.00 [0.80, 0.80] & 0.00 $\pm$ 0.00 & 4.00 $\pm$ 0.00 & 0.0 $\pm$ 0.0 & N/A (Static) \\
 Artificial Potential Fields (APF) & 0.0\% & Timeout (35.0s) & 0.01 $\pm$ 0.10 & 226.39 $\pm$ 69.25 & 0.0 $\pm$ 0.0 & 0.040 $\pm$ 0.000 \\
 Reactive ORCA (Velocity Obstacles) & 0.0\% & Timeout (35.0s) & 2094.37 $\pm$ 99.62 & 19.37 $\pm$ 65.28 & 0.0 $\pm$ 0.0 & 0.120 $\pm$ 0.000 \\
 Decentralized Local MAPF & 0.0\% & Timeout (35.0s) & 11.00 $\pm$ 0.00 & 102.44 $\pm$ 15.00 & 0.0 $\pm$ 0.0 & 0.350 $\pm$ 0.000 \\
-\textbf{$\text{D}^2\text{RO}$ (SW-DGO Proposed)} & \textbf{100.0\%} & \textbf{21.99 $\pm$ 2.39} & \textbf{0.00 $\pm$ 0.00} & \textbf{0.00 $\pm$ 0.00} & \textbf{14.23 $\pm$ 2.79} & \textbf{0.145 $\pm$ 0.017} \\
+\textbf{$\text{D}^2\text{RO}$ (SW-DGO Proposed)} & \textbf{100.0\%} & \textbf{21.99 $\pm$ 2.39 [21.52, 22.45]} & \textbf{0.00 $\pm$ 0.00} & \textbf{0.00 $\pm$ 0.00} & \textbf{14.23 $\pm$ 2.79} & \textbf{0.145 $\pm$ 0.017} \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -405,15 +405,15 @@ Both APF and ORCA suffer catastrophic $0.0\%$ mission success in the supermarket
     \item \textbf{ORCA Half-Plane Infeasibility:} In narrow single-file aisles ($W_{\text{corridor}} < 2 r_{\text{safety}}$), linear half-plane constraints from walls and opposing carts intersect with an empty feasible set ($\bigcap H = \emptyset$) or force velocity to zero ($\mathbf{v} \to \mathbf{0}$).
 \end{itemize}
 
-\subsubsection{Delayed Backtracking in Decentralized Local MAPF}
-While Decentralized Local MAPF achieves local conflict arbitration via stop-and-wait yielding, it lacks multi-hop V2V mesh telemetry. Trailing carts only discover blocked aisles upon reaching the entrance, causing heavy congestion and timeout in dense shopper bottlenecks ($102.44 \pm 15.00$ intimate personal space violations per trial).
+\subsubsection{Failure Mechanism of Decentralized Local MAPF}
+Decentralized Local MAPF employs windowed spatial conflict arbitration and token-passing. However, in single-file corridors where lateral passing is geometrically impossible, two opposing agents meeting head-on repeatedly yield and swap local priority tokens without global topological diversion. Because the baseline lacks multi-hop V2V mesh routing, neither agent can command an early detour into parallel aisles or Turnout Alcoves, locking both carts into permanent token-swapping live-locks until reaching the $35.0\text{ s}$ timeout ($0.0\%$ success, $102.44 \pm 15.00$ intimate space violations, $p < 0.001$).
 
 \subsection{Comparative Benchmark Analysis}
 As reported in Table~\ref{tab:benchmark} and Fig.~\ref{fig:benchmark}:
 \begin{enumerate}
     \item \textbf{Failure of Reactive Avoidance (0.0\% Success):} ORCA and potential field baselines fail completely in shelf environments due to repulsive force cancellation and constraint infeasibility at $90^\circ$ corners.
     \item \textbf{Social Blindness of Static $A^*$:} While Static $A^*$ executes fixed paths, it causes severe intimate personal space violations ($4.00 \pm 0.00$ per trial).
-    \item \textbf{$\text{D}^2\text{RO}$ Optimal Performance:} $\text{D}^2\text{RO}$ achieves $100.0\%$ success, $0.00$ deadlocks, and $0.00$ intimate violations ($p < 0.001$) with sub-millisecond replan latencies ($0.145\text{ ms}$).
+    \item \textbf{$\text{D}^2\text{RO}$ Optimal Performance:} $\text{D}^2\text{RO}$ achieves $100.0\%$ success, $0.00 \pm 0.00$ deadlocks, and $0.00 \pm 0.00$ intimate violations ($p < 0.001$) with sub-millisecond replan latencies ($0.145\text{ ms}$).
 \end{enumerate}
 
 \subsection{Component Ablation Analysis}
@@ -525,17 +525,17 @@ As shown in Fig.~\ref{fig:scalability}, Table~\ref{tab:scalability_crowd}, and T
 % SECTION VII: CONCLUSION
 % ==============================================================================
 \section{Conclusion \& Future Research Directions}
-This paper introduced the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). By formalizing a 5-component edge traversal cost function $C(u, v, t) = D + W_{\text{mesh}} + H_{\text{prox}} + R_{\text{lock}} + S_{\text{trolley}}$, $\text{D}^2\text{RO}$ resolves the fundamental failure modes of prior Multi-Agent Path Finding and reactive navigation paradigms. Extensive Monte Carlo evaluations demonstrate a $100.0\%$ mission success rate, $0.0$ corridor deadlocks, $0.0$ intimate personal space violations, and sub-millisecond ($< 0.16\text{ ms}$) incremental $\text{D}^*$ Lite vertex repair times on embedded microcontrollers.
+This paper introduced the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). By formalizing a 5-component edge traversal cost function $C(u, v, t) = w_D D + w_M W_{\text{mesh}} + w_H H_{\text{prox}} + w_R R_{\text{lock}} + w_S S_{\text{trolley}}$, $\text{D}^2\text{RO}$ resolves the fundamental failure modes of prior Multi-Agent Path Finding and reactive navigation paradigms. Extensive Monte Carlo evaluations demonstrate a $100.0\%$ mission success rate, $0.00 \pm 0.00$ corridor deadlocks, $0.00 \pm 0.00$ intimate personal space violations, and sub-millisecond ($< 0.15\text{ ms}$) incremental $\text{D}^*$ Lite vertex repair times.
 
 \subsection{Theoretical Guarantees \& Deadlock Prevention}
 \begin{enumerate}
     \item \textbf{Heuristic Admissibility \& Incremental Optimality:} Because the Euclidean distance heuristic $h(s, s_{\text{goal}}) \le c^*(s, s_{\text{goal}})$ is strictly admissible and consistent, $\text{D}^*$ Lite guarantees optimal path extraction with respect to the currently observed edge cost field $C(u, v, t)$ while recomputing only the subgraph perturbed by dynamic obstacles \cite{koenig2002dstar}.
-    \item \textbf{Deadlock Freedom in Single-File Bottlenecks:} In single-file passages where corridor width is insufficient for bidirectional passing, opposing agents entering simultaneously produce reactive live-locks ($\mathbf{F}_{\text{net}} = 0$). $\text{D}^2\text{RO}$ prevents deadlocks by assigning directional reservations and broadcasting `LOCK\_REQUEST` packets that dynamically inflate the reverse edge cost to $R_{\text{lock}} = \infty$. Opposing carts detect this infinity cost and immediately detour through parallel aisles or hold in Turnout Alcoves ($V_{\text{alcove}}$), provably eliminating head-on deadlocks ($N_{\text{deadlock}} \equiv 0$).
+    \item \textbf{Deadlock Freedom in Single-File Bottlenecks:} In single-file passages where corridor width is insufficient for bidirectional passing, opposing agents entering simultaneously produce reactive live-locks ($\mathbf{F}_{\text{net}} = 0$). $\text{D}^2\text{RO}$ prevents deadlocks by assigning directional reservations and broadcasting `LOCK\_REQUEST` packets that dynamically inflate the reverse edge cost to $R_{\text{lock}} = \infty$. Opposing carts detect this infinity cost and immediately detour through parallel aisles or hold in Turnout Alcoves ($V_{\text{alcove}}$), empirically eliminating head-on deadlocks across all evaluated trials ($N_{\text{deadlock}} = 0.00 \pm 0.00$).
 \end{enumerate}
 
 \subsection{Real-World Physical Considerations \& Deployment Constraints}
 \begin{enumerate}
-    \item \textbf{RF Signal Attenuation \& Steel Fixture Multipath:} Metallic retail shelf gondolas and merchandise packaging attenuate $2.4\text{ GHz}$ RF signals by $-15\text{ to }-25\text{ dBm}$. $\text{D}^2\text{RO}$ addresses this through Sub-GHz ($868/915\text{ MHz}$ / IEEE 802.11p) multi-hop TTL forwarding and autonomous exponential penalty decay ($W_{\text{mesh}}(t) = W_0 \cdot \exp(-\lambda t)$), ensuring that intermittent packet loss does not permanently poison the routing graph.
+    \item \textbf{RF Signal Attenuation \& Steel Fixture Multipath:} Metallic retail shelf gondolas and merchandise packaging attenuate $2.4\text{ GHz}$ RF signals by $-15\text{ to }-25\text{ dBm}$. $\text{D}^2\text{RO}$ addresses this through Sub-GHz ($868/915\text{ MHz}$) and dedicated short-range communications ($5.9\text{ GHz}$ IEEE 802.11p / DSRC) multi-hop TTL forwarding with autonomous exponential penalty decay ($W_{\text{mesh}}(t) = W_0 \cdot \exp(-\lambda t)$), ensuring that intermittent packet loss does not permanently poison the routing graph.
     \item \textbf{Indoor Positioning \& Sensor Fusion:} To mitigate wheel odometry drift on variable flooring (polished supermarket tiles, clinical vinyl, terminal carpets), ground truth localization is maintained via an Extended Kalman Filter (EKF) fusing $100\text{ Hz}$ wheel encoders, 6-DOF IMU gyros, Ultra-Wideband (UWB) transceiver trilateration (Decawave DWM1000), and 2D LiDAR scan-matching against architectural CAD floorplans.
     \item \textbf{Payload Invariance \& Non-Holonomic Kinodynamics:} Autonomous carts undergo substantial payload shifts ($15\text{ kg}$ empty to $65\text{ kg}$ fully loaded, a $+333\%$ mass increase), altering the center of gravity and rotational moment of inertia. $\text{D}^2\text{RO}$ modulates linear acceleration ($a_{\max}$) and steering curvature ($\kappa_{\max}$) based on real-time motor current draw and load-cell readings to prevent wheel scrubbing or tip-over during turns.
 \end{enumerate}

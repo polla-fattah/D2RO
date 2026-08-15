@@ -86,12 +86,12 @@ def generate_figure_1():
                        width=0.55, edgecolor="#0f172a", linewidth=1.2)
     axs[1].set_ylabel("Fleet Makespan (s)", fontsize=11, fontweight="bold")
     axs[1].set_title("(b) Fleet Travel Time", fontsize=12, fontweight="bold", pad=10)
-    axs[1].set_ylim(0, 42)
+    axs[1].set_ylim(0, 44)
     axs[1].grid(axis="y")
     for idx, bar in enumerate(bars2):
         yval = bar.get_height()
-        tag = f"{yval:.1f}s" if idx not in [1, 2] else "Timeout\n(35s)"
-        y_pos = yval + (stds_time[idx] if idx not in [1, 2] else 0) + 1.2
+        tag = f"{yval:.1f}s" if idx in [0, 4] else "Timeout\n(35s)"
+        y_pos = yval + (stds_time[idx] if idx in [0, 4] else 0) + 1.2
         axs[1].text(bar.get_x() + bar.get_width()/2.0, y_pos,
                     tag, ha="center", va="bottom", fontsize=8.5, fontweight="bold")
 
@@ -100,13 +100,13 @@ def generate_figure_1():
     stds_viol = [np.std(violations[m]) for m in methods]
     bars3 = axs[2].bar(labels, means_viol, yerr=stds_viol, capsize=4, color=colors,
                        width=0.55, edgecolor="#0f172a", linewidth=1.2)
-    axs[2].set_ylabel("Intimate Violations (d < 0.8m)", fontsize=11, fontweight="bold")
+    axs[2].set_ylabel("Intimate Violations ($d < 0.8\\text{ m}$)", fontsize=11, fontweight="bold")
     axs[2].set_title("(c) Social Comfort Violations", fontsize=12, fontweight="bold", pad=10)
-    axs[2].set_ylim(0, 26)
+    axs[2].set_ylim(0, 320)
     axs[2].grid(axis="y")
     for idx, bar in enumerate(bars3):
         yval = bar.get_height()
-        axs[2].text(bar.get_x() + bar.get_width()/2.0, yval + stds_viol[idx] + 0.6,
+        axs[2].text(bar.get_x() + bar.get_width()/2.0, yval + stds_viol[idx] + 6.0,
                     f"{yval:.1f}", ha="center", va="bottom", fontsize=9.5, fontweight="bold")
 
     for ax in axs:

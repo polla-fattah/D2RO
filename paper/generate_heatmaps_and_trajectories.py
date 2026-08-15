@@ -110,7 +110,7 @@ def generate_figure_8():
         ax.add_patch(patches.Circle((hx, hy), 7, facecolor="#ea580c", edgecolor="#ffffff", linewidth=1.2, zorder=6))
 
     ax.legend(loc="upper left", frameon=True, fontsize=9.5, facecolor="#ffffff", edgecolor="#334155")
-    ax.set_title("Figure 8: Spatial Human Proxemic Discomfort Field & D²RO Social Detour Trajectory Overlay",
+    ax.set_title("Spatial Human Proxemic Discomfort Field & D²RO Social Detour Trajectory Overlay",
                  fontsize=11.5, fontweight="bold", pad=12)
 
     plt.tight_layout()
@@ -169,7 +169,7 @@ def generate_figure_9():
 
     ax.set_xlabel("Corridor Longitudinal Position $X$ (px)", fontsize=11, fontweight="bold")
     ax.set_ylabel("Spatiotemporal Progression Time $t$ (seconds)", fontsize=11, fontweight="bold")
-    ax.set_title("Figure 9: Spatiotemporal Time-Space Trajectory Diagram of Turnout Alcove Resolution",
+    ax.set_title("Spatiotemporal Time-Space Trajectory Diagram of Turnout Alcove Resolution",
                  fontsize=11.5, fontweight="bold", pad=12)
     ax.set_ylim(0, 18)
     ax.set_xlim(50, 950)
@@ -241,7 +241,7 @@ def generate_figure_10():
         ax.add_patch(patches.Circle((hx, hy), 7, facecolor="#ea580c", edgecolor="#ffffff", linewidth=1.2, zorder=5))
 
     ax.legend(loc="upper left", frameon=True, fontsize=9.5, facecolor="#ffffff")
-    ax.set_title("Figure 10: Airport Open Concourse Vector Flow Streamlines & Multi-Agent Luggage Trajectories",
+    ax.set_title("Airport Open Concourse Vector Flow Streamlines & Multi-Agent Luggage Trajectories",
                  fontsize=11.5, fontweight="bold", pad=12)
 
     plt.tight_layout()

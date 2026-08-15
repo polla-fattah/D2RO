@@ -48,15 +48,18 @@ def build_paper_docx():
         "The continuous routing of autonomous service fleets—such as retail shopping trolleys (Int-Cart), "
         "hospital pushchairs, and airport luggage carts—in crowded, human-shared environments poses fundamental multi-agent challenges. "
         "Traditional Multi-Agent Path Finding (MAPF) and reactive collision avoidance methods (e.g., ORCA, Artificial Potential Fields) "
-        "suffer from local potential minima traps in orthogonal 90-degree shelf fixtures (0.0% success rate), symmetrical live-locks in "
-        "narrow single-file corridors, and social discomfort violations. This paper proposes the Distributed Dynamic Route Optimization (D²RO) "
-        "framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). D²RO formalizes a dynamic 5-component edge traversal "
-        "cost function C(u, v, t) = D + W_mesh + H_prox + R_lock + S_trolley, unifying incremental heuristic search (D* Lite), event-driven "
-        "Vehicle-to-Vehicle (V2V) ad-hoc mesh telemetry with exponential decay, continuous 2D Gaussian human proxemics, spatiotemporal directional "
-        "corridor mutex locks, and non-holonomic kinetic vehicle safety clearance envelopes (S_trolley). Evaluated across 20 randomized Monte Carlo "
-        "physical trials in retail supermarket, hospital, and airport architectures, D²RO achieves a 100.0% mission success rate with 0.0 corridor "
-        "deadlocks and 0.0 intimate proxemic violations, eliminating 100% of reactive shelf corner traps while executing incremental vertex repairs "
-        "in under 0.16 ms on low-cost embedded hardware."
+        "suffer from local potential minima traps in orthogonal 90-degree shelf fixtures (0.0% success rate), velocity obstacle constraint "
+        "infeasibility in narrow single-file corridors (ORCA: 0.0% success), live-lock timeouts in narrow corridors (Decentralized Local MAPF: "
+        "0.0% success, 35.0s timeout), and social discomfort violations (Static A*: 4.00 ± 0.00 violations). This paper proposes the "
+        "Distributed Dynamic Route Optimization (D²RO) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). "
+        "D²RO formalizes a dimensionally weighted 5-component edge traversal cost function C(u, v, t) = w_D D(u, v) + w_M W_mesh(u, v, t) + "
+        "w_H H_prox(v, t) + w_R R_lock(u, v, t) + w_S S_trolley(v, t), unifying incremental heuristic search (D* Lite), event-driven "
+        "Vehicle-to-Vehicle (V2V) ad-hoc mesh telemetry with exponential decay, continuous 2D asymmetric Gaussian human proxemics, spatiotemporal "
+        "directional corridor mutex locks, and non-holonomic kinetic vehicle safety clearance envelopes (S_trolley). Evaluated across N = 100 "
+        "randomized Monte Carlo kinodynamic simulation trials in retail supermarket, clinical hospital (featuring Turnout Alcoves), and airport "
+        "terminal concourses, D²RO achieves a 100.0% mission success rate with 0.00 ± 0.00 corridor deadlocks and 0.00 ± 0.00 intimate proxemic "
+        "violations (p < 0.001), while executing incremental vertex repairs in under 0.15 ms on modern host processors (extrapolating to real-time "
+        "embedded execution)."
     )
     abs_run.font.size = Pt(10.5)
 
@@ -90,7 +93,7 @@ def build_paper_docx():
         "3. Symmetrical Live-Locks in Single-File Corridors: In narrow passages where corridor width is less than two vehicle safety radii, opposing "
         "agents meeting head-on oscillate in place, producing permanent live-locks without dynamic priority arbitration.\n\n"
         "4. Information Isolation & Delayed Backtracking: Without peer communication, trailing robots travel all the way to a blocked corridor before "
-        "discovering the obstruction locally, forcing complete reversals and causing a +46.5% inflation in fleet makespan."
+        "discovering the obstruction locally, forcing complete reversals and causing severe inflation in fleet makespan."
     )
 
     doc.add_heading("1.2 Multi-Domain Target Application Fields", level=2)
@@ -108,7 +111,8 @@ def build_paper_docx():
     doc.add_heading("1.3 The Proposed Solution: D²RO Framework", level=2)
     doc.add_paragraph(
         "To overcome these bottlenecks, this paper proposes the Distributed Dynamic Route Optimization (D²RO) framework powered by Socially-Weighted "
-        "Distributed Graph Optimization (SW-DGO). D²RO introduces a unified 5-component cost function C(u, v, t) = D + W_mesh + H_prox + R_lock + S_trolley, "
+        "Distributed Graph Optimization (SW-DGO). D²RO introduces a unified 5-component cost function:\n\n"
+        "C(u, v, t) = w_D * D(u, v) + w_M * W_mesh(u, v, t) + w_H * H_prox(v, t) + w_R * R_lock(u, v, t) + w_S * S_trolley(v, t)\n\n"
         "coupling incremental D* Lite heuristic search with event-driven V2V mesh telemetry, continuous Gaussian proxemics, directional corridor "
         "mutex locks, and non-holonomic vehicle clearance envelopes."
     )
@@ -158,7 +162,7 @@ def build_paper_docx():
 
     doc.add_heading("2.6 Human-Aware Navigation & Research Gap", level=2)
     doc.add_paragraph(
-        "HA-VLN 2.0 (HA-VLN Authors, 2024) emphasized that robots must respect personal space boundaries (proxemics). The Research Gap: There remains "
+        "Kruse et al. (2013) and Chen et al. (2020) emphasized that robots must respect personal space boundaries (proxemics). The Research Gap: There remains "
         "a distinct lack of hybrid frameworks that fuse proactive, mesh-informed global graph updates with reactive human-aware collision avoidance "
         "in fixture-dense environments. D²RO bridges this gap."
     )
@@ -167,14 +171,9 @@ def build_paper_docx():
     doc.add_heading("3. Mathematical Formulation & System Architecture", level=1)
     doc.add_paragraph(
         "The complete 5-Component SW-DGO Traversal Cost Function is formalized as:\n\n"
-        "C(u, v, t) = D(u, v) + W_mesh(u, v, t) + H_prox(v, t) + R_lock(u, v, t) + S_trolley(v, t)\n"
-    )
-    doc.add_paragraph(
-        "1. D(u, v): Baseline Euclidean physical distance and non-holonomic orientation change penalty.\n"
-        "2. W_mesh(u, v, t): Event-driven V2V congestion alert with exponential temporal decay: W_mesh(t) = W_0 * exp(-lambda * t).\n"
-        "3. H_prox(v, t): Continuous 2D anisotropic Gaussian human personal space discomfort field.\n"
-        "4. R_lock(u, v, t): Spatiotemporal directional mutex lock guaranteeing single-file corridor exclusivity.\n"
-        "5. S_trolley(v, t): Kinetic safety clearance envelope enforcing anti-tailgating following distance and an 18px shelf margin."
+        "C(u, v, t) = w_D * D(u, v) + w_M * W_mesh(u, v, t) + w_H * H_prox(v, t) + w_R * R_lock(u, v, t) + w_S * S_trolley(v, t)\n\n"
+        "where calibrated dimensionless weights w = [1.0, 1.5, 2.0, 1.0, 1.2] balance metric progress, collaborative V2V routing, human comfort, "
+        "corridor mutual exclusion, and vehicle safety envelopes."
     )
 
     # Section 4: Multi-Domain Environments & Snapshots
@@ -253,34 +252,39 @@ def build_paper_docx():
     # Section 6: Experimental Results & Discussion
     doc.add_heading("6. Experimental Results & Quantitative Discussion", level=1)
     doc.add_paragraph(
-        "Comprehensive empirical benchmarks were conducted across 20 randomized Monte Carlo trials. All raw data is exported to "
-        "experiments/data/ and summarized in Table 1 below:"
+        "Comprehensive empirical benchmarks were conducted across N = 100 randomized Monte Carlo trials per algorithm (deterministic seeds). "
+        "All raw data is exported to experiments/data/ and summarized in Table 1 below:"
     )
 
-    # Table 1
-    table = doc.add_table(rows=4, cols=7)
+    # Table 1: Complete 5-Algorithm Benchmark
+    table = doc.add_table(rows=6, cols=7)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    headers = ["Algorithm", "Success Rate", "Makespan (s)", "Deadlocks", "Intimate Violations", "Mesh Packets", "Avg Replan"]
+    headers = ["Navigation Algorithm", "Success Rate", "Makespan (s) [95% CI]", "Deadlocks", "Intimate Violations", "V2V Packets", "Avg Replan"]
     for col_idx, h in enumerate(headers):
         cell = table.cell(0, col_idx)
         cell.text = h
         cell.paragraphs[0].runs[0].bold = True
 
     data = [
-        ["Static A*", "100.0%", "8.10 ± 0.0s", "0.0", "46.25 ± 3.2", "0.0", "N/A (Static)"],
-        ["ORCA / Reactive", "0.0%", "Timeout (35s)", "5.10 ± 1.4", "54.95 ± 5.0", "0.0", "0.09 ms"],
-        ["D²RO (Proposed)", "100.0%", "22.00 ± 4.5s", "0.0", "0.00 ± 0.0", "39.1 ± 22.6", "0.16 ms"]
+        ["Static A*", "100.0%", "0.80 ± 0.00 [0.80, 0.80]", "0.00 ± 0.00", "4.00 ± 0.00", "0.0 ± 0.0", "N/A (Static)"],
+        ["Artificial Potential Fields (APF)", "0.0%", "Timeout (35.0s)", "0.01 ± 0.10", "226.39 ± 69.25", "0.0 ± 0.0", "0.040 ms"],
+        ["Reactive ORCA (Velocity Obstacles)", "0.0%", "Timeout (35.0s)", "2094.37 ± 99.62", "19.37 ± 65.28", "0.0 ± 0.0", "0.120 ms"],
+        ["Decentralized Local MAPF", "0.0%", "Timeout (35.0s)", "11.00 ± 0.00", "102.44 ± 15.00", "0.0 ± 0.0", "0.350 ms"],
+        ["D²RO (SW-DGO Proposed)", "100.0%", "21.99 ± 2.39 [21.52, 22.45]", "0.00 ± 0.00", "0.00 ± 0.00", "14.23 ± 2.79", "0.145 ms"]
     ]
     for row_idx, row_data in enumerate(data):
         for col_idx, val in enumerate(row_data):
-            table.cell(row_idx + 1, col_idx).text = val
+            cell = table.cell(row_idx + 1, col_idx)
+            cell.text = val
+            if row_idx == 4:
+                cell.paragraphs[0].runs[0].bold = True
 
     # Add Figure 1 (Benchmark)
     fig1_path = os.path.join(FIG_DIR, "fig1_benchmark_comparison.png")
     if os.path.exists(fig1_path):
         doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER
         doc.add_picture(fig1_path, width=Inches(6.2))
-        cap = doc.add_paragraph("Figure 1: Benchmark comparison of D²RO vs. Static A* and ORCA across (a) Success Rate, (b) Makespan, and (c) Social Proxemic Violations.")
+        cap = doc.add_paragraph("Figure 1: Benchmark comparison of D²RO vs. Static A*, APF, ORCA, and Decentralized Local MAPF across (a) Success Rate, (b) Makespan, and (c) Social Proxemic Violations.")
         cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
         cap.runs[0].font.size = Pt(9.5)
         cap.runs[0].font.italic = True
@@ -291,13 +295,16 @@ def build_paper_docx():
         "1. Catastrophic Failure of Reactive Avoidance in Orthogonal Fixtures (0.0% Success): As depicted in Figure 1(a), reactive potential "
         "fields and ORCA fail completely (0.0% success rate) in the supermarket domain. When a cart encounters a pedestrian near a shelf corner, "
         "the repulsive force from the human and the repulsive vector from the orthogonal shelf wall cancel out, creating a local potential minimum. "
-        "Carts become permanently trapped in internal 90-degree L-corners and U-bays formed by shelves, timing out at 35.0s (Figure 1(b)) with "
-        "5.1 ± 1.4 deadlocks per trial.\n\n"
-        "2. Social Blindness of Static A*: Static A* completes missions quickly (8.10s), but causes 46.25 ± 3.2 intimate personal space "
-        "violations per trial (Figure 1(c)). Because Static A* plans purely on static Euclidean distances D(u, v), it relentlessly drives straight "
-        "through dense pedestrian clusters, forcing human shoppers to jump aside.\n\n"
-        "3. D²RO Optimal Social Synthesis: D²RO achieves a 100.0% mission success rate with 0.0 intimate violations, executing polite, wide "
-        "social detours through Action Alley. Incremental D* Lite updates execute in just 0.16 ms, proving embedded real-time efficiency."
+        "Carts become permanently trapped in internal 90-degree L-corners and U-bays formed by shelves, timing out at 35.0s (Figure 1(b)).\n\n"
+        "2. Failure Mechanism of Decentralized Local MAPF: In single-file corridors where lateral passing is geometrically impossible, two opposing "
+        "agents meeting head-on repeatedly yield and swap local priority tokens without global topological diversion. Lacking multi-hop V2V mesh "
+        "routing, neither agent can command an early detour into parallel aisles or Turnout Alcoves, locking both carts into permanent token-swapping "
+        "live-locks until reaching the 35.0s timeout (0.0% success, 102.44 ± 15.00 intimate violations, p < 0.001).\n\n"
+        "3. Social Blindness of Static A*: Static A* completes missions quickly (0.80s), but causes 4.00 ± 0.00 intimate personal space violations "
+        "per trial (Figure 1(c)). Because Static A* plans purely on static Euclidean distances D(u, v), it relentlessly drives straight through dense "
+        "pedestrian clusters, forcing human shoppers to step aside.\n\n"
+        "4. D²RO Optimal Social Synthesis: D²RO achieves a 100.0% mission success rate with 0.00 ± 0.00 intimate violations (p < 0.001), executing "
+        "polite, wide social detours through Action Alley. Incremental D* Lite updates execute in just 0.145 ms, proving real-time computational efficiency."
     )
 
     # Add Figure 2 (Ablation)
@@ -315,14 +322,14 @@ def build_paper_docx():
     doc.add_paragraph(
         "1. Necessity of W_mesh (V2V Telemetry): Setting W_mesh = 0 forces trailing carts to rely solely on local line-of-sight sensors. Trailing "
         "units travel all the way to a blocked corridor entrance before detecting the bottleneck, forcing complete reversals and increasing "
-        "makespan by +46.5% (14.6s -> 21.4s).\n\n"
+        "makespan by +48.3% (14.57s -> 21.61s).\n\n"
         "2. Necessity of R_lock (Directional Mutex Locks): Setting R_lock = 0 removes single-file corridor exclusivity. When two opposing carts "
-        "enter a narrow aisle simultaneously, they freeze in symmetrical head-on deadlocks, reducing mission success to 45.0% with 3.2 ± 0.8 deadlocks "
+        "enter a narrow aisle simultaneously, they freeze in symmetrical head-on deadlocks, reducing mission success to 47.0% with 1.94 ± 2.01 deadlocks "
         "per trial (Figure 2(b)).\n\n"
-        "3. Necessity of H_prox (Gaussian Proxemics): Setting H_prox = 0 causes the cumulative pedestrian discomfort integral to spike from 12.4 to "
-        "94.7 (+663.7%) (Figure 2(a)). Carts treat shoppers as infinitesimal points, brushing aggressively past pedestrians.\n\n"
+        "3. Necessity of H_prox (Gaussian Proxemics): Setting H_prox = 0 causes the cumulative pedestrian discomfort integral to spike from 12.47 to "
+        "95.52 (+666.0%) (Figure 2(a)). Carts treat shoppers as infinitesimal points, brushing aggressively past pedestrians.\n\n"
         "4. Necessity of S_trolley (Kinetic Vehicle Safety Envelope): Setting S_trolley = 0 causes carts to cut sharp 90-degree turns tightly, "
-        "producing 5.4 ± 1.8 shelf corner scrapes and severe tailgating during multi-cart queueing (Figure 2(b))."
+        "producing 5.69 ± 1.69 shelf corner scrapes and reducing mission success to 88.0% (Figure 2(b))."
     )
 
     # Add Figure 4 (Scalability)
@@ -330,50 +337,27 @@ def build_paper_docx():
     if os.path.exists(fig4_path):
         doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER
         doc.add_picture(fig4_path, width=Inches(4.8))
-        cap = doc.add_paragraph("Figure 4: Fleet scalability curves showing sub-linear D* Lite vertex repair latency and V2V mesh packets as crowd density increases from 2 to 24 pedestrians.")
+        cap = doc.add_paragraph("Figure 4: Decoupled fleet scalability curves: (a) Incremental D* Lite replanning latency and V2V mesh broadcast packets vs. dynamic crowd density (N_humans in [2..30], fixed fleet N_carts=4); (b) Fleet makespan and mutex wait time vs. autonomous fleet size (N_carts in [2..12], fixed crowd N_humans=10).")
         cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
         cap.runs[0].font.size = Pt(9.5)
         cap.runs[0].font.italic = True
 
-    # In-Depth Scalability Discussion
-    doc.add_heading("6.3 Scalability & Computational Efficiency", level=2)
-    doc.add_paragraph(
-        "Across a 12x increase in dynamic obstacles (from 2 to 24 humans) and a 5x increase in fleet size (from 2 to 10 carts), D* Lite incremental "
-        "vertex repair latency increases minimally from 0.04 ms to 0.11 ms (Figure 4). Because D* Lite updates only inconsistent vertices (g(s) != rhs(s)) "
-        "affected by the local Gaussian envelope rather than re-heapifying the full graph, it guarantees deterministic execution within a 16.6 ms "
-        "(60 FPS) control loop.\n\n"
-        "Furthermore, total V2V mesh packet traffic scales moderately from 4 to 118 packets per run (< 2.5 KB/s bandwidth consumption), remaining "
-        "well within standard IEEE 802.11p and BLE 5.0 mesh wireless capacity."
-    )
-
     # Section 7: Conclusion and Future Research Directions
     doc.add_heading("7. Conclusion & Future Research Directions", level=1)
-    
-    doc.add_heading("7.1 Summary of Contributions", level=2)
     doc.add_paragraph(
         "This paper introduced the Distributed Dynamic Route Optimization (D²RO) framework powered by Socially-Weighted Distributed Graph "
-        "Optimization (SW-DGO). By formalizing a 5-component edge traversal cost function C(u, v, t) = D + W_mesh + H_prox + R_lock + S_trolley, "
-        "D²RO resolves the fundamental failure modes of prior Multi-Agent Path Finding and reactive navigation paradigms. Extensive Monte Carlo "
-        "evaluations demonstrate a 100.0% mission success rate, 0.0 corridor deadlocks, 0.0 intimate personal space violations, and sub-millisecond "
-        "(< 0.16 ms) incremental D* Lite vertex repair times on embedded microcontrollers."
+        "Optimization (SW-DGO). By formalizing a 5-component edge traversal cost function C(u, v, t) = w_D * D + w_M * W_mesh + w_H * H_prox + "
+        "w_R * R_lock + w_S * S_trolley, D²RO resolves the fundamental failure modes of prior Multi-Agent Path Finding and reactive navigation "
+        "paradigms. Extensive Monte Carlo evaluations demonstrate a 100.0% mission success rate, 0.00 ± 0.00 corridor deadlocks, 0.00 ± 0.00 "
+        "intimate personal space violations, and sub-millisecond (< 0.15 ms) incremental D* Lite vertex repair times."
     )
 
-    doc.add_heading("7.2 Theoretical Guarantees & Deadlock Prevention", level=2)
-    doc.add_paragraph(
-        "1. Heuristic Admissibility & Incremental Optimality: Because the Euclidean distance heuristic h(s, s_goal) <= c*(s, s_goal) is strictly "
-        "admissible and consistent, D* Lite guarantees optimal path extraction with respect to the currently observed edge cost field C(u, v, t) "
-        "while recomputing only the subgraph perturbed by dynamic obstacles.\n\n"
-        "2. Deadlock Freedom in Single-File Bottlenecks: In single-file passages where corridor width is insufficient for bidirectional passing, "
-        "opposing agents entering simultaneously produce reactive live-locks (F_net = 0). D²RO prevents deadlocks by assigning directional reservations "
-        "and broadcasting LOCK_REQUEST(u, v) packets that dynamically inflate the reverse edge cost to R_lock = inf. Opposing carts detect this infinity "
-        "cost and immediately detour through parallel aisles or hold in Turnout Alcoves (V_alcove), provably eliminating head-on deadlocks (N_deadlock = 0)."
-    )
-
-    doc.add_heading("7.3 Real-World Physical Considerations & Deployment Constraints", level=2)
+    doc.add_heading("7.1 Real-World Physical Considerations & Deployment Constraints", level=2)
     doc.add_paragraph(
         "1. RF Signal Attenuation & Steel Fixture Multipath: Metallic retail shelf gondolas and merchandise packaging attenuate 2.4 GHz RF signals "
-        "by -15 to -25 dBm. D²RO addresses this through Sub-GHz (868/915 MHz / IEEE 802.11p) multi-hop TTL forwarding and autonomous exponential "
-        "penalty decay (W_mesh(t) = W_0 * exp(-lambda * t)), ensuring that intermittent packet loss does not permanently poison the routing graph.\n\n"
+        "by -15 to -25 dBm. D²RO addresses this through Sub-GHz (868/915 MHz) and dedicated short-range communications (5.9 GHz IEEE 802.11p / DSRC) "
+        "multi-hop TTL forwarding with autonomous exponential penalty decay (W_mesh(t) = W_0 * exp(-lambda * t)), ensuring that intermittent "
+        "packet loss does not permanently poison the routing graph.\n\n"
         "2. Indoor Positioning & Sensor Fusion: To mitigate wheel odometry drift on variable flooring (polished supermarket tiles, clinical vinyl, "
         "terminal carpets), ground truth localization is maintained via an Extended Kalman Filter (EKF) fusing 100 Hz wheel encoders, 6-DOF IMU gyros, "
         "Ultra-Wideband (UWB) transceiver trilateration (Decawave DWM1000), and 2D LiDAR scan-matching against architectural CAD floorplans.\n\n"
@@ -382,15 +366,19 @@ def build_paper_docx():
         "curvature (kappa_max) based on real-time motor current draw and load-cell readings to prevent wheel scrubbing or tip-over during turns."
     )
 
-    doc.add_heading("7.4 Future Research Directions", level=2)
+    doc.add_heading("7.2 Future Research Directions", level=2)
     doc.add_paragraph(
         "1. Hybrid Learning-Guided Search: Future investigations will explore coupling Graph Neural Networks (GNNs) or Deep Reinforcement Learning "
         "(e.g., PRIMAL / Learn to Follow) for global sub-goal allocation with the deterministic D²RO engine for micro-level kinodynamic path execution.\n\n"
-        "2. Hardware-in-the-Loop (HIL) & Physical ROS 2 Stack: The software architecture is designed for native deployment as a ROS 2 Nav2 global "
-        "planner plugin running on NVIDIA Jetson Orin Nano / Raspberry Pi 5 hardware equipped with RPLiDAR A3 laser scanners and Intel RealSense D435i "
-        "depth cameras running YOLOv8-Pose for real-time human skeleton tracking.\n\n"
-        "3. Heterogeneous Multi-Agent Ecosystems: Expanding SW-DGO to mixed-fleet environments comprising autonomous delivery pods, heavy floor-scrubbing "
+        "2. Heterogeneous Multi-Agent Ecosystems: Expanding SW-DGO to mixed-fleet environments comprising autonomous delivery pods, heavy floor-scrubbing "
         "AGVs, and human-operated wheelchairs by introducing vehicle-specific agility weights into the R_lock reservation tensor."
+    )
+
+    doc.add_heading("7.3 Data and Code Availability", level=2)
+    doc.add_paragraph(
+        "To support scientific reproducibility and open science, all simulation source code, experimental benchmarking harnesses, verification "
+        "test suites, raw CSV datasets (N = 100 Monte Carlo trials across 5 algorithms, 5 cost configurations, and 3 cross-domain environments), "
+        "and high-resolution vector figures are available under the MIT open-source license at: https://github.com/polla-fattah/D2RO"
     )
 
     doc_path = os.path.join(BASE_DIR, "..", "paper.docx")
