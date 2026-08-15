@@ -343,8 +343,9 @@ def generate_simulation_snapshots():
               color="#f8fafc", fontsize=11, fontweight="bold", pad=12)
     plt.tight_layout()
     plt.savefig(os.path.join(OUT_DIR, "fig5_supermarket_topology_trajectories.png"), dpi=300, facecolor="#0b1120")
+    plt.savefig(os.path.join(OUT_DIR, "fig5_supermarket_topology_trajectories.pdf"), facecolor="#0b1120")
     plt.close()
-    print("  -> Generated: fig5_supermarket_topology_trajectories.png")
+    print("  -> Generated: fig5_supermarket_topology_trajectories.png & .pdf")
 
     # 5.2 Hospital Architecture Figure
     fig, ax = plt.subplots(figsize=(9.5, 6.0), dpi=300)
@@ -387,8 +388,9 @@ def generate_simulation_snapshots():
               color="#38bdf8", fontsize=11, fontweight="bold", pad=12)
     plt.tight_layout()
     plt.savefig(os.path.join(OUT_DIR, "fig6_hospital_topology_trajectories.png"), dpi=300, facecolor="#050a18")
+    plt.savefig(os.path.join(OUT_DIR, "fig6_hospital_topology_trajectories.pdf"), facecolor="#050a18")
     plt.close()
-    print("  -> Generated: fig6_hospital_topology_trajectories.png")
+    print("  -> Generated: fig6_hospital_topology_trajectories.png & .pdf")
 
     # 5.3 Airport Architecture Figure
     fig, ax = plt.subplots(figsize=(9.5, 6.0), dpi=300)
@@ -429,8 +431,9 @@ def generate_simulation_snapshots():
               color="#7dd3fc", fontsize=11, fontweight="bold", pad=12)
     plt.tight_layout()
     plt.savefig(os.path.join(OUT_DIR, "fig7_airport_topology_trajectories.png"), dpi=300, facecolor="#060e20")
+    plt.savefig(os.path.join(OUT_DIR, "fig7_airport_topology_trajectories.pdf"), facecolor="#060e20")
     plt.close()
-    print("  -> Generated: fig7_airport_topology_trajectories.png")
+    print("  -> Generated: fig7_airport_topology_trajectories.png & .pdf")
 
 def main():
     print("=" * 80)
