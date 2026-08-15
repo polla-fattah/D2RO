@@ -563,8 +563,15 @@ def main() -> None:
              "path_length_m", "makespan_s"]),
         "corridor_lock": analyse_paired_mechanism(
             "corridor_lock_experiment.csv", "lock_enabled", "1",
-            ["head_on_events", "deadlocks", "lock_wait_s",
-             "corridor_time_s", "makespan_s"]),
+            # total_lock_wait_s supersedes lock_wait_s: the latter is a per-episode
+            # timer that corridor release resets, so an end-of-run read of it is
+            # always ~0 regardless of how long the agent actually waited. Both are
+            # reported so the correction is visible rather than silent.
+            ["head_on_events", "deadlocks", "lock_wait_s", "total_lock_wait_s",
+             "corridor_time_s", "makespan_s",
+             # Diversion evidence: off-corridor vertices occupied, and the number of
+             # route reconsiderations that took the agent there.
+             "nodes_outside_corridor", "replans"]),
     }
 
     json_path = os.path.join(DATA_DIR, "analysis_results.json")

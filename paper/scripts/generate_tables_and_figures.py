@@ -472,7 +472,9 @@ def table_corridor_lock(res: Dict[str, Any]) -> bool:
         "the same single-file corridor from opposite ends",
         [("head_on_events", "Head-on encounters", 2),
          ("deadlocks", "Deadlocks", 2),
-         ("lock_wait_s", "Lock wait (s)", 2),
+         ("total_lock_wait_s", "Lock wait, total (s)", 2),
+         ("nodes_outside_corridor", "Off-corridor vertices", 2),
+         ("replans", "Route reconsiderations", 1),
          ("corridor_time_s", "Corridor occupancy (s)", 2),
          ("makespan_s", "Makespan (s)", 2)])
 

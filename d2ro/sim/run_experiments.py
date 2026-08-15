@@ -1075,7 +1075,15 @@ class ExperimentRunner:
         fieldnames = [
             "trial_id", "lock_enabled", "arrival_offset_s", "head_on_events",
             "deadlocks", "lock_wait_s", "corridor_time_s", "timeout",
-            "makespan_s", "success"
+            "makespan_s", "success",
+            # Diversion evidence. The reservation protocol raises success without
+            # producing measurable queueing, so the mechanism claim rests on showing
+            # that agents LEAVE the contested corridor rather than wait at it. These
+            # columns put that evidence in the released dataset instead of leaving it
+            # to diagnostic instrumentation quoted in prose.
+            "nodes_outside_corridor",   # distinct off-corridor vertices occupied
+            "replans",                  # D* Lite repairs, i.e. route reconsiderations
+            "total_lock_wait_s"         # accumulator that corridor release cannot reset
         ]
 
         dt = 0.05
@@ -1108,6 +1116,9 @@ class ExperimentRunner:
             agents = [a1, a2]
 
             corridor_nodes = {"N_back_2", "N_mid_2", "N_front_2"}
+            # Vertices occupied outside the contested corridor. A diverting agent
+            # accumulates these; a queueing agent does not leave the corridor at all.
+            visited_outside = set()
             entry_t = None
             exit_t = None
             in_conflict = False
@@ -1120,6 +1131,10 @@ class ExperimentRunner:
                         continue          # staggered arrival
                     a.step(dt, [], prox_field, current_sim_time=sim_time,
                            shelves=obstacles, peer_agents=agents)
+
+                for a in agents:
+                    if a.current_node not in corridor_nodes:
+                        visited_outside.add(a.current_node)
 
                 # --- discrete head-on encounter detection -------------------- #
                 both_inside = (a1.current_node in corridor_nodes and
@@ -1161,6 +1176,10 @@ class ExperimentRunner:
                 "timeout": 0 if done else 1,
                 "makespan_s": round(sim_time, 2),
                 "success": 1 if done else 0,
+                "nodes_outside_corridor": len(visited_outside),
+                "replans": sum(a.replan_count for a in agents),
+                "total_lock_wait_s": round(
+                    sum(a.total_lock_wait_time for a in agents), 3),
             }
 
         rows = []

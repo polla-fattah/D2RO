@@ -127,11 +127,14 @@ diagnostic traces that are not in the released data. Add an experiment recording
 per trial: nodes visited outside the contested corridor, replan count, and wait
 time. This makes the mechanism claim rest on committed data.
 
-### A7. Optional: heading-augmented search — *reviewer #9*
+### A7. Heading-augmented search — *deliberately NOT implemented*
 
-Only if `α_turn` is to be retained. Otherwise handle in Phase D by removing it from
-the evaluated formulation. **Recommendation: do not implement now.** Remove the
-term from Eq. (4) and schedule as future work; it is not where the novelty lies.
+**Decision: no code change.** Implementing `α_turn` requires a heading-augmented
+state space, which is effectively a rewrite of D\* Lite's search domain — high risk
+for a term the paper's novelty does not rest on. The reviewer explicitly accepts
+the alternative: remove it from the evaluated formulation, or state `α_turn = 0`.
+
+Resolved as a manuscript change instead. **See D14 in Phase D.**
 
 ---
 
@@ -206,6 +209,31 @@ the diversion experiment and the split latency metrics.
 | D11 | Move ORCA/MAPF out of Figure 1 into supplementary | #12 |
 | D12 | Add the Git commit SHA and release tag to the manuscript | #1 |
 | D13 | **Done.** Provenance table (was Table VII) removed from the manuscript — see below | #1 |
+| D14 | **Action required.** Remove `α_turn` from Eq. (4) (carried over from A7, which was closed without code), and correct the displayed `S_trolley` equation to match the implementation — see below | #9 |
+
+### D14 — the `α_turn` decision (ACTION REQUIRED in Phase D)
+
+Carried here from A7, which was deliberately closed without code. **This is a
+manuscript edit that must not be forgotten**: it is reviewer point #9, and the
+inconsistency is currently visible in the central equation of the paper.
+
+Equation (4) includes a turn penalty `α_turn·|Δθ|`. It is **not implemented** — the
+graph state is not heading-augmented — so the displayed formulation describes a
+system that was never evaluated. The reviewer will not accept an unimplemented term
+inside the definition of the evaluated method.
+
+Two acceptable resolutions; **take the first**:
+
+1. **Remove `α_turn` from Eq. (4)** and describe instead the kinodynamic cornering
+   deceleration that genuinely exists in the motion layer. Add the heading-augmented
+   state space to Future Work.
+2. Keep the general formulation but label it as such, and state explicitly that
+   `α_turn = 0` in every reported experiment.
+
+**Also in the same edit** (same reviewer point): the displayed `S_trolley` equation
+describes only the inter-trolley Gaussian, whereas the implementation is a static
+shelf-clearance contribution *plus* a dynamic peer Gaussian. Correct the equation to
+match the code.
 
 ### D13 — why the provenance table was removed (already applied)
 
@@ -280,12 +308,12 @@ whose stamp ends in `-dirty` as **not submittable**.
 
 | Phase | Work | Effort | Blocking? |
 |:--|:--|--:|:--|
-| A1 | Matched-controller Static A\* (+ APF) | 1–2 d | **Yes** |
-| A2 | Latency instrumentation split | 0.5 d | **Yes** |
-| A3 | `lock_wait_time` fix + test | 2 h | **Yes** |
-| A4 | Mesh latency wiring + integration test | 3 h | **Yes** |
-| A5 | Scrape metric event/exposure split | 3 h | No |
-| A6 | Diversion experiment | 0.5 d | No |
+| A1 | Matched-controller Static A\* | **done** | **Yes** |
+| A2 | Latency instrumentation split | **done** | **Yes** |
+| A3 | `lock_wait_time` fix + test | **done** | **Yes** |
+| A4 | Mesh latency wiring + integration test | **done** | **Yes** |
+| A5 | Fixture-contact event/exposure split | **done** | No |
+| A6 | Diversion evidence in Experiment B | **done** | No |
 | B1 | Weight sensitivity (25 configs) | 1 d + runtime | **Yes** |
 | B2 | Communication robustness sweep | 0.5 d + runtime | No |
 | B3 | Demote ORCA/MAPF to supplementary | 2 h | **Yes** |
