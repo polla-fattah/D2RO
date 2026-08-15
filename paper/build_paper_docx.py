@@ -37,7 +37,7 @@ def build_paper_docx():
     # Author
     author_p = doc.add_paragraph()
     author_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    author_run = author_p.add_run("Polla Fattah, et al.\nDepartment of Computer Science & Robotics\n")
+    author_run = author_p.add_run("Polla Fattah and Sanar Fawzi\nDepartment of Computer Science and Engineering\npolla.fattah@koyauniversity.org; sanar.fawzi@koyauniversity.org\n")
     author_run.font.size = Pt(11)
     author_run.italic = True
 
