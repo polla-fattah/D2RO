@@ -1,0 +1,301 @@
+trial_id,environment,key_topological_challenge,agent_count,human_density,success_rate_pct,makespan_s,mean_transit_time_s,proxemic_violations,mesh_packets_exchanged,dynamic_replans
+1,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,95.8,36.9,0,70,696
+1,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,35.9,27.57,0,3,295
+1,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,40.85,26.42,30,30,703
+2,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,56.85,30.19,0,70,471
+2,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,42.6,31.43,0,2,349
+2,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,61.15,29.6,0,17,718
+3,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,23.5,18.58,0,86,371
+3,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,38.9,30.2,0,3,318
+3,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,50.1,33.55,97,34,947
+4,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,42.2,26.74,0,72,499
+4,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,62.15,35.93,0,10,416
+4,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,60.5,35.24,93,38,1004
+5,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,41.65,23.18,0,67,458
+5,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,40.2,29.0,0,3,318
+5,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,42.95,23.85,0,34,618
+6,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,51.2,25.74,6,86,590
+6,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,36.1,27.63,0,3,310
+6,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,70.4,34.22,6,27,754
+7,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,44.95,27.14,0,86,586
+7,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,43.85,34.67,0,4,418
+7,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,84.6,37.66,102,37,1043
+8,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,35.05,21.83,0,73,436
+8,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,51.35,32.87,0,3,301
+8,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,52.9,29.99,198,55,796
+9,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,35.8,22.01,0,73,485
+9,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,41.25,32.68,0,4,391
+9,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,86.9,42.49,145,57,950
+10,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,37.3,22.03,0,75,408
+10,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,40.85,29.15,0,5,355
+10,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,40.75,26.59,84,29,685
+11,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,49.35,25.4,0,70,451
+11,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,35.05,27.28,0,3,243
+11,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,49.35,28.22,17,24,736
+12,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,56.25,26.77,0,72,395
+12,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,79.9,45.18,0,4,475
+12,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,40.35,20.19,19,26,547
+13,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,63.45,28.62,0,74,551
+13,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,44.2,31.93,0,2,413
+13,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,56.3,33.34,70,26,878
+14,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,41.35,23.05,0,67,492
+14,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,36.95,27.53,0,2,358
+14,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,89.45,48.77,4,21,1295
+15,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,55.5,26.94,0,62,461
+15,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,52.35,33.0,0,3,374
+15,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,100.9,42.8,447,76,997
+16,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,42.2,23.4,0,74,381
+16,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,38.55,30.37,0,2,370
+16,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,73.5,29.04,76,39,741
+17,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,36.65,22.13,0,74,489
+17,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,40.45,29.02,0,3,243
+17,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,72.4,33.27,0,47,896
+18,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,53.7,26.14,0,72,432
+18,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,39.15,28.78,0,3,264
+18,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,52.1,32.35,3,13,818
+19,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,42.2,23.31,0,74,391
+19,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,67.7,37.78,0,2,451
+19,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,42.25,26.71,116,30,753
+20,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,58.3,27.49,0,106,625
+20,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,54.6,35.58,0,4,358
+20,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,70.4,46.94,153,40,1246
+21,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,41.75,23.25,0,75,490
+21,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,47.7,35.25,0,3,434
+21,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,67.95,37.67,158,50,1058
+22,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,24.4,19.15,0,86,436
+22,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,43.4,29.83,0,5,285
+22,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,57.5,31.42,3,37,791
+23,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,52.4,25.81,0,72,396
+23,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,39.2,29.75,0,3,364
+23,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,127.95,45.07,59,40,1202
+24,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,64.75,29.25,0,70,497
+24,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,38.1,27.92,0,3,241
+24,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,75.95,34.46,142,56,1009
+25,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,50.4,25.31,0,72,405
+25,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,70.0,39.22,0,8,431
+25,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,32.1,21.44,37,33,525
+26,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,42.2,23.34,0,74,343
+26,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,55.1,36.53,0,4,327
+26,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,34.15,20.8,83,25,575
+27,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,42.2,23.29,0,74,316
+27,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,36.3,27.63,0,3,245
+27,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,29.55,20.55,45,29,572
+28,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,43.85,23.67,0,72,304
+28,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,42.35,29.72,0,3,271
+28,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,65.1,37.71,46,44,1048
+29,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,73.35,31.4,0,73,656
+29,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,40.2,29.0,0,3,334
+29,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,74.3,35.29,217,64,1020
+30,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,52.4,26.16,0,70,433
+30,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,43.35,31.87,0,2,368
+30,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,35.4,23.76,7,24,656
+31,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,44.35,24.15,0,70,340
+31,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,55.1,36.9,0,3,352
+31,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,56.2,29.72,174,49,829
+32,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,59.35,27.55,0,75,633
+32,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,35.05,27.28,0,3,284
+32,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,53.15,27.26,0,25,676
+33,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,53.85,26.52,0,76,570
+33,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,49.55,32.42,0,3,307
+33,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,24.7,18.33,0,18,464
+34,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,63.9,29.04,0,70,527
+34,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,48.6,31.95,0,3,276
+34,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,95.5,39.32,298,74,1118
+35,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,47.95,24.69,0,72,394
+35,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,70.9,42.35,193,16,522
+35,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,143.05,52.22,29,40,1454
+36,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,36.7,21.88,0,88,367
+36,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,47.25,33.13,0,3,372
+36,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,70.7,31.0,218,40,853
+37,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,42.2,26.49,0,72,377
+37,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,36.55,25.58,0,2,360
+37,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,50.25,26.65,57,47,698
+38,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,31.45,20.58,0,90,410
+38,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,41.3,28.98,0,3,316
+38,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,67.25,34.94,79,27,923
+39,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,52.75,28.02,0,73,590
+39,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,43.35,29.67,0,3,275
+39,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,33.75,23.08,92,48,635
+40,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,42.2,23.25,0,74,434
+40,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,55.25,35.62,30,3,511
+40,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,77.1,31.0,68,34,835
+41,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,45.35,24.1,0,94,555
+41,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,41.9,32.83,0,3,375
+41,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,41.55,24.25,82,23,668
+42,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,43.0,23.6,0,74,297
+42,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,56.45,33.95,0,4,370
+42,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,54.0,25.27,64,28,640
+43,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,65.65,30.72,0,75,630
+43,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,35.05,27.28,0,3,292
+43,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,61.4,28.0,0,30,689
+44,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,42.4,23.41,0,74,377
+44,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,37.9,28.17,0,3,235
+44,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,93.1,48.01,0,24,1285
+45,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,61.35,28.04,0,75,632
+45,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,46.85,30.83,0,5,255
+45,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,68.9,40.11,0,38,1120
+46,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,62.4,28.3,0,64,550
+46,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,34.95,27.18,0,3,239
+46,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,61.15,30.02,199,50,759
+47,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,47.15,24.49,0,72,459
+47,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,47.0,31.12,0,5,392
+47,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,0.0,180.0,96.5,30,29,2117
+48,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,37.1,22.33,0,75,441
+48,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,44.15,34.57,0,3,307
+48,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,54.7,31.12,116,34,848
+49,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,99.05,37.57,0,72,747
+49,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,78.0,41.6,0,3,511
+49,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,0.0,180.0,58.93,460,63,1719
+50,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,43.0,23.51,0,74,380
+50,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,42.15,32.05,0,2,446
+50,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,57.1,33.41,62,52,911
+51,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,62.45,28.37,0,72,429
+51,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,45.2,33.43,0,8,485
+51,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,0.0,180.0,82.75,232,46,2137
+52,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,69.7,30.49,0,70,548
+52,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,44.65,32.2,0,2,395
+52,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,63.0,28.17,0,39,717
+53,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,31.25,20.53,0,75,429
+53,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,47.7,31.03,0,5,326
+53,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,72.1,32.54,162,46,895
+54,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,36.7,22.24,0,86,391
+54,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,46.8,30.73,0,2,293
+54,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,80.75,45.96,295,60,1161
+55,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,47.0,24.74,0,67,514
+55,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,36.1,28.0,0,3,296
+55,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,0.0,180.0,64.88,79,13,1060
+56,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,37.95,22.55,0,62,416
+56,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,34.85,27.02,0,3,260
+56,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,62.8,26.07,86,45,682
+57,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,36.55,22.2,0,73,448
+57,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,48.3,32.78,0,5,377
+57,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,75.45,33.99,126,22,920
+58,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,64.8,29.26,0,70,429
+58,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,39.4,28.52,0,2,357
+58,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,145.9,79.02,34,58,2019
+59,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,37.45,23.86,0,86,415
+59,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,35.05,27.28,0,3,297
+59,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,73.7,42.5,54,19,967
+60,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,33.5,21.08,0,91,422
+60,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,56.4,34.33,0,3,388
+60,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,93.95,36.74,91,50,954
+61,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,35.8,26.16,0,80,579
+61,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,53.85,37.75,0,3,363
+61,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,79.8,31.04,263,44,818
+62,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,88.2,37.36,0,70,619
+62,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,43.95,29.87,0,3,282
+62,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,137.9,63.16,148,29,1551
+63,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,35.9,22.04,0,73,444
+63,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,35.05,27.28,0,3,316
+63,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,52.95,23.96,152,50,650
+64,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,71.35,39.89,242,145,817
+64,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,46.6,33.1,0,9,388
+64,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,77.8,33.39,29,19,881
+65,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,59.3,27.54,0,72,443
+65,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,42.45,31.47,0,2,333
+65,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,145.45,79.15,0,36,2115
+66,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,74.2,31.31,0,75,657
+66,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,47.8,34.35,0,2,438
+66,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,0.0,180.0,96.5,43,21,2257
+67,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,42.2,23.61,0,72,415
+67,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,53.9,33.1,0,4,347
+67,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,31.9,21.81,207,51,575
+68,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,21.15,18.0,0,86,348
+68,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,43.05,29.57,0,3,260
+68,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,66.9,32.87,40,30,862
+69,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,44.85,24.27,0,70,341
+69,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,42.35,29.72,0,3,260
+69,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,106.8,40.81,80,49,1044
+70,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,51.7,25.66,0,72,446
+70,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,36.3,25.5,0,2,308
+70,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,67.25,35.25,0,23,865
+71,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,39.65,22.63,0,75,464
+71,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,69.2,39.42,0,5,316
+71,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,55.2,26.22,0,13,667
+72,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,43.2,23.86,0,73,509
+72,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,50.0,31.88,0,3,282
+72,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,133.25,45.59,63,30,1119
+73,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,37.3,22.06,0,75,433
+73,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,37.05,29.58,0,4,336
+73,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,98.25,39.54,21,47,1064
+74,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,40.25,23.13,0,73,506
+74,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,50.55,32.38,0,5,316
+74,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,68.7,33.84,179,39,919
+75,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,52.45,26.17,0,70,475
+75,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,40.9,30.6,0,3,322
+75,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,134.85,57.35,52,29,1489
+76,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,0.0,180.0,60.6,0,75,1535
+76,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,37.25,29.85,0,3,311
+76,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,53.9,36.84,209,28,1042
+77,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,38.65,22.45,0,64,414
+77,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,40.25,28.63,0,3,319
+77,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,82.95,36.61,28,42,1035
+78,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,44.35,23.82,0,72,392
+78,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,38.1,27.92,0,3,261
+78,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,61.95,26.82,20,40,734
+79,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,68.45,29.81,0,64,557
+79,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,38.45,30.18,0,4,344
+79,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,51.2,31.49,0,17,861
+80,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,84.05,40.17,0,90,833
+80,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,59.85,37.75,0,4,355
+80,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,94.05,52.61,17,43,1379
+81,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,35.0,21.45,0,75,459
+81,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,46.1,34.53,0,9,375
+81,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,64.4,32.1,51,24,845
+82,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,57.3,27.06,0,72,510
+82,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,46.1,30.5,0,2,339
+82,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,55.4,31.06,224,57,884
+83,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,55.1,26.84,0,73,567
+83,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,62.55,40.63,0,11,373
+83,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,68.9,40.52,66,19,926
+84,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,53.5,26.16,0,72,330
+84,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,51.4,34.92,0,3,411
+84,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,60.25,36.2,37,26,917
+85,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,36.1,21.76,0,86,437
+85,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,41.7,33.1,0,3,305
+85,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,91.65,50.15,0,13,1288
+86,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,52.7,25.87,0,72,389
+86,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,39.45,31.63,0,5,384
+86,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,92.25,48.85,152,30,1340
+87,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,26.5,19.2,0,89,409
+87,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,34.95,27.18,0,3,309
+87,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,77.1,32.01,69,50,967
+88,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,30.75,24.28,0,86,538
+88,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,46.9,31.23,0,3,309
+88,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,74.35,29.24,9,41,768
+89,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,42.2,23.61,0,72,414
+89,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,34.9,28.82,0,3,286
+89,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,52.3,29.09,96,51,827
+90,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,35.1,21.84,0,73,463
+90,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,48.35,29.92,0,2,406
+90,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,31.85,20.18,0,15,530
+91,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,28.15,19.8,0,73,437
+91,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,54.75,33.38,0,4,305
+91,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,28.1,19.0,0,26,496
+92,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,49.25,33.09,74,112,741
+92,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,72.9,39.52,0,3,437
+92,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,82.95,33.19,44,44,771
+93,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,54.55,29.25,0,70,457
+93,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,33.4,27.15,0,9,368
+93,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,58.3,26.86,23,28,742
+94,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,52.4,25.81,0,72,425
+94,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,48.1,34.75,0,8,397
+94,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,36.15,25.91,107,31,703
+95,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,55.3,26.89,0,70,403
+95,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,46.1,32.6,0,2,403
+95,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,49.95,27.39,260,46,759
+96,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,38.6,22.41,0,75,476
+96,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,34.95,27.18,0,3,271
+96,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,54.1,35.71,105,34,975
+97,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,43.45,23.94,0,75,489
+97,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,60.35,35.25,0,5,365
+97,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,66.75,29.84,23,40,798
+98,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,36.7,22.24,0,86,371
+98,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,40.45,28.7,0,2,315
+98,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,96.6,48.17,161,33,1198
+99,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,87.5,34.5,0,87,705
+99,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,49.7,31.78,0,8,378
+99,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,73.5,33.91,33,16,938
+100,Retail Supermarket,"Narrow aisles, Action Alley, shelf margins",4,7,100.0,36.25,21.83,0,75,443
+100,Clinical Hospital,"Turnout alcoves, emergency triage, sterile OR locks",3,5,100.0,52.1,32.58,0,5,263
+100,Airport Terminal,"Massive open concourse, security chokepoints, gate piers",4,16,100.0,77.35,38.54,6,36,983

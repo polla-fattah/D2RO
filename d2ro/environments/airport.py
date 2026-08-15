@@ -189,7 +189,10 @@ class AirportScenarioSuite:
                 {"id": 3, "start": "N_PLZ_510_100", "goal": "TROLLEY_DEPOT_PIER"},
                 {"id": 4, "start": "N_GATE_A1", "goal": "TROLLEY_DEPOT_PIER"},
             ]
-            random.seed(303)
+            # No random.seed() here: the caller owns the seed. This scenario
+            # previously reset it to a constant, which made all 100 cross-domain
+            # trials byte-identical (n=1 reported as n=100). Scenarios A in the
+            # supermarket and hospital suites likewise leave the seed alone.
             humans = []
             for i in range(16):
                 humans.append(Human(

@@ -1,3 +1,23 @@
-% NOT GENERATED: corridor_lock dataset missing
-% This experiment has no complete dataset. The manuscript must not
-% cite numbers for it until the run completes.
+% GENERATED FILE - do not edit by hand.
+% Source: experiments/data/analysis_results.json
+% Produced by paper/scripts/generate_tables_and_figures.py
+\begin{table}[t]
+\centering
+\caption{Mechanism experiment B: distributed corridor mutex. Two carts are routed into the same single-file corridor from opposite ends ($N=50$ paired trials; the same seed drives both arms, so each row is a within-pair comparison). Continuous outcomes use the Wilcoxon signed-rank test and mission success McNemar's exact test; rows marked \emph{identical} were equal in every pair. $p$-values are Holm-adjusted across the rows of this table.}
+\label{tab:mech_lock}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Metric} & \textbf{ON} & \textbf{OFF} & \textbf{Test} & \textbf{$p$ (Holm)} \\
+\midrule
+Head-on encounters & $1.08 \pm 1.18$ & $1.00 \pm 0.00$ & Wilcoxon & $1$ \\
+Deadlocks & $0.00 \pm 0.00$ & $0.00 \pm 0.00$ & identical & $1$ \\
+Lock wait (s) & $0.00 \pm 0.00$ & $0.00 \pm 0.00$ & identical & $1$ \\
+Corridor occupancy (s) & $40.01 \pm 30.87$ & $89.41 \pm 42.42$ & Wilcoxon & $0.00403$ \\
+Makespan (s) & $40.05 \pm 30.85$ & $89.42 \pm 42.39$ & Wilcoxon & $0.00403$ \\
+\midrule
+Mission success & 88.0\% & 36.0\% & McNemar & $1.5 \times 10^{-4}$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

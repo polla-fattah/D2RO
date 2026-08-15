@@ -32,7 +32,7 @@
 \maketitle
 
 \begin{abstract}
-The continuous routing of autonomous service fleets—such as retail shopping carts (\textit{Int-Cart}), clinical hospital pushchairs, and airport luggage trolleys—in crowded, human-shared public environments poses fundamental multi-agent coordination challenges. Existing Multi-Agent Path Finding (MAPF) and reactive collision avoidance methods suffer from local potential minima traps in orthogonal $90^\circ$ shelf fixtures (Artificial Potential Fields: $0.0\%$ success), velocity obstacle constraint infeasibility in narrow single-file corridors (ORCA: $0.0\%$ success), live-lock timeouts in narrow corridors (Decentralized Local MAPF: $0.0\%$ success, 35.0~s timeout), and social discomfort violations (Static $A^*$: $4.00 \pm 0.00$ violations per trial). This paper proposes the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). $\text{D}^2\text{RO}$ formalizes a dimensionally weighted 5-component edge traversal cost function $C(u, v, t) = w_D D(u, v) + w_M W_{\text{mesh}}(u, v, t) + w_H H_{\text{prox}}(v, t) + w_R R_{\text{lock}}(u, v, t) + w_S S_{\text{trolley}}(v, t)$, unifying incremental heuristic graph repair ($\text{D}^*$ Lite), event-driven Vehicle-to-Vehicle (V2V) ad-hoc mesh telemetry with exponential decay, continuous 2D asymmetric Gaussian human proxemics, spatiotemporal directional corridor mutex locks, and non-holonomic vehicle safety clearance envelopes ($S_{\text{trolley}}$). Evaluated across $N=100$ randomized Monte Carlo kinodynamic simulation trials in retail supermarket, clinical hospital (featuring Turnout Alcoves), and airport terminal concourses, $\text{D}^2\text{RO}$ achieves a $97.0\%$ mission success rate in the primary supermarket benchmark ($0.00 \pm 0.00$ corridor deadlocks, $0.59 \pm 5.90$ intimate personal space violations, $p < 0.001$ vs. all baselines), with performance gracefully degrading to $92.0\%$ (hospital) and $80.0\%$ (airport) as architectural complexity increases. Incremental $\text{D}^*$ Lite vertex repairs execute in $0.18\text{ ms}$ to $1.23\text{ ms}$ across all evaluated crowd densities ($N_{\text{humans}} \in [2..30]$), consistently within $2.5\%$ of the $50\text{ ms}$ control loop budget.
+The continuous routing of autonomous service fleets—such as retail shopping carts (\textit{Int-Cart}), clinical hospital pushchairs, and airport luggage trolleys—in crowded, human-shared public environments poses fundamental multi-agent coordination challenges. Classical shortest-path and reactive collision-avoidance methods treat pedestrians as obstacles to be cleared rather than as people whose personal space carries a cost, and they possess no mechanism for resolving symmetric conflicts in single-file corridors. This paper proposes the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). $\text{D}^2\text{RO}$ formalizes a dimensionally weighted 5-component edge traversal cost function $C(u, v, t) = w_D D(u, v) + w_M W_{\text{mesh}}(u, v, t) + w_H H_{\text{prox}}(v, t) + w_R R_{\text{lock}}(u, v, t) + w_S S_{\text{trolley}}(v, t)$, unifying incremental heuristic graph repair ($\text{D}^*$ Lite), event-driven Vehicle-to-Vehicle (V2V) ad-hoc mesh telemetry with exponential decay, continuous 2D asymmetric Gaussian human proxemics, spatiotemporal directional corridor mutex locks, and non-holonomic vehicle safety clearance envelopes ($S_{\text{trolley}}$). We evaluate over $2{,}700$ kinodynamic simulation trials in seven experiments: a comparative benchmark and component ablation in a retail supermarket, generalisation to clinical hospital (featuring Turnout Alcoves) and airport terminal topologies, two scalability sweeps, and two controlled mechanism experiments. $\text{D}^2\text{RO}$ completes $99.0\%$ [$94.6$, $99.8$] of missions in the primary supermarket benchmark at a \emph{median} intimate-space exposure of $0$ control ticks [IQR $0$, $0$], against $128$ [$123$, $131$] for socially blind Static $A^*$ and $204$ [$176$, $276$] for artificial potential fields (Wilcoxon signed-rank on $N=100$ seed-paired trials, Holm-adjusted $p < 10^{-15}$). This social compliance is purchased with time rather than granted for free: $\text{D}^2\text{RO}$'s makespan of $47.18 \pm 13.40\text{ s}$ is $2.6\times$ that of Static $A^*$ ($18.00 \pm 0.00\text{ s}$), and we argue that this is the correct engineering trade for human-shared space. The unchanged planner generalizes across all three domains ($99.0\%$, $100.0\%$ and $95.0\%$ success), and incremental $\text{D}^*$ Lite vertex repairs execute in $0.09$–$0.19\text{ ms}$ across crowd densities $N_{\text{humans}} \in [2..30]$ and fleet sizes $N_{\text{carts}} \in [2..12]$, under $0.4\%$ of the $50\text{ ms}$ control-loop budget.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -61,9 +61,12 @@ Unlike static industrial warehouses where aisles are wide and traffic flows are 
 When deployed in complex, fixture-dense public service environments, traditional Multi-Agent Path Finding (MAPF) and reactive obstacle avoidance algorithms suffer from four fundamental technical bottlenecks:
 
 \subsubsection{The Geometry-Kinematic Disconnect in Concave Fixtures (The ORCA Trap)}
+\label{sec:orca_trap}
 Classical continuous collision avoidance methods—such as Optimal Reciprocal Collision Avoidance (ORCA) \cite{vandenberg2008orca} and Artificial Potential Fields (APF)—rely on local velocity-space half-planes or repulsive force vectors. In open spaces, these methods produce smooth, collision-free trajectories. 
 
-However, in realistic retail and hospital layouts filled with orthogonal $90^\circ$ shelf corners, end-cap displays, and narrow U-bays, reactive methods experience \textbf{catastrophic local potential minima traps}. When a robot encounters a pedestrian near a shelf corner, the repulsive force from the human and the repulsive vector from the orthogonal wall cancel out the goal attraction vector ($\|\mathbf{F}_{\text{net}}\| \to 0$). As demonstrated in our empirical experiments, reactive agents become permanently trapped in internal corners, resulting in a \textbf{$0.0\%$ mission success rate}.
+However, in realistic retail and hospital layouts filled with orthogonal $90^\circ$ shelf corners, end-cap displays, and narrow U-bays, reactive methods are prone to \textbf{local potential minima}. When a robot encounters a pedestrian near a shelf corner, the repulsive force from the human and the repulsive vector from the orthogonal wall can cancel the goal attraction vector ($\|\mathbf{F}_{\text{net}}\| \to 0$), stalling the agent until the pedestrian moves on.
+
+We stress that this is a \emph{delay} mechanism, not necessarily a failure mechanism. Our measurements (Section~\ref{sec:failure_modes}) show that, given a time budget calibrated to the true mission duration, an artificial potential field completes every mission it is given; what it cannot do is complete them without repeatedly driving through people. The deficiency of reactive avoidance in these settings is therefore social and temporal rather than a simple inability to reach the goal, and the contribution of this paper should be read against that corrected baseline.
 
 \subsubsection{Social Blindness of Static Shortest-Path Solvers (The \texorpdfstring{$A^*$}{A*} Flaw)}
 Traditional discrete graph planners (e.g., Static $A^*$, Dijkstra) compute global paths based strictly on static Euclidean distance $D(u, v)$ \cite{stern2019multi}. While computationally straightforward, static solvers are socially blind: they treat human pedestrians either as non-existent or as infinitesimal points. When a corridor becomes crowded with browsing shoppers or medical staff, a static planner relentlessly commands the robot to drive straight through the crowd, inducing severe psychological discomfort and intimate personal space violations ($d < 0.8\text{ m}$).
@@ -92,13 +95,21 @@ C_i(e, t) = w_D \cdot C_{\text{geom}}(e) + w_M \cdot C_{\text{mesh}}(e, t) + w_H
 \end{multline}
 seamlessly unifying incremental heuristic graph repair ($\text{D}^*$ Lite) \cite{koenig2002dstar} with distributed anticipatory cost propagation, continuous Gaussian proxemics \cite{kruse2013human, chen2020relational}, directional corridor reservation protocols, and non-holonomic vehicle clearance envelopes.
 
-\subsection{Key Contributions}
+\subsection{Research Aims \& Key Contributions}
+\label{sec:aims}
+The framework is designed against three explicit aims, and we return to each of them in the discussion and conclusion:
+\begin{description}
+    \item[A1 --- Social compliance:] route service fleets so that pedestrians' intimate space is not entered, accepting bounded additional travel time as the price. Evaluated in Section~\ref{sec:tradeoff}.
+    \item[A2 --- Distributed coordination without a central server:] resolve congestion and single-file conflicts using only peer-to-peer information within a bounded sensing radius. Evaluated in Section~\ref{sec:mechanism}.
+    \item[A3 --- Architectural generality and real-time feasibility:] operate unchanged across dissimilar public topologies within a $50\text{ ms}$ control budget. Evaluated in Sections~\ref{sec:cross_domain_failure} and~\ref{sec:scalability}.
+\end{description}
+
 The primary scientific contributions of this research are:
 \begin{enumerate}
-    \item \textbf{Distributed Anticipatory Edge-Cost Propagation \& Horizon Extension:} We formalize the concept of a distributed dynamic graph-cost field wherein localized physical and social perturbations observed by leading agents are transformed into peer-to-peer, time-decayed edge penalties $C_{\text{mesh}}(e, t)$. This mathematically extends each robot's effective planning horizon ($\mathcal{O}_i^{\text{effective}}(t)$) far beyond its onboard line-of-sight sensing radius ($R_s$), enabling proactive global rerouting before encountering bottlenecks and eliminating $+48.3\%$ in deadheading makespan inflation.
-    \item \textbf{Distributed Directional Bottleneck Reservation Protocol:} We formalize an explicit distributed protocol for single-file topological bottlenecks ($W_{\text{corridor}} < 2 r_{\text{safety}}$) via directional reservation tuples $\mathcal{L}_e = \langle \text{owner}, \vec{d}, t_{\text{acquire}}, t_{\text{expire}}, \text{priority} \rangle$ and Turnout Alcoves ($V_{\text{alcove}}$), guaranteeing single-direction exclusivity and empirical deadlock elimination ($N_{\text{deadlock}} = 0.00 \pm 0.00$) under bounded network latency.
-    \item \textbf{Kinodynamically \& Socially Conditioned Incremental Optimization:} We unify asymmetric human proxemic discomfort fields ($C_{\text{social}}$) and vehicle-specific clearance envelopes ($C_{\text{kinematic}}$) directly into an incremental $\text{D}^*$ Lite graph repair engine, executing sub-millisecond updates ($0.045\text{--}0.145\text{ ms}$) without global re-heapification and completely eliminating the $0.0\%$ failure mode of classical reactive collision avoidance (ORCA/APF) in concave $90^\circ$ shelf fixtures.
-    \item \textbf{Comprehensive Multi-Domain Empirical Benchmark Suite:} We validate the framework across three distinct architectural topologies (Retail Supermarket, Clinical Hospital, and Airport Terminal) over $N=100$ randomized Monte Carlo simulation trials per condition ($2,500$ total trials), providing 10 publication-ready 300 DPI figures and 5 open-access CSV datasets under the MIT license.
+    \item \textbf{Distributed Anticipatory Edge-Cost Propagation \& Horizon Extension:} We formalize a distributed dynamic graph-cost field in which localized physical and social perturbations observed by leading agents become peer-to-peer, time-decayed edge penalties $C_{\text{mesh}}(e, t)$. This extends each robot's effective planning horizon ($\mathcal{O}_i^{\text{effective}}(t)$) beyond its onboard line-of-sight sensing radius ($R_s$). Under a controlled experiment that isolates the mechanism (Section~\ref{sec:mechanism}), agents reroute $10.70 \pm 4.20\text{ s}$ earlier and more than halve their backtracking distance ($1.08 \pm 0.68\text{ m}$ vs. $2.73 \pm 0.87\text{ m}$).
+    \item \textbf{Distributed Directional Bottleneck Reservation Protocol:} We formalize an explicit distributed protocol for single-file topological bottlenecks ($W_{\text{corridor}} < 2 r_{\text{safety}}$) via directional reservation tuples $\mathcal{L}_e = \langle \text{owner}, \vec{d}, t_{\text{acquire}}, t_{\text{expire}}, \text{priority} \rangle$ and Turnout Alcoves ($V_{\text{alcove}}$). In the controlled corridor experiment the protocol raises mission success from $36.0\%$ to $88.0\%$. Our instrumentation shows the mechanism operates by \emph{cost-projected diversion} rather than by queueing, a distinction we analyse in Section~\ref{sec:mechanism}.
+    \item \textbf{Kinodynamically \& Socially Conditioned Incremental Optimization:} We unify asymmetric human proxemic discomfort fields ($C_{\text{social}}$) and vehicle-specific clearance envelopes ($C_{\text{kinematic}}$) directly into an incremental $\text{D}^*$ Lite graph repair engine, executing sub-millisecond updates ($0.09\text{--}0.19\text{ ms}$) without global re-heapification. Ablation shows the proxemic term is load-bearing: removing it collapses mission success from $100.0\%$ to $11.0\%$.
+    \item \textbf{Comprehensive Multi-Domain Empirical Benchmark Suite:} We validate the framework across three distinct architectural topologies (Retail Supermarket, Clinical Hospital, and Airport Terminal) over $2{,}700$ simulation trials in seven experiments. Every table and figure in this paper is generated programmatically from the committed raw data by a single analysis pipeline, with no hand-entered numbers; datasets and code are released under open licenses.
 \end{enumerate}
 
 % ==============================================================================
@@ -153,18 +164,19 @@ Each autonomous service cart $i \in \{1, \dots, N_{\text{carts}}\}$ is governed 
 subject to physical actuator bounds $|v_i(t)| \le v_{\max}$ and $|\omega_i(t)| \le \omega_{\max}$.
 
 \subsection{The Distributed Dynamic Edge-Cost Field Formulation}
-Rather than relying on centralized graph allocation or isolated myopic sensing, SW-DGO establishes a **distributed, time-varying edge-cost field** $C_i(u, v, t)$ maintained locally by each autonomous agent $i$. The edge traversal cost $e = (u, v) \in E$ is formalized as:
+Rather than relying on centralized graph allocation or isolated myopic sensing, SW-DGO establishes a \textbf{distributed, time-varying edge-cost field} $C_i(u, v, t)$ maintained locally by each autonomous agent $i$. The edge traversal cost $e = (u, v) \in E$ is formalized as:
 \begin{multline}
 \label{eq:sw_dgo_master}
-C_i(u, v, t) = w_D \cdot C_{\text{geom}}(u, v) + w_M \cdot C_{\text{mesh}}(u, v, t) + w_H \cdot C_{\text{social}}(v, t) \\
-+ w_R \cdot C_{\text{mutex}}(u, v, t) + w_S \cdot C_{\text{kinematic}}(i, v, t)
+C_i(u, v, t) = w_D \cdot C_{\text{geom}}(u, v) + w_M \cdot C_{\text{mesh}}(u, v, t) \\
++ w_H \cdot C_{\text{social}}(v, t) + w_R \cdot C_{\text{mutex}}(u, v, t) \\
++ w_S \cdot C_{\text{kinematic}}(i, v, t)
 \end{multline}
 where the calibrated dimensionless weights $\mathbf{w} = [w_D, w_M, w_H, w_R, w_S] = [1.0, 1.5, 2.0, 1.0, 1.2]$ balance physical metric progress against social proxemics, collaborative telemetry, and vehicle clearance:
 \begin{itemize}
     \item $w_D = 1.0$: Baseline Euclidean physical distance ($C_{\text{geom}}$ in meters).
     \item $w_M = 1.5$: Weights collaborative V2V congestion alerts $1.5\times$ higher than metric distance, ensuring trailing carts proactively reroute through clear parallel corridors rather than deadheading into blocked aisles.
     \item $w_H = 2.0$: Prioritizes pedestrian personal-space comfort $2.0\times$ above travel distance, enforcing compliant yielding and wide social berths.
-    \item $w_R = 1.0$: Directional corridor mutex multiplier ($C_{\text{mutex}} = \infty$ during active contention, $0$ otherwise), guaranteeing single-direction exclusivity.
+    \item $w_R = 1.0$: Directional corridor mutex multiplier ($C_{\text{mutex}} = \infty$ during active contention, $0$ otherwise), which renders a contested corridor untraversable for the deferring agent in its own cost field. We claim this empirically, not as a proven exclusivity guarantee.
     \item $w_S = 1.2$: Kinetic clearance penalty preventing chassis corner scrapes ($1.2\times$ baseline) and anti-tailgating violations.
 \end{itemize}
 
@@ -175,7 +187,7 @@ C_{\text{geom}}(u, v) = \|\mathbf{p}_u - \mathbf{p}_v\|_2 + \alpha_{\text{turn}}
 where $\alpha_{\text{turn}}$ penalizes sharp angular steering deviations to favor smooth corridor alignment.
 
 \subsubsection{2. Distributed Anticipatory Cost Propagation \& Horizon Extension \texorpdfstring{$C_{\text{mesh}}(u, v, t)$}{C\_mesh(u, v, t)}}
-In decentralized multi-agent systems, myopic line-of-sight sensing restricts an agent's local obstacle horizon to $\mathcal{O}_i^{\text{local}}(t) = \{\mathbf{x} \mid \|\mathbf{x} - \mathbf{p}_i(t)\| \le R_s\}$. To eliminate the severe makespan penalty of deadheading into remote blockages, SW-DGO formalizes an **effective perception horizon extension**:
+In decentralized multi-agent systems, myopic line-of-sight sensing restricts an agent's local obstacle horizon to $\mathcal{O}_i^{\text{local}}(t) = \{\mathbf{x} \mid \|\mathbf{x} - \mathbf{p}_i(t)\| \le R_s\}$. To eliminate the severe makespan penalty of deadheading into remote blockages, SW-DGO formalizes an 	extbf{effective perception horizon extension}:
 \begin{equation}
 \mathcal{O}_i^{\text{effective}}(t) = \mathcal{O}_i^{\text{local}}(t) \cup \bigcup_{j \in \mathcal{N}_i} \mathcal{O}_j(t - \tau_{ij})
 \end{equation}
@@ -186,7 +198,7 @@ C_{\text{mesh}}(u, v, t) = \sum_{k \in \mathcal{M}(u, v, t)} \gamma_k \cdot \exp
 where $\gamma_k$ is the initial congestion penalty amplitude and $\lambda_{\text{decay}}$ is the temporal decay rate, guaranteeing that stale congestion information naturally attenuates without permanently poisoning the routing topology.
 
 \subsubsection{3. Continuous 2D Asymmetric Human Proxemics \texorpdfstring{$C_{\text{social}}(v, t)$}{C\_social(v, t)}}
-To model human psychological personal space (Hall's Proxemics), we formulate an **asymmetric directional Gaussian potential field** aligned with pedestrian heading $\theta_h$:
+To model human psychological personal space (Hall's Proxemics), we formulate an 	extbf{asymmetric directional Gaussian potential field} aligned with pedestrian heading $\theta_h$:
 \begin{equation}
 H_{\text{prox}}(\mathbf{p}, \mathbf{h}_j, \theta_h) = A_j \cdot \exp\left( -\frac{1}{2} \left[ \left(\frac{x_{\text{local}}}{\sigma_x}\right)^2 + \left(\frac{y_{\text{local}}}{\sigma_y}\right)^2 \right] \right)
 \end{equation}
@@ -196,7 +208,8 @@ where relative coordinates are transformed into the pedestrian's local body fram
 \end{equation}
 with asymmetric longitudinal variance reflecting expanded front personal space:
 \begin{equation}
-\sigma_x = \begin{cases} \sigma_{\text{front}} = 1.35\text{ m}, & \text{if } x_{\text{local}} \ge 0 \ (\text{Front}) \\ \sigma_{\text{rear}} = 0.60\text{ m}, & \text{if } x_{\text{local}} < 0 \ (\text{Rear}) \end{cases}, \quad \sigma_y = 0.90\text{ m}
+\sigma_x = \begin{cases} 1.35\text{ m}, & x_{\text{local}} \ge 0 \ (\text{front}) \\ 0.60\text{ m}, & x_{\text{local}} < 0 \ (\text{rear}) \end{cases}
+\qquad \sigma_y = 0.90\text{ m}
 \end{equation}
 The continuous social edge penalty is integrated along the edge trajectory segment:
 \begin{equation}
@@ -210,9 +223,9 @@ In single-file architectural passages where aisle width cannot accommodate bidir
 \end{equation}
 When agent $i$ claims edge $(u, v)$, the reverse edge cost for opposing agents is set to:
 \begin{equation}
-C_{\text{mutex}}(v, u, t) = \begin{cases} \infty, & \text{if edge } (u, v) \text{ is reserved by peer } j \neq i \\ 0, & \text{otherwise} \end{cases}
+C_{\text{mutex}}(v, u, t) = \begin{cases} \infty, & (u, v) \text{ reserved by peer } j \neq i \\ 0, & \text{otherwise} \end{cases}
 \end{equation}
-Opposing agents detect this infinity cost and hold in Turnout Alcoves ($V_{\text{alcove}}$) or detour through parallel aisles, preventing head-on deadlocks ($N_{\text{deadlock}} = 0.00 \pm 0.00$).
+An opposing agent observes this infinite cost and, because the reservation enters its \emph{graph} rather than its controller, $\text{D}^*$ Lite reroutes it through a parallel aisle or a Turnout Alcove ($V_{\text{alcove}}$) instead of halting at the corridor mouth. Section~\ref{sec:mechanism} shows empirically that this diversion---rather than queueing---is the operative behaviour.
 
 \subsubsection{5. Kinetic Chassis Safety Clearance Envelope \texorpdfstring{$C_{\text{kinematic}}(i, v, t)$}{C\_kinematic(i, v, t)}}
 To prevent chassis scrapes against orthogonal shelf corners and enforce dynamic following gaps:
@@ -225,6 +238,7 @@ enforcing an $18\text{ px}$ ($0.54\text{ m}$) shelf clearance buffer and a $36\t
 \centering
 \caption{System Simulation Parameters \& Physical SI Metric Calibration.}
 \label{tab:parameters}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcc}
 \toprule
 \textbf{Parameter Description} & \textbf{Symbol} & \textbf{Physical Value (SI)} \\
@@ -244,8 +258,11 @@ Mesh Hop Limit & $\text{TTL}$ & $3\text{ hops}$ \\
 Proxemic Front Space & $\sigma_{\text{front}}$ & $1.35\text{ m}$ ($45.0\text{ px}$) \\
 Proxemic Lateral Space & $\sigma_{\text{side}}$ & $0.90\text{ m}$ ($30.0\text{ px}$) \\
 Proxemic Rear Space & $\sigma_{\text{rear}}$ & $0.60\text{ m}$ ($20.0\text{ px}$) \\
+Onboard Sensing Radius & $R_s$ & $7.20\text{ m}$ ($240.0\text{ px}$) \\
+Arrival Tolerance (all planners) & $r_{\text{arrive}}$ & $0.84\text{ m}$ ($28.0\text{ px}$) \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \begin{algorithm}[t]
@@ -289,7 +306,7 @@ Proxemic Rear Space & $\sigma_{\text{rear}}$ & $0.60\text{ m}$ ($20.0\text{ px}$
 To contextualize the architectural design of $\text{D}^2\text{RO}$, we contrast it with four standard robotics simulation paradigms:
 \begin{enumerate}
     \item \textbf{Classical 2D Grid-World MAPF (CBS, PBS, EECBS):} Assumes synchronous discrete time steps and point holonomic agents. Ignores continuous turning kinodynamics, dynamic human loitering, and V2V mesh latency.
-    \item \textbf{Pure Continuous Multi-Agent Navigators (ORCA, Social Force):} Operates in continuous velocity space without topological roadmaps. Lacks global awareness, causing catastrophic $0.0\%$ failure traps in $90^\circ$ shelf corridors.
+    \item \textbf{Pure Continuous Multi-Agent Navigators (ORCA, Social Force):} Operates in continuous velocity space without topological roadmaps. Lacks global topological awareness, so an agent driven into an infeasible velocity state in a narrow corridor has no route-level recourse. Our implementation exhibits this mode (Section~\ref{sec:failure_modes}), though we do not generalise from it to the published algorithm.
     \item \textbf{Network-Centric Packet Simulators (NS-3, OMNeT++):} Models high-fidelity RF propagation and MAC collisions, but lacks robot kinodynamic physics and graph search.
     \item \textbf{3D Rigid-Body Physics Engines (Gazebo, Isaac Sim):} Models full multi-body dynamics, contact mechanics, and sensor ray-tracing. However, executing $N=100$ randomized Monte Carlo trials across multi-agent fleets is computationally prohibitive ($>100\times$ slower than real time).
     \item \textbf{The SW-DGO Hybrid Approach (The Goldilocks Paradigm):} Couples non-holonomic unicycle kinodynamics ($dt = 0.05\text{ s}$, 60 FPS) with continuous Gaussian proxemics, an ad-hoc V2V mesh simulator, and incremental $\text{D}^*$ Lite graph repair, providing deterministic, real-time evaluation ($<0.15\text{ ms}$).
@@ -322,7 +339,7 @@ As shown in Fig.~\ref{fig:hospital}, the hospital floorplan includes Emergency T
 \end{figure}
 
 \subsection{Airport Terminal (Luggage Trolleys)}
-As shown in Fig.~\ref{fig:airport}, the airport concourse combines a massive open-plan departure plaza with narrow security screening chokepoints and boarding gate piers (Gates A1–A4, Gates B1–B4).
+As shown in Fig.~\ref{fig:airport}, the airport concourse combines a large open-plan departure plaza with narrow security screening chokepoints and boarding gate piers (Gates A1–A4, Gates B1–B4).
 
 \begin{figure}[t]
 \centering
@@ -347,7 +364,7 @@ Fig.~\ref{fig:heatmap} maps the continuous 2D Gaussian discomfort field $H_{\tex
 \end{figure}
 
 \subsection{Spatiotemporal Turnout Alcove Resolution}
-Fig.~\ref{fig:alcove} illustrates the longitudinal space-time trajectory $(X, t)$ in clinical corridors. Emergency Pushchair $P_1$ maintains full velocity under priority lock ($R_{\text{lock}} = \infty$), while routine Pushchair $P_2$ safely pulls into the Turnout Alcove at $X = 650\text{ px}$ ($t = 4.5\text{ s} \to 10.5\text{ s}$), eliminating corridor deadlocks.
+Fig.~\ref{fig:alcove} illustrates the longitudinal space-time trajectory $(X, t)$ in clinical corridors. Emergency Pushchair $P_1$ maintains full velocity under priority lock ($R_{\text{lock}} = \infty$), while routine Pushchair $P_2$ pulls into the Turnout Alcove at $X = 650\text{ px}$ ($t = 4.5\text{ s} \to 10.5\text{ s}$), resolving the conflict without either agent reversing. The figure illustrates intended behaviour; the quantitative evidence is in Section~\ref{sec:mechanism}.
 
 \begin{figure}[t]
 \centering
@@ -374,182 +391,85 @@ Fig.~\ref{fig:streamlines} demonstrates 2D velocity streamlines around high-dens
 \subsection{Experimental Setup \& Randomization Protocol}
 All experiments were conducted using the decoupled 2D kinodynamic simulation framework integrating non-holonomic unicycle dynamics ($\Delta t = 0.05\text{ s}$, 20 Hz control loop) across $1200 \times 800\text{ px}$ ($36.0\text{ m} \times 24.0\text{ m}$) floorplans. To ensure statistical rigor and reproducibility:
 \begin{itemize}
-    \item \textbf{Random Seed Policy:} Each evaluation executed $N=100$ independent Monte Carlo trials seeded deterministically ($\text{seed} = \text{trial\_idx} + 1000$).
+    \item \textbf{Random Seed Policy:} Each evaluation executed $N=100$ independent Monte Carlo trials seeded deterministically. Crucially, every planner in a given trial receives the \emph{same} seed, so comparisons are \textbf{seed-paired} rather than independent: the pedestrian crowd a baseline faces is the crowd $\text{D}^2\text{RO}$ faces.
     \item \textbf{Dynamic Pedestrian Behavior:} Pedestrians move with stochastic velocities $v_h \in [0.8, 1.2]\text{ m/s}$, random waypoint heading deflections, and a $30\%$ browsing loitering probability ($p_{\text{loiter}} = 0.30$) generating dynamic Gaussian discomfort Halos.
-    \item \textbf{Timeout Threshold:} A strict mission timeout threshold of $T_{\max} = 35.0\text{ s}$ was enforced; runs exceeding $T_{\max}$ due to livelocks were logged as mission failures.
-    \item \textbf{Statistical Significance Testing:} Comparative metrics are reported as sample mean $\pm$ standard deviation ($\mu \pm \sigma$) alongside exact two-sided $95\%$ Confidence Intervals ($[\mu \pm t_{0.975, \nu} \cdot \text{SEM}]$). Pairwise hypothesis testing was conducted via two-tailed Welch's unequal-variance $t$-tests ($H_0: \mu_{\text{D2RO}} = \mu_{\text{baseline}}$, significance threshold $\alpha = 0.01$, with Satterthwaite degrees of freedom $\nu$).
+    \item \textbf{Common Completion Criterion:} Within any given experiment all planners share an identical arrival tolerance of $0.84\text{ m}$ (approximately one cart length) and an identical time budget. An earlier revision applied planner-specific tolerances, scoring the proposed method against a $2.3\times$ more lenient criterion than its baselines; that asymmetry is removed and every result reported here uses the common criterion. Budgets are set well above the longest observed mission for the experiment class so that a timeout indicates genuine non-completion rather than a truncated run: $T_{\max} = 180\text{ s}$ for the benchmark, ablation, cross-domain and crowd-density experiments, $240\text{ s}$ for fleet-size scaling (where queueing grows with fleet size), and $120\text{ s}$ for the two-cart mechanism experiments.
+    \item \textbf{Statistical Analysis:} Because the trials are seed-paired and several outcome distributions are zero-inflated and strongly right-skewed, we do not assume normality. Continuous outcomes are compared with the \textbf{Wilcoxon signed-rank} test on within-pair differences, supported by paired bootstrap confidence intervals; binary mission success is compared with \textbf{McNemar's exact} test. $p$-values are \textbf{Holm-adjusted} within each family of comparisons, and every reported $p$ belongs to one specific outcome---no single significance claim is attached to several unrelated metrics. Skewed outcomes are summarised as median [IQR]; symmetric ones as $\mu \pm \sigma$.
 \end{itemize}
 
-\begin{table*}[t]
-\centering
-\caption{Comparative Performance Benchmark over $N=100$ Randomized Monte Carlo Trials (Mean $\pm$ Std. Dev. [95\% Confidence Interval]).}
-\label{tab:benchmark}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lcccccc}
-\toprule
-\textbf{Navigation Algorithm} & \textbf{Success Rate (\%)} & \textbf{Makespan (s) [95\% CI]} & \textbf{Deadlocks} & \textbf{Intimate Violations} & \textbf{V2V Packets} & \textbf{Avg Replan (ms)} \\
-\midrule
-Static $A^*$ & 100.0\% & 0.80 $\pm$ 0.00 [0.80, 0.80] & 0.00 $\pm$ 0.00 & 4.00 $\pm$ 0.00 & 0.0 $\pm$ 0.0 & N/A (Static) \\
-Artificial Potential Fields (APF) & 0.0\% & Timeout (35.0s) & 0.01 $\pm$ 0.10 & 226.39 $\pm$ 69.25 & 0.0 $\pm$ 0.0 & 0.040 $\pm$ 0.000 \\
-Reactive ORCA (Velocity Obstacles) & 0.0\% & Timeout (35.0s) & 2094.37 $\pm$ 99.62 & 19.37 $\pm$ 65.28 & 0.0 $\pm$ 0.0 & 0.120 $\pm$ 0.000 \\
-Decentralized Local MAPF & 0.0\% & Timeout (35.0s) & 11.00 $\pm$ 0.00 & 102.44 $\pm$ 15.00 & 0.0 $\pm$ 0.0 & 0.350 $\pm$ 0.000 \\
-\textbf{$\text{D}^2\text{RO}$ (SW-DGO Proposed)} & \textbf{97.0\%} & \textbf{21.47 $\pm$ 5.32 [20.42, 22.53]} & \textbf{0.00 $\pm$ 0.00} & \textbf{0.59 $\pm$ 5.90} & \textbf{12.21 $\pm$ 2.76} & \textbf{0.145 $\pm$ 0.017} \\
-\bottomrule
-\end{tabular}%
-}
-\end{table*}
+\input{generated/table_benchmark}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{fig1_benchmark_comparison.pdf}
-\caption{Quantitative comparative evaluation across (a) Mission Success Rate, (b) Fleet Makespan, and (c) Social Proxemic Discomfort Violations, demonstrating $\text{D}^2\text{RO}$ superiority over Static $A^*$, APF, ORCA, and Decentralized Local MAPF.}
+\caption{Comparative evaluation across (a) mission success rate, (b) makespan of successful missions, and (c) intimate-space exposure (median, IQR whiskers). Panels (b) and (c) show the trade-off directly: $\text{D}^2\text{RO}$ is slower than Static $A^*$ and APF while intruding on personal space substantially less. Success rates in (a) are statistically indistinguishable between $\text{D}^2\text{RO}$, Static $A^*$ and APF.}
 \label{fig:benchmark}
 \end{figure}
 
 \subsection{Physical Insights and Failure Modes Analysis}
-\subsubsection{Failure Modes of Purely Reactive Navigators}
-Both APF and ORCA suffer catastrophic $0.0\%$ mission success in the supermarket environment due to fundamentally different mathematical failure mechanisms:
-\begin{itemize}
-    \item \textbf{APF Local Minima Trap:} In concave $90^\circ$ shelf bays, repulsive forces from orthogonal walls cancel out goal attraction ($\|\mathbf{F}_{\text{net}}\| \approx 0$), permanently trapping carts.
-    \item \textbf{ORCA Half-Plane Infeasibility:} In narrow single-file aisles ($W_{\text{corridor}} < 2 r_{\text{safety}}$), linear half-plane constraints from walls and opposing carts intersect with an empty feasible set ($\bigcap H = \emptyset$) or force velocity to zero ($\mathbf{v} \to \mathbf{0}$).
-\end{itemize}
+\label{sec:failure_modes}
 
-\subsubsection{Failure Mechanism of Decentralized Local MAPF}
-Decentralized Local MAPF employs windowed spatial conflict arbitration and token-passing. However, in single-file corridors where lateral passing is geometrically impossible, two opposing agents meeting head-on repeatedly yield and swap local priority tokens without global topological diversion. Because the baseline lacks multi-hop V2V mesh routing, neither agent can command an early detour into parallel aisles or Turnout Alcoves, locking both carts into permanent token-swapping live-locks until reaching the $35.0\text{ s}$ timeout ($0.0\%$ success, $102.44 \pm 15.00$ intimate space violations, $p < 0.001$).
+\subsubsection{Artificial Potential Fields: a social failure, not a navigational one}
+An earlier revision of this study reported that APF achieves $0.0\%$ mission success and built a local-minima argument upon it. Under the common completion criterion and a time budget calibrated to true mission durations, that result does not reproduce: \textbf{APF completes $100\%$ of its missions} at $34.54 \pm 0.16\text{ s}$. The previous figure was an artefact of a $35.0\text{ s}$ timeout inherited from an earlier, incorrectly scaled kinematic model, not a property of the algorithm. We report the correction explicitly because the conclusion changes: potential fields are not disqualified from these environments by an inability to arrive.
+
+What disqualifies them is \emph{how} they arrive. APF records the highest intimate-space exposure of any planner evaluated---median $204$ ticks [IQR $176$, $276$], against $0$ [$0$, $0$] for $\text{D}^2\text{RO}$ (Wilcoxon signed-rank, $\Delta = -220.7$ [$-239.5$, $-201.4$], Holm-adjusted $p = 2.7 \times 10^{-16}$). A repulsive force that activates only when a pedestrian is already close produces exactly this behaviour: the cart is pushed aside at the last moment, repeatedly, having already entered the person's intimate zone. The deficiency is one of \emph{anticipation}, which is precisely what a cost field evaluated over a planning horizon supplies and a local force law cannot.
+
+\subsubsection{ORCA and Decentralized Local MAPF: results we decline to over-interpret}
+Our implementations of Reactive ORCA and Decentralized Local MAPF complete no missions under the common arrival criterion. Instrumented traces show ORCA agents stalled for $91$--$99\%$ of control ticks, having covered only a fraction of a ${\sim}17\text{ m}$ mission, which is consistent with the velocity-obstacle infeasibility mode described in Section~\ref{sec:orca_trap}: in a corridor narrower than twice the safety envelope, the half-plane constraints admit no feasible velocity and the agent halts.
+
+We deliberately stop short of the stronger claim. ORCA is a widely deployed algorithm, and an in-house implementation returning $0\%$ where the published method is used successfully in practice is at least as likely to indicate a defect in our implementation as a fundamental limitation of the method. \textbf{We therefore report these as properties of our implementations, not of the algorithms}, and we identify validation against a reference implementation on a canonical benchmark as required work before any general claim about ORCA's behaviour in single-file corridors can be sustained. The same caution applies to Local MAPF, where traced trials show agents finishing within ${\sim}1.3\text{ m}$ of their goals rather than livelocked---a near-miss, not the permanent token-swapping deadlock previously asserted. Consequently, none of the contributions claimed in this paper rest on the ORCA or MAPF baselines; they rest on the comparison against Static $A^*$ and APF, both of which complete their missions.
 
 \subsubsection{Anticipatory Horizon Extension vs. Myopic Backtracking}
 In decentralized navigation without peer-to-peer telemetry ($W_{\text{mesh}}=0$), trailing carts operate under myopic line-of-sight sensing ($R_s = 7.2\text{ m}$). When an unexpected pedestrian cluster blocks an inner aisle, trailing units travel to the blocked entrance before sensing the obstruction locally, potentially forcing reversal and path re-computation. The V2V mesh is designed to propagate anticipatory cost penalties to upstream agents before they commit to a congested route, enabling topological detours $\Delta T_{\text{anticipation}}$ earlier.
 
-Importantly, the broad Monte Carlo benchmark—where pedestrian blockages and junction opportunities are randomized across 100 trials—does not consistently trigger the specific topology required to demonstrate this benefit: an upstream agent at a divergence junction while a downstream agent simultaneously encounters a blockage outside sensing range. In these trials, the mesh overhead (cost-field propagation and triggered replanning) can exceed its benefit, yielding the observed result that the no-mesh configuration completes the benchmark at $15.24 \pm 1.95\text{ s}$ vs. the full system at $22.98 \pm 2.21\text{ s}$. This does not invalidate the mechanism; it reflects that the broad-scenario experiment is not a sufficient test of anticipatory communication. Section~\ref{sec:mechanism} presents controlled mechanism-specific experiments that directly confirm the mesh and lock contributions under targeted conditions.
+Importantly, the broad Monte Carlo benchmark---where pedestrian blockages and junction opportunities are randomized across $100$ trials---does not consistently instantiate the topology required for this benefit to appear: an upstream agent at a divergence junction while a downstream agent simultaneously encounters a blockage beyond its sensing range. In those trials the mesh pays its overhead (cost-field propagation and broadcast-triggered replanning) without collecting its return, which is why the no-mesh ablation completes the benchmark faster than the full system ($38.23 \pm 16.88\text{ s}$ vs. $47.38 \pm 13.96\text{ s}$; Table~\ref{tab:ablation}). This does not invalidate the mechanism, but neither does the benchmark evidence it: a general-scenario experiment is simply not a test of anticipatory communication. Section~\ref{sec:mechanism} therefore evaluates the mesh under conditions that do instantiate the required topology.
 
-\subsection{Comparative Benchmark Analysis}
-As reported in Table~\ref{tab:benchmark} and Fig.~\ref{fig:benchmark}:
-\begin{enumerate}
-    \item \textbf{Failure of Reactive Avoidance (0.0\% Success):} ORCA and potential field baselines fail completely in shelf environments due to repulsive force cancellation and constraint infeasibility at $90^\circ$ corners.
-    \item \textbf{Social Blindness of Static $A^*$:} While Static $A^*$ executes fixed paths, it causes severe intimate personal space violations ($4.00 \pm 0.00$ per trial).
-    \item \textbf{$\text{D}^2\text{RO}$ Optimal Performance:} $\text{D}^2\text{RO}$ achieves $97.0\%$ success, $0.00 \pm 0.00$ deadlocks, and $0.59 \pm 5.90$ intimate violations ($p < 0.001$) with sub-millisecond replan latencies ($0.145\text{ ms}$).
-\end{enumerate}
+\subsection{Comparative Benchmark Analysis: an explicit trade-off}
+\label{sec:tradeoff}
+Table~\ref{tab:benchmark} and Fig.~\ref{fig:benchmark} do not show the proposed method dominating on every axis, and we present them as what they are---a trade-off that we argue is favourable for human-shared space.
+
+\textbf{Where $\text{D}^2\text{RO}$ leads.} On social compliance the separation is large and consistent. $\text{D}^2\text{RO}$ records a median intimate-space exposure of $0$ ticks [IQR $0$, $0$]: in the majority of trials the fleet never enters a pedestrian's intimate zone at all. Static $A^*$ records $128$ [$123$, $131$] and APF $204$ [$176$, $276$]. We report medians because the distribution is zero-inflated and strongly right-skewed---$\text{D}^2\text{RO}$'s own mean is inflated by a small number of trials in which a pedestrian steps into an already-committed corridor---and a $\mu \pm \sigma$ summary would imply a symmetry that does not exist.
+
+\textbf{What that compliance costs.} $\text{D}^2\text{RO}$ completes missions in $47.18 \pm 13.40\text{ s}$ against Static $A^*$'s $18.00 \pm 0.00\text{ s}$: a $2.6\times$ makespan penalty (Wilcoxon signed-rank, $\Delta = 30.51\text{ s}$, $d_z = 1.62$, Holm-adjusted $p = 3.8 \times 10^{-17}$). It also does not lead on raw success: $99.0\%$ [$94.6$, $99.8$] against $100.0\%$ for both Static $A^*$ and APF, a difference of a single trial that McNemar's exact test does not distinguish from chance ($p = 1$). Claiming a success-rate advantage over these two baselines would not be supportable, and we do not make one.
+
+\textbf{Why the trade is the right one.} A cart that reaches the depot four seconds sooner by driving through a queue of shoppers has not solved the problem this paper poses. The design objective (Section~\ref{sec:aims}) is socially compliant routing subject to completing the mission, and against that objective the measured outcome is the intended one: near-total elimination of personal-space intrusion, purchased with time, at no measurable cost in reliability.
 
 \subsection{Component Ablation Analysis}
-Table~\ref{tab:ablation} and Fig.~\ref{fig:ablation} validate the mathematical necessity of each term in Eq.~\eqref{eq:sw_dgo_master}:
-\begin{enumerate}
-    \item Omitting $H_{\text{prox}}$ causes a catastrophic collapse in mission success ($17.0\%$) and a massive surge in pedestrian discomfort integral ($71.56 \pm 34.26$).
-    \item Omitting $S_{\text{trolley}}$ produces $77.72 \pm 11.94$ shelf corner scrapes, demonstrating that kinodynamic bubble inflation is essential for geometric fixture clearance.
-    \item Omitting $W_{\text{mesh}}$ or $R_{\text{lock}}$ reduces early topological avoidance, forcing agents to negotiate conflicts in localized proximities.
-\end{enumerate}
+The ablation in Table~\ref{tab:ablation} distinguishes the terms of Eq.~\eqref{eq:sw_dgo_master} that are load-bearing in this benchmark from those that are not, and we report both outcomes.
 
-\begin{table}[t]
-\centering
-\caption{Mathematical Component Ablation Matrix over $N=100$ Trials (Mean $\pm$ Std.\ Dev.).}
-\label{tab:ablation}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{lcccc}
-\toprule
-\textbf{Configuration} & \textbf{Success (\%)} & \textbf{Makespan (s)} & \textbf{Discomfort $\mathcal{J}_{\text{prox}}$} & \textbf{Shelf Scrapes} \\
-\midrule
-Full $\text{D}^2\text{RO}$ (Complete) & \textbf{99.0\%} & \textbf{22.98 $\pm$ 2.21} & \textbf{0.63 $\pm$ 3.09} & \textbf{0.00 $\pm$ 0.00} \\
-w/o V2V Mesh ($W_{\text{mesh}}\!=\!0$) & 100.0\% & 15.24 $\pm$ 1.95 & 0.43 $\pm$ 1.99 & 0.00 $\pm$ 0.00 \\
-w/o Mutex Lock ($R_{\text{lock}}\!=\!0$) & 100.0\% & 15.24 $\pm$ 1.95 & 0.43 $\pm$ 1.99 & 0.00 $\pm$ 0.00 \\
-w/o Proxemics ($H_{\text{prox}}\!=\!0$) & 17.0\% & 32.70 $\pm$ 5.67 & 71.56 $\pm$ 34.26 & 0.00 $\pm$ 0.00 \\
-w/o Safety Bubble ($S_{\text{trolley}}\!=\!0$) & 100.0\% & 21.26 $\pm$ 2.17 & 0.41 $\pm$ 2.07 & 77.72 $\pm$ 11.94 \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
+\textbf{The proxemic term carries the framework.} Removing $H_{\text{prox}}$ collapses mission success from $100.0\%$ to $11.0\%$ and raises the discomfort integral from $0.05 \pm 0.13$ to $13.14 \pm 3.57$, with makespan degrading from $47.38 \pm 13.96\text{ s}$ to $172.05 \pm 26.67\text{ s}$. Without a social cost the planner routes straight into crowds, then relies on the reactive yielding layer to extricate itself, which it frequently cannot do within the time budget. This single term accounts for most of what distinguishes $\text{D}^2\text{RO}$ from Static $A^*$.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{fig2_ablation_study.pdf}
-\caption{Component ablation study evaluating (a) Discomfort Integral and (b) Corridor Deadlocks \& Shelf Corner Scrapes across the 5 cost configurations.}
-\label{fig:ablation}
-\end{figure}
+\textbf{The mesh and mutex terms are not exercised by this benchmark.} Removing $W_{\text{mesh}}$ or $R_{\text{lock}}$ leaves success at $100.0\%$ and \emph{reduces} makespan, from $47.38 \pm 13.96\text{ s}$ to $38.23 \pm 16.88\text{ s}$ and $37.86 \pm 15.13\text{ s}$ respectively. Read alone, this ablation argues against both mechanisms. The explanation is that a randomized supermarket scenario rarely instantiates the topology each mechanism addresses---a downstream blockage outside a trailing agent's sensing range, or two agents committed to the same single-file corridor from opposite ends---while their costs (broadcast-triggered replanning, conservative corridor deferral) are paid in every trial. Section~\ref{sec:mechanism} therefore evaluates both under controlled conditions that do instantiate those topologies. We consider it important to report the negative general-scenario result alongside the positive controlled one rather than only the latter.
 
-\begin{table}[t]
-\centering
-\caption{Cross-Domain Architectural Generalization ($N=100$ Trials per Domain).}
-\label{tab:cross_domain}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{lcccc}
-\toprule
-\textbf{Environment} & \textbf{Success (\%)} & \textbf{Makespan (s)} & \textbf{V2V Packets} & \textbf{D* Lite Replans} \\
-\midrule
-Retail Supermarket & 100.0\% & 23.07 $\pm$ 2.47 & 15.2 $\pm$ 2.6 & 341.7 $\pm$ 82.8 \\
-Clinical Hospital & 92.0\% & 27.68 $\pm$ 11.35 & 2.8 $\pm$ 2.0 & 309.6 $\pm$ 127.1 \\
-Airport Terminal & 80.0\% & 25.29 $\pm$ 13.60 & 6.6 $\pm$ 14.8 & 897.9 $\pm$ 342.9 \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
+\textbf{The safety envelope shows a weaker effect than previously claimed.} Removing $S_{\text{trolley}}$ raises shelf-corner scrapes from $193.05 \pm 169.90$ to $271.71 \pm 84.16$. This is a real degradation, but it is a $41\%$ increase rather than the elimination of scraping: the envelope reduces fixture contact, it does not prevent it, and the full configuration itself records substantial contact. An earlier revision reported $0.00$ scrapes for the full system against $77.72 \pm 11.94$ without it; that contrast was an artefact of the superseded metric semantics and does not survive measurement under a single shared threshold. The high variance in both arms further suggests scrape counts are dominated by a few tight-clearance geometries rather than distributed evenly across trials.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{fig3_cross_domain_generalization.pdf}
-\caption{Multi-domain fleet performance across Supermarket, Hospital, and Airport environments on (a) Makespan, (b) V2V Mesh Packets, and (c) Incremental Replan Cycles.}
-\label{fig:cross_domain}
-\end{figure}
+\input{generated/table_ablation}
+
+\input{generated/table_cross_domain}
 
 \subsection{Cross-Domain Failure Mode Analysis}
 \label{sec:cross_domain_failure}
-As shown in Table~\ref{tab:cross_domain}, $\text{D}^2\text{RO}$ achieves $100.0\%$ success in the retail supermarket environment, but this degrades to $92.0\%$ in the clinical hospital and $80.0\%$ in the airport terminal. These differences reflect genuine architectural challenges rather than algorithmic failure, and are consistent with expected behavior under increasing topological complexity.
+Aim A3 requires that the planner transfer across dissimilar architectures without retuning. Table~\ref{tab:cross_domain} supports this: with identical weights and no domain-specific parameters, $\text{D}^2\text{RO}$ completes $99.0\%$ of missions in the retail supermarket, $100.0\%$ in the clinical hospital and $95.0\%$ in the airport terminal. Generality is therefore demonstrated; what differs across domains is not reliability but the \emph{character} of the routing effort, which the remaining columns expose.
 
-\textbf{Hospital degradation ($-8\%$):} The clinical hospital environment features significantly narrower corridors adjacent to patient-care zones, higher ambient pedestrian density near nursing stations, and mandatory Turnout Alcove yields that add traversal time. The combination of tighter passages and higher human density increases the frequency of unavoidable pedestrian blockages, where no alternative route exists within the $35.0\text{ s}$ timeout. The lower V2V packet count ($2.8 \pm 2.0$ vs. $15.2 \pm 2.6$ in supermarket) indicates fewer V2V-triggerable re-routes: the hospital topology offers fewer parallel aisle alternatives.
+\textbf{The hospital is the easiest domain, not the hardest.} It records the highest success rate and the lowest replan count ($342.47 \pm 64.94$), despite having the narrowest corridors. Its topology is strongly channelised: routes are largely predetermined by the corridor structure, so there are few alternatives to evaluate and little for the planner to reconsider once committed. Its longer mean transit ($31.78 \pm 3.89\text{ s}$) reflects distance and mandatory alcove yields, not indecision.
 
-\textbf{Airport degradation ($-20\%$):} The airport terminal concourse presents a qualitatively different failure mode. While the open concourse architecture reduces shelf-fixture traps, the large pedestrian crowd in gate areas generates high-frequency cost-field fluctuations. This drives a dramatically higher replan count ($897.9 \pm 342.9$ vs. $341.7 \pm 82.8$ in supermarket), reflecting excessive reactive replanning rather than steady anticipatory routing. Agents spend significant control cycles recalculating paths around shifting crowd boundaries, and occasional timeout failures occur when all routes to a gate become simultaneously congested. These results motivate future work on crowd-density-adaptive weight scheduling for $H_{\text{prox}}$ and $W_{\text{mesh}}$ in open concourse topologies.
+\textbf{The airport is the hardest, and for an instructive reason.} It requires $959.2 \pm 359.8$ replans---nearly twice the supermarket's $487.9 \pm 151.1$---and is the only domain with non-zero median intimate exposure ($62$ [$18$, $130$], against $0$ [$0$, $0$] in both other domains). An open concourse offers a large, continuously changing set of admissible routes, so a crowd shifting a few metres alters the cost field enough to justify a new plan; the planner spends its effort re-deciding rather than executing. The wide interquartile range indicates the exposure is concentrated in trials where the fleet must cross a dense gate-area crowd, rather than being incurred uniformly. Open topologies thus stress the framework differently from constrained ones---the difficulty is choice abundance, not scarcity---which motivates crowd-density-adaptive scheduling of $w_H$ and $w_M$, and a replan-hysteresis term, as future work.
+
+We note that these figures supersede an earlier revision reporting $80.0\%$ airport success. In that revision the airport scenario reset its random seed to a constant, so its $100$ nominal trials were $100$ repetitions of a single trial; the defect is corrected and the domain now varies per trial as the other two do.
 
 \subsection{Decoupled Scalability Analysis}
-As shown in Fig.~\ref{fig:scalability}, Table~\ref{tab:scalability_crowd}, and Table~\ref{tab:scalability_fleet}, we evaluated parametric scalability across two decoupled dimensions ($N=100$ trials each):
+\label{sec:scalability}
+We vary crowd density and fleet size independently ($N=100$ trials per point) so that the two effects are not confounded. The two dimensions behave very differently, and only one of them is benign.
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\linewidth]{fig4_scalability_density.pdf}
-\caption{Decoupled fleet scalability evaluations: (a) Incremental $\text{D}^*$ Lite replanning latency and V2V mesh broadcast packets vs. dynamic crowd density ($N_{\text{humans}} \in [2..30]$, fixed fleet $N=4$); (b) Fleet makespan and single-file corridor mutex queueing wait time vs. autonomous fleet size ($N_{\text{carts}} \in [2..12]$, fixed crowd $N=10$).}
-\label{fig:scalability}
-\end{figure}
+\input{generated/fig_crowd_density}
 
-\begin{enumerate}
-    \item \textbf{Crowd Density Scaling ($N_{\text{humans}} \in [2..30]$, $N_{\text{carts}}=4$):} Replan latency scales smoothly from $0.18\text{ ms}$ at $N_h=2$ to $1.23\text{ ms}$ at $N_h=30$, consistently executing within $<2.5\%$ of the $50\text{ ms}$ control loop.
-    \item \textbf{Fleet Size Scaling ($N_{\text{carts}} \in [2..12]$, $N_{\text{humans}}=10$):} Fleet makespan scales gracefully ($25.67\text{ s} \to 41.25\text{ s}$) while V2V mesh broadcast packets scale with fleet size ($5.0 \to 134.9\text{ packets}$).
-\end{enumerate}
+\input{generated/fig_fleet_size}
 
-\begin{table}[t]
-\centering
-\caption{Decoupled Crowd Density Scalability ($N_{\text{carts}}=4$, $N=100$ Trials).}
-\label{tab:scalability_crowd}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{cccc}
-\toprule
-\textbf{Crowd Density ($N_h$)} & \textbf{Success (\%)} & \textbf{Replan Latency (ms)} & \textbf{V2V Packets} \\
-\midrule
-$N_h = 2$  & 100.0\% & 0.179 $\pm$ 0.076 & 20.4 $\pm$ 4.2 \\
-$N_h = 6$  & 99.0\%  & 0.350 $\pm$ 0.150 & 15.9 $\pm$ 8.8 \\
-$N_h = 12$ & 92.0\%  & 0.612 $\pm$ 0.239 & 15.7 $\pm$ 16.9 \\
-$N_h = 18$ & 91.0\%  & 0.828 $\pm$ 0.409 & 20.7 $\pm$ 24.0 \\
-$N_h = 24$ & 94.0\%  & 1.021 $\pm$ 0.383 & 19.3 $\pm$ 15.5 \\
-$N_h = 30$ & 93.0\%  & 1.228 $\pm$ 0.644 & 21.5 $\pm$ 23.1 \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
+\textbf{Crowd density scales benignly (Fig.~\ref{fig:scalability_crowd}).} Increasing pedestrians from $2$ to $30$ raises replan latency only from $0.09 \pm 0.01\text{ ms}$ to $0.17 \pm 0.05\text{ ms}$ and makespan from $30.10\text{ s}$ to $56.30\text{ s}$, while success falls just $100.0\% \to 98.0\%$. Incremental repair is doing its job: a denser crowd perturbs more edges, but $\text{D}^*$ Lite repairs only the affected subgraph, so cost grows with the perturbation rather than with the map. Even at the highest density the planner consumes under $0.4\%$ of the $50\text{ ms}$ control budget, satisfying the real-time half of aim A3 with three orders of magnitude of headroom.
 
-\begin{table}[t]
-\centering
-\caption{Decoupled Fleet Size Scalability ($N_{\text{humans}}=10$, $N=100$ Trials).}
-\label{tab:scalability_fleet}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{cccc}
-\toprule
-\textbf{Fleet Size ($N_c$)} & \textbf{Success (\%)} & \textbf{Makespan (s)} & \textbf{V2V Packets} \\
-\midrule
-$N_c = 2$  & 97.0\% & 25.67 $\pm$ 11.22 & 5.0 $\pm$ 5.0 \\
-$N_c = 4$  & 93.0\% & 32.31 $\pm$ 13.46 & 32.3 $\pm$ 30.8 \\
-$N_c = 6$  & 80.0\% & 39.69 $\pm$ 15.79 & 55.1 $\pm$ 42.0 \\
-$N_c = 8$  & 83.0\% & 37.32 $\pm$ 15.06 & 74.4 $\pm$ 73.6 \\
-$N_c = 10$ & 80.0\% & 39.68 $\pm$ 16.29 & 107.7 $\pm$ 93.6 \\
-$N_c = 12$ & 78.0\% & 41.25 $\pm$ 15.79 & 134.9 $\pm$ 111.4 \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
+\textbf{Fleet size does not (Fig.~\ref{fig:scalability_fleet}), and this is the framework's clearest limitation.} Success holds near $100\%$ up to $8$ carts, then falls to $85.0\%$ at $10$ and $78.0\%$ at $12$, while makespan roughly doubles ($50.99\text{ s} \to 110.17\text{ s}$). The mechanism is visible in the mesh column: broadcast volume grows super-linearly, from $8.50 \pm 5.72$ packets at two carts to $1158.60 \pm 336.83$ at twelve, because every agent broadcasts observations that every other agent must incorporate. Beyond roughly eight carts in a $36 \times 24\text{ m}$ floorplan the fleet begins to congest itself: agents increasingly replan around each other's reservations and telemetry rather than around pedestrians.
+
+We state this bound plainly rather than describing the degradation as graceful. For the retail and clinical deployments motivating this work---where a realistic fleet in a single zone is a handful of units---the operating regime sits inside the flat part of the curve. But the present design should not be represented as scaling to large fleets in a confined space, and mesh-traffic suppression (relevance filtering, spatial scoping of broadcasts) is the natural next step for that regime.
 
 % ==============================================================================
 % SECTION VI-D: MECHANISM-SPECIFIC VALIDATION
@@ -561,74 +481,70 @@ Because the broad Monte Carlo benchmark does not reliably trigger the specific t
 \subsubsection{Experiment A: V2V Mesh Anticipation ($N=50$ trials)}
 Two carts are positioned such that Cart~A is in front and Cart~B is 10+ m behind (outside Cart~A's sensing range). A pedestrian cluster blocks Cart~A's forward aisle mid-route. An alternative divergence junction exists upstream of Cart~B, where it can reroute \emph{before} committing to the congested path. We compare \textbf{Mesh ON} vs. \textbf{Mesh OFF} using identical seeds, measuring anticipation time $\Delta T_{\text{ant}}$ (how many seconds earlier Cart~B reroutes), backtracking distance, and total makespan.
 
-\begin{table}[t]
-\centering
-\caption{Mechanism Experiment A: V2V Mesh Anticipation ($N=50$ controlled trials).}
-\label{tab:mech_mesh}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{lccc}
-\toprule
-\textbf{Condition} & \textbf{$\Delta T_{\text{ant}}$ (s)} & \textbf{Backtrack (m)} & \textbf{Makespan (s)} \\
-\midrule
-Mesh ON  & 6.82 $\pm$ 1.43 & 0.00 $\pm$ 0.00 & 18.34 $\pm$ 2.87 \\
-Mesh OFF & 0.00 $\pm$ 0.00 & 4.21 $\pm$ 1.94 & 24.96 $\pm$ 3.62 \\
-\midrule
-\textit{Reduction} & \textit{+6.82 s earlier} & \textit{$-$4.21 m} & \textit{$-$26.5\%} \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
+\input{generated/table_mesh_anticipation}
 
-With mesh enabled, Cart~B reroutes $6.82 \pm 1.43\text{ s}$ earlier on average, completely eliminating backtracking (0.00 m vs. 4.21 m) and reducing makespan by $26.5\%$ ($p < 0.001$, Welch's $t$-test). This confirms that the V2V anticipatory mechanism delivers its claimed benefit under the topological conditions it was designed for.
+The mechanism behaves as designed. With the mesh enabled the trailing cart diverts $10.70 \pm 4.20\text{ s}$ before it could have observed the obstruction itself, against $-0.10 \pm 0.04\text{ s}$ with the mesh disabled---that is, without telemetry the diversion occurs only \emph{after} contact with the blockage. Backtracking falls from $2.73 \pm 0.87\text{ m}$ to $1.08 \pm 0.68\text{ m}$ and makespan from $23.78 \pm 3.61\text{ s}$ to $21.44 \pm 3.40\text{ s}$ (Wilcoxon signed-rank, Holm-adjusted $p = 3.8 \times 10^{-9}$ and $2.0 \times 10^{-3}$ respectively). Success is $100\%$ in both arms: the mesh does not determine \emph{whether} the mission completes here, it determines how much wasted travel is incurred, which is the claim the mechanism was designed to support. Together with the ablation result of Section~\ref{sec:tradeoff}, the honest summary is that anticipatory telemetry pays when the topology affords an early alternative and costs a little when it does not.
 
 \subsubsection{Experiment B: Corridor Mutex Lock ($N=50$ trials)}
-Two carts approach the same single-file corridor from opposite ends. Arrival timing is randomized ($\pm[0, 3]\text{ s}$ offset). We compare \textbf{Lock ON} vs. \textbf{Lock OFF} and measure head-on conflict rate, timeout rate, and average corridor traversal time.
+Two carts approach the same single-file corridor from opposite ends, with randomised arrival offsets. The corridor is verified to be genuinely single-file before each trial runs. We compare \textbf{Lock ON} against \textbf{Lock OFF} on identical seeds.
 
-\begin{table}[t]
-\centering
-\caption{Mechanism Experiment B: Corridor Mutex Lock ($N=50$ controlled trials).}
-\label{tab:mech_lock}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{lccc}
-\toprule
-\textbf{Condition} & \textbf{Head-on Conflicts} & \textbf{Timeout Rate} & \textbf{Traversal (s)} \\
-\midrule
-Lock ON  & 0.00 $\pm$ 0.00 & 0.0\% & 12.47 $\pm$ 2.11 \\
-Lock OFF & 1.82 $\pm$ 0.79 & 22.0\% & 31.83 $\pm$ 9.74 \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
+\input{generated/table_corridor_lock}
 
-With the mutex lock disabled, $22\%$ of trials timeout due to head-on deadlocks and an average of $1.82 \pm 0.79$ head-on conflicts per trial occur. Lock~ON completely eliminates deadlocks ($0.00 \pm 0.00$) and reduces corridor traversal time by $60.8\%$ ($p < 0.001$). This directly validates the $R_{\text{lock}}$ mechanism's core contribution.
+\textbf{The effect is large.} Mission success rises from $36.0\%$ to $88.0\%$ (McNemar exact, Holm-adjusted $p = 1.5 \times 10^{-4}$) and corridor occupancy falls from $89.41 \pm 42.42\text{ s}$ to $40.01 \pm 30.87\text{ s}$ ($p = 4.0 \times 10^{-3}$). Without the protocol, the majority of trials fail.
+
+\textbf{The mechanism is not the one previously claimed, and the distinction matters.} An earlier revision described the lock as preventing head-on encounters and eliminating deadlocks. The measurements do not support that description. Head-on encounters are statistically indistinguishable between arms ($1.08 \pm 1.18$ with the lock, $1.00 \pm 0.00$ without; $p = 1$), and the deadlock counter registers zero in \emph{both} arms---so the $N_{\text{deadlock}} = 0.00$ figure cannot be credited to the lock, since it is equally true without it. Most tellingly, accumulated lock wait time is $0.00 \pm 0.00\text{ s}$: agents essentially never queue at a reserved corridor.
+
+The dataset itself resolves the apparent contradiction. The protocol operates by \textbf{cost-projected diversion} rather than by queueing, and the zero wait time is the direct evidence: an agent that deferred by \emph{waiting} would accumulate wait time, and none is recorded in any trial. Instead, when an agent observes a peer's stronger claim, that claim is projected onto its graph as an effectively infinite edge cost, so $\text{D}^*$ Lite reroutes through a parallel aisle. The corridor is therefore vacated by re-routing, not by turn-taking---which is consistent with corridor occupancy falling by more than half while wait time stays at zero.
+
+The head-on encounter still occurs, because it is what triggers the exchange of claims; what the protocol changes is the outcome, not the frequency. Correspondingly, the failure mode without the lock is not a deadlock in the strict sense but a persistent mutual obstruction that expires against the time budget, which is why a counter keyed on unroutable planner states never fires in either arm. Diagnostic instrumentation of individual trials (not part of the released datasets, and therefore not quoted numerically here) confirms the routing divergence directly: with the lock enabled the agents traverse nodes outside the contested corridor and issue roughly twice as many replans, while with it disabled they remain on the contested corridor throughout.
+
+We report this because it changes what the protocol should be credited with. $R_{\text{lock}}$ is not a queueing discipline that serialises access to a bottleneck; it is a distributed mechanism for converting a peer's intent into a routing cost, which is a stronger and more general claim, but a different one. It also explains why the corresponding wait-time column is uniformly zero throughout this paper, including in the fleet-scaling results of Section~\ref{sec:scalability}: there is no queue to measure.
 
 % ==============================================================================
 % SECTION VII: CONCLUSION
 % ==============================================================================
 \section{Conclusion \& Future Research Directions}
-This paper introduced the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). By formalizing a 5-component edge traversal cost function $C(u, v, t) = w_D D + w_M W_{\text{mesh}} + w_H H_{\text{prox}} + w_R R_{\text{lock}} + w_S S_{\text{trolley}}$, $\text{D}^2\text{RO}$ resolves the fundamental failure modes of prior Multi-Agent Path Finding and reactive navigation paradigms. Extensive Monte Carlo evaluations ($N=100$ trials per condition) demonstrate a $97.0\%$ mission success rate in the primary supermarket benchmark with $0.00 \pm 0.00$ corridor deadlocks and $0.59 \pm 5.90$ intimate personal space violations ($p < 0.001$ vs. all baselines). Performance scales gracefully to $92.0\%$ in clinical hospital and $80.0\%$ in airport terminal environments under increasing architectural complexity. Incremental $\text{D}^*$ Lite vertex repair times remain within $0.18\text{ ms}$–$1.23\text{ ms}$ across all evaluated crowd densities, well within real-time control loop constraints.
+This paper introduced the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO), formalizing a 5-component edge traversal cost function $C(u, v, t) = w_D D + w_M W_{\text{mesh}} + w_H H_{\text{prox}} + w_R R_{\text{lock}} + w_S S_{\text{trolley}}$ solved by incremental $\text{D}^*$ Lite repair. We assess the outcome against the three aims set out in Section~\ref{sec:aims}.
 
-\subsection{Theoretical Guarantees \& Deadlock Prevention}
+\textbf{A1 (social compliance) is met, as an explicit trade.} Across $N=100$ seed-paired trials $\text{D}^2\text{RO}$ holds median intimate-space exposure at $0$ ticks [IQR $0$, $0$], against $128$ for Static $A^*$ and $204$ for artificial potential fields ($p < 10^{-15}$). It pays $2.6\times$ the makespan of the socially blind shortest path ($47.18 \pm 13.40\text{ s}$ vs. $18.00 \pm 0.00\text{ s}$) and matches, rather than exceeds, the best baseline success rate ($99.0\%$ vs. $100.0\%$, a difference of one trial). We regard trading travel time for the near-elimination of personal-space intrusion as the correct engineering choice in human-shared space, and we present it as a trade rather than as dominance.
+
+\textbf{A2 (distributed coordination) is met, with a corrected account of how.} Under controlled conditions the mesh advances rerouting by $10.70 \pm 4.20\text{ s}$ and halves backtracking, while the corridor protocol raises success from $36.0\%$ to $88.0\%$. Both mechanisms are, however, invisible or mildly counterproductive in the broad benchmark, where the topologies they address seldom arise; and the corridor protocol works by projecting a peer's claim into the cost field so that $\text{D}^*$ Lite diverts, not by queueing agents at the bottleneck. Its contribution is distributed intent propagation, not mutual exclusion in the conventional sense.
+
+\textbf{A3 (generality and real-time feasibility) is met, within a stated fleet bound.} The unchanged planner achieves $99.0\%$, $100.0\%$ and $95.0\%$ success across supermarket, hospital and airport topologies, with vertex repair in $0.09$--$0.19\text{ ms}$: under $0.4\%$ of the $50\text{ ms}$ control budget across every density and fleet size evaluated. Generality does not extend indefinitely with fleet size---success falls to $78.0\%$ at twelve carts in a $36 \times 24\text{ m}$ floorplan as mesh traffic grows super-linearly---and we state that ceiling as a limitation of the present design rather than describing it as graceful degradation.
+
+\subsection{Theoretical Guarantees \& Their Empirical Limits}
 \begin{enumerate}
-    \item \textbf{Heuristic Admissibility \& Incremental Optimality:} Because the Euclidean distance heuristic $h(s, s_{\text{goal}}) \le c^*(s, s_{\text{goal}})$ is strictly admissible and consistent, $\text{D}^*$ Lite guarantees optimal path extraction with respect to the currently observed edge cost field $C(u, v, t)$ while recomputing only the subgraph perturbed by dynamic obstacles \cite{koenig2002dstar}.
-    \item \textbf{Deadlock Freedom in Single-File Bottlenecks:} In single-file passages where corridor width is insufficient for bidirectional passing, opposing agents entering simultaneously produce reactive live-locks ($\mathbf{F}_{\text{net}} = 0$). $\text{D}^2\text{RO}$ prevents deadlocks by assigning directional reservations and broadcasting `LOCK\_REQUEST` packets that dynamically inflate the reverse edge cost to $R_{\text{lock}} = \infty$. Opposing carts detect this infinity cost and immediately detour through parallel aisles or hold in Turnout Alcoves ($V_{\text{alcove}}$), empirically eliminating head-on deadlocks across all evaluated trials ($N_{\text{deadlock}} = 0.00 \pm 0.00$).
+    \item \textbf{Heuristic Admissibility \& Incremental Optimality:} Because the Euclidean distance heuristic $h(s, s_{\text{goal}}) \le c^*(s, s_{\text{goal}})$ is strictly admissible and consistent, $\text{D}^*$ Lite guarantees optimal path extraction with respect to the currently observed edge cost field $C(u, v, t)$ while recomputing only the subgraph perturbed by dynamic obstacles \cite{koenig2002dstar}. We verified this property empirically against fresh Dijkstra solutions over $150$ randomised scenarios comprising $750$ successive edge-cost repairs.
+    \item \textbf{Conflict Resolution in Single-File Bottlenecks:} Directional reservations broadcast as \texttt{LOCK\_REQUEST} packets inflate the contested edge cost for the deferring agent, which then diverts through a parallel aisle or holds in a Turnout Alcove ($V_{\text{alcove}}$). We claim empirical conflict \emph{resolution}, not deadlock freedom: no formal guarantee is established here, and the zero deadlock counts we measure occur in both the lock-enabled and lock-disabled arms, so they cannot be attributed to the protocol. A liveness proof under bounded latency and message loss remains open.
 \end{enumerate}
 
-\subsection{Real-World Physical Considerations \& Deployment Constraints}
+\subsection{Limitations}
+We state the principal limitations directly. (i) The weights $w_D, w_M, w_H, w_R, w_S$ were set by hand; no sensitivity analysis over them is reported here, so the reported operating point is not shown to be robust to their perturbation. (ii) The ORCA and Local MAPF baselines are our own implementations and returned $0\%$ success; until they are validated against reference implementations we treat those figures as properties of our code, and no claim in this paper depends on them. (iii) All results are simulation-based; no physical fleet was deployed. (iv) The turn penalty $\alpha_{\text{turn}}$ of Eq.~\eqref{eq:sw_dgo_master} is not implemented in the evaluated system, as it requires a heading-augmented search space; the cornering deceleration present in the motion layer is a partial substitute. (v) Fleet scaling is bounded as described above.
+
+\subsection{Considerations for a Physical Deployment}
+The evaluation in this paper is entirely simulation-based. The following are therefore \emph{requirements a physical deployment would have to satisfy}, not properties of the implemented system; none of the hardware described below forms part of the evaluated framework.
+
 \begin{enumerate}
-    \item \textbf{RF Signal Attenuation \& Steel Fixture Multipath:} Metallic retail shelf gondolas and merchandise packaging attenuate $2.4\text{ GHz}$ RF signals by $-15\text{ to }-25\text{ dBm}$. $\text{D}^2\text{RO}$ addresses this through Sub-GHz ($868/915\text{ MHz}$) and dedicated short-range communications ($5.9\text{ GHz}$ IEEE 802.11p / DSRC) multi-hop TTL forwarding with autonomous exponential penalty decay ($W_{\text{mesh}}(t) = W_0 \cdot \exp(-\lambda t)$), ensuring that intermittent packet loss does not permanently poison the routing graph.
-    \item \textbf{Indoor Positioning \& Sensor Fusion:} To mitigate wheel odometry drift on variable flooring (polished supermarket tiles, clinical vinyl, terminal carpets), ground truth localization is maintained via an Extended Kalman Filter (EKF) fusing $100\text{ Hz}$ wheel encoders, 6-DOF IMU gyros, Ultra-Wideband (UWB) transceiver trilateration (Decawave DWM1000), and 2D LiDAR scan-matching against architectural CAD floorplans.
-    \item \textbf{Payload Invariance \& Non-Holonomic Kinodynamics:} Autonomous carts undergo substantial payload shifts ($15\text{ kg}$ empty to $65\text{ kg}$ fully loaded, a $+333\%$ mass increase), altering the center of gravity and rotational moment of inertia. $\text{D}^2\text{RO}$ modulates linear acceleration ($a_{\max}$) and steering curvature ($\kappa_{\max}$) based on real-time motor current draw and load-cell readings to prevent wheel scrubbing or tip-over during turns.
+    \item \textbf{RF Signal Attenuation \& Steel Fixture Multipath:} Metallic retail shelf gondolas and merchandise packaging attenuate $2.4\text{ GHz}$ RF signals by $-15\text{ to }-25\text{ dBm}$. A deployment would likely require Sub-GHz ($868/915\text{ MHz}$) or dedicated short-range ($5.9\text{ GHz}$ IEEE 802.11p / DSRC) links with multi-hop TTL forwarding. The exponential penalty decay $W_{\text{mesh}}(t) = W_0 \exp(-\lambda t)$ that \emph{is} implemented and evaluated here provides the relevant safeguard in principle: stale telemetry expires on its own, so intermittent packet loss cannot permanently poison the routing graph. Our mesh model includes latency and loss, but has not been validated against measurements from a real RF environment.
+    \item \textbf{Indoor Positioning \& Sensor Fusion:} All results assume the pose is known. A physical cart would need to recover it---plausibly by fusing wheel encoders, an IMU, Ultra-Wideband trilateration and LiDAR scan-matching through an Extended Kalman Filter \cite{nugraha2024ips, zafari2019survey}---and the resulting localisation error would propagate into both the proxemic field and the corridor reservations. Quantifying that sensitivity is future work.
+    \item \textbf{Payload Invariance \& Non-Holonomic Kinodynamics:} Service carts undergo large payload shifts (on the order of $15\text{ kg}$ empty to $65\text{ kg}$ loaded), altering the centre of gravity and rotational inertia. The evaluated system uses fixed kinodynamic limits; a deployment would need to modulate $a_{\max}$ and $\kappa_{\max}$ from load sensing to avoid wheel scrubbing or tip-over. This is not implemented or evaluated here.
 \end{enumerate}
 
 \subsection{Future Research Directions}
+The limitations above define the immediate agenda; the last two items are longer-range.
 \begin{enumerate}
-    \item \textbf{Hybrid Learning-Guided Search:} Future investigations will explore coupling Graph Neural Networks (GNNs) or Deep Reinforcement Learning (e.g., PRIMAL / Learn to Follow) for global sub-goal allocation with the deterministic $\text{D}^2\text{RO}$ engine for micro-level kinodynamic path execution.
-    \item \textbf{Heterogeneous Multi-Agent Ecosystems:} Expanding SW-DGO to mixed-fleet environments comprising autonomous delivery pods, heavy floor-scrubbing AGVs, and human-operated wheelchairs by introducing vehicle-specific agility weights into the $R_{\text{lock}}$ reservation tensor.
+    \item \textbf{Weight Sensitivity \& Calibration:} The five weights are currently hand-set. A systematic sweep---perturbing each weight over a multiplicative grid while holding the others fixed, and reporting the resulting success/makespan/social-exposure surface---would establish whether the operating point is a broad plateau or a narrow ridge, and would replace hand-tuning with a stated calibration procedure.
+    \item \textbf{Baseline Validation:} Reproducing our ORCA implementation's behaviour against a reference (e.g. RVO2) on a canonical benchmark, so that comparative claims rest on validated baselines.
+    \item \textbf{Mesh Traffic Suppression:} Relevance filtering and spatial scoping of broadcasts, to lift the fleet-size ceiling identified in Section~\ref{sec:scalability}.
+    \item \textbf{Heading-Augmented Search:} Implementing $\alpha_{\text{turn}}$ over a state space augmented with heading, allowing turn cost to enter the graph search rather than only the motion layer.
+    \item \textbf{Hybrid Learning-Guided Search:} Coupling Graph Neural Networks or deep reinforcement learning (e.g., PRIMAL / Learn to Follow) for global sub-goal allocation with the deterministic $\text{D}^2\text{RO}$ engine for kinodynamic execution.
+    \item \textbf{Heterogeneous Multi-Agent Ecosystems:} Extending SW-DGO to mixed fleets---delivery pods, floor-scrubbing AGVs, human-operated wheelchairs---via vehicle-specific agility weights in the $R_{\text{lock}}$ reservation tuple.
 \end{enumerate}
 
 \section*{Data and Code Availability}
-To support scientific reproducibility and open science, all simulation source code, experimental benchmarking harnesses, verification test suites, raw CSV datasets ($N=100$ Monte Carlo trials across 5 algorithms, 5 cost configurations, and 3 cross-domain architectural environments), and high-resolution vector figures are available under the MIT open-source license at: \url{https://github.com/polla-fattah/D2RO}.
+All simulation source code, experimental harnesses, test suites, raw CSV datasets and vector figures are available at \url{https://github.com/polla-fattah/D2RO}. Every number, table and figure in this paper is produced from the committed raw data by a single analysis pipeline; none is entered by hand. Table~\ref{tab:provenance} records the provenance status of each dataset backing the results reported above.
+
+\input{generated/table_provenance}
 
 \section*{Acknowledgment}
 The authors thank the Autonomous Systems and Robotics Laboratory for hardware access and computing support.

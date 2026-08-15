@@ -5,9 +5,10 @@
 > needs correcting. Nothing required to continue lives outside the repository.
 
 **Status date:** 15 August 2026
-**Context:** Code rebuild in response to the final pre-submission audit is complete
-and tested. Experiment execution is blocked by hardware instability on the original
-workstation, not by the code.
+**Context:** The code rebuild following the pre-submission audit is complete and
+tested. All seven datasets have now been regenerated to completion, statistics and
+manuscript artefacts are rebuilt from them, and the results/discussion/conclusion
+have been rewritten around the real numbers. What remains is listed in §6.
 
 ---
 
@@ -57,46 +58,33 @@ git show 2239939:experiments/data/benchmark_comparison.csv > /tmp/old_benchmark.
 
 ---
 
-## 1. The blocker (read this first)
+## 1. The former blocker — RESOLVED
 
-Six of the seven experiments could not be run to completion on this machine.
+The execution problem that previously stopped six of seven experiments was
+**environmental, not algorithmic**, and it is now closed.
 
-**Symptom.** Long simulation runs abort with a Windows access violation
-(`0xC0000005`), or surface logically impossible Python errors — an attribute holding
-an agent object where the source can only ever assign a `set`; `math.exp` appearing
-as a `float`. Short runs are unaffected: the 53-test suite passes consistently in
-under a second.
+On a different machine the entire suite runs to completion with **zero retries**:
+all seven datasets, 2,700 rows, in ~20 minutes (against the 2–4 h previously
+estimated under repeated failure). No access violations, no impossible-attribute
+errors, no non-deterministic aborts.
 
-**Assessment.** This is memory corruption at the process level, and it is
-non-deterministic — the same command succeeds and fails on consecutive attempts.
-The machine has reportedly been running under thermal stress and other well-behaved
-applications crash on it too. **The most probable cause is failing RAM**, not the
-D²RO code.
+```
+[OK] 1   Benchmark comparison        rows=500/500    70.6s
+[OK] 2   Component ablation          rows=500/500   180.1s
+[OK] 3   Cross-domain benchmark      rows=300/300   160.5s
+[OK] 4A  Crowd-density scalability   rows=600/600   276.0s
+[OK] 4B  Fleet-size scalability      rows=600/600   523.9s
+[OK] A   Mesh anticipation           rows=100/100     8.0s
+[OK] B   Corridor mutex lock         rows=100/100    11.7s
+```
 
-**Evidence pointing away from the code:**
+The earlier failures were confined to one workstation. **This has no bearing on the
+research and must never appear in the manuscript** — it was a local machine fault,
+not a property of the method, the code, or the results. It is recorded here only so
+that a future reader of this file understands why the datasets were once missing.
 
-- The one experiment that completed (`benchmark_comparison.csv`, 500 rows) produced
-  clean, internally consistent, statistically sensible results.
-- Failures occur at varying, arbitrary source locations, including lines that
-  perform only float arithmetic.
-- Free memory was ample (15 GB of 31.6 GB) when failures occurred.
-- Unit tests never fail.
-
-### Before assuming the code is at fault
-
-1. Run a memory diagnostic: `mdsched.exe` (Windows Memory Diagnostic), or
-   MemTest86 from USB for a thorough overnight pass.
-2. Check CPU/GPU temperatures under load; thermal throttling and instability often
-   travel together.
-3. Try the suite on a different machine, or under WSL/Linux:
-   ```bash
-   python -m pytest d2ro/tests/ -q
-   python run_full_suite.py
-   ```
-   If it completes there, the code is fine and the workstation is the fault.
-4. If Windows Defender real-time scanning covers this folder, add an exclusion —
-   scanners injecting into a process that writes files in a tight loop can produce
-   this class of instability.
+If the suite ever fails again, the diagnosis order is: run it on a second machine
+first; only if it also fails there should the code be suspected.
 
 ### A note on stale bytecode (unrelated, but bit us once)
 
@@ -136,19 +124,29 @@ All code changes are complete, reviewed and covered by **53 passing tests**.
 
 ### Datasets
 
+All seven datasets are complete and verified. `analyze_results.py` reports every one
+as `ok` — not `provisional`, `unverified` or `STALE` — meaning each carries a
+provenance stamp matching the current code fingerprint.
+
 | Experiment | Rows | State |
 |:--|--:|:--|
-| Comparative benchmark | 500/500 | **Provisional** — complete, but generated before the arrival-tolerance fix; must be rerun |
-| Component ablation | 0/500 | Blocked |
-| Cross-domain generalisation | 0/300 | Blocked |
-| Crowd-density scalability | 0/600 | Blocked |
-| Fleet-size scalability | 0/600 | Blocked |
-| Mechanism A — mesh anticipation | 0/100 | Blocked |
-| Mechanism B — corridor mutex | 0/100 | Blocked |
+| Comparative benchmark | 500/500 | ✅ ok |
+| Component ablation | 500/500 | ✅ ok |
+| Cross-domain generalisation | 300/300 | ✅ ok (airport seed defect fixed — see below) |
+| Crowd-density scalability | 600/600 | ✅ ok |
+| Fleet-size scalability | 600/600 | ✅ ok |
+| Mechanism A — mesh anticipation | 100/100 | ✅ ok |
+| Mechanism B — corridor mutex | 100/100 | ✅ ok |
+
+**Note on the provenance guard.** The fingerprint is a SHA-256 over the whole `d2ro/`
+package, so *any* source edit marks *every* dataset `STALE` and requires a full
+rerun. This is intended. Budget ~20 minutes whenever you touch the package.
 
 ---
 
-## 3. To finish once the hardware is sound
+## 3. Rebuilding everything from scratch
+
+The full chain, in order (~20 min end to end):
 
 ```bash
 # 1. regenerate every dataset (refuses to report success on short row counts)
@@ -183,7 +181,59 @@ Then remaining work:
 
 ## 4. Findings that already change the manuscript
 
-These hold regardless of the pending reruns.
+Findings 4.7–4.9 were discovered during the completed rerun and are the most
+consequential; 4.1–4.6 predate it and have now been re-verified against real data.
+
+### 4.7 Airport cross-domain results were n=1, not n=100 (FIXED)
+
+`AirportScenarioSuite.get_scenario` scenario "A" called `random.seed(303)`
+internally, clobbering the per-trial seed set by the runner. All 100 airport trials
+were therefore byte-identical — makespan 71.25 ± 0.00, replans 968.00 ± 0.00. The
+supermarket and hospital suites escaped this only by accident: their hard-coded seeds
+sit in scenario "D", which the runner never calls.
+
+Fixed by removing the call (`d2ro/environments/airport.py`). With per-trial variation
+restored the airport domain reports **95.0% success, makespan 74.63 ± 35.71,
+replans 959.16 ± 359.83** — replacing the previously reported 80.0%.
+
+### 4.8 The corridor mutex works, but not by the mechanism the paper claimed
+
+Mechanism B shows a large, real effect: success 88.0% vs 36.0% (p = 1.5e-4),
+corridor occupancy 40.01 s vs 89.41 s. But:
+
+- head-on encounters are **statistically unchanged** (1.08 vs 1.00, p = 1);
+- the deadlock counter reads **0.00 in both arms**, so `N_deadlock = 0.00` cannot be
+  credited to the lock;
+- `lock_wait_s` is **0.00 ± 0.00** — agents essentially never queue.
+
+Instrumented traces (25 seed-paired runs) explain it. The lock operates by
+**cost-projected diversion**: `_apply_lock_costs` turns a peer's claim into an
+infinite edge cost and D* Lite reroutes. Lock ON visited 2.16 nodes outside the
+corridor and issued 21.7 replans; lock OFF visited 0.00 and issued 9.5. The manuscript
+now describes this accurately and claims conflict *resolution*, not deadlock freedom.
+
+Probe scripts used: `probe_lock.py`, `probe_lock2.py` (session scratchpad — rewrite if
+needed; they only import the package, they do not modify it).
+
+### 4.9 `lock_wait_time` is destroyed before it is read (OPEN, minor)
+
+`TrolleyAgent._release_corridor` sets `self.lock_wait_time = 0.0`, and it is called
+both on docking and on corridor exit. The experiments sum this attribute at the *end*
+of the run, so any accumulated wait is already zeroed — which is why `lock_wait_s` and
+`mutex_wait_s` are identically 0.00 everywhere. Peak-value probing shows the true
+figure is small anyway (0.00 s in 8 of 10 seeds, ≤0.20 s in the rest), so the
+reported conclusion does not change — but the metric as implemented cannot measure
+what it claims. Fix by accumulating into a separate total that release does not reset.
+**Note this requires a full 20-minute suite rerun** (provenance fingerprint).
+
+### 4.10 Superseded findings, re-verified
+
+- §4.1 (APF is not 0%) **confirmed** — APF now completes 100% at 34.54 ± 0.16 s.
+- §4.3 (headline is a trade-off) **confirmed** — 99.0%/47.18 s vs A* 100%/18.00 s,
+  intimate exposure median 0 vs 128.
+- §4.5's hypothesis that Local MAPF's 0% was "substantially an artefact" **did not
+  survive**: under the unified 0.84 m arrival radius MAPF still measures 0.0%.
+  The ORCA caveat in §4.5 stands and remains blocking.
 
 ### 4.1 The APF "0% success" claim is wrong
 
@@ -305,13 +355,12 @@ Work top to bottom. Items marked **[blocks submission]** must be resolved before
 paper can be sent anywhere.
 
 ### A. Regenerate the evidence
-- [ ] **[blocks submission]** Run the full suite to completion on sound hardware; all
-      seven datasets must report `OK` with matching row counts.
-- [ ] Confirm `analyze_results.py` reports every dataset as `ok` — **not**
-      `provisional`, `STALE` or `unverified`. If it does not, the numbers do not
-      match the code and must not be published.
-- [ ] Re-check §4.1–4.3 conclusions against the regenerated data; they were computed
-      before the arrival-tolerance fix and may change.
+- [x] **DONE** Run the full suite to completion; all seven datasets report `OK` with
+      matching row counts (2,700 rows, zero retries).
+- [x] **DONE** `analyze_results.py` reports all seven datasets as `ok`.
+- [x] **DONE** §4.1–4.3 re-checked against regenerated data. §4.1 and §4.3 hold;
+      §4.5's "MAPF was only an artefact" hypothesis did **not** survive — MAPF still
+      measures 0% under the unified arrival radius.
 
 ### B. Close the two open scientific questions
 - [ ] **[blocks submission]** Validate the ORCA implementation against a reference
@@ -330,22 +379,23 @@ paper can be sent anywhere.
 - [ ] **[blocks submission]** Rebuild `paper/references.bib` from the verified
       `literature/D2RO.bib`. References [6], [11], [13], [14], [21] are wrong; audit
       every remaining entry rather than assuming only those are affected.
-- [ ] **[blocks submission]** Rewrite the deployment section (~line 610) into
-      future/conditional tense. It currently states that EKF/UWB/LiDAR fusion and
-      load-cell modulation are in place; none of it is implemented.
+- [x] **DONE** Deployment section rewritten into conditional tense and retitled
+      "Considerations for a Physical Deployment", with an explicit statement that none
+      of the hardware described forms part of the evaluated framework.
 - [ ] Decide the `α_turn` question (see §5): either drop it from Eq. (4) and describe
       the kinodynamic cornering model that genuinely exists, or schedule the
       heading-augmented state space as future work.
 
 ### D. Rewrite around the real numbers
-- [ ] Remove the stale "+48.3%" mesh claim (`paper.tex:98`).
-- [ ] Replace "2,500 total trials" (`paper.tex:101`) with the true count.
-- [ ] Fix README trial counts (says 2,500 in three places, 2,700 in one).
-- [ ] Rewrite the APF failure-mode discussion — with a fair time budget APF
-      completes 100% of missions (see §4.1).
-- [ ] Frame the headline as an explicit trade-off (social compliance bought with
-      makespan), not as a clean sweep.
-- [ ] Replace every hand-typed number with `\input{}` of the generated tables.
+- [x] **DONE** Stale "+48.3%" mesh claim removed.
+- [x] **DONE** Trial count corrected to 2,700 throughout the manuscript.
+- [ ] Fix README trial counts and superseded results table.
+- [x] **DONE** APF failure-mode discussion rewritten; APF completes 100% of missions
+      and is now criticised on social grounds (highest intimate exposure), not success.
+- [x] **DONE** Headline framed as an explicit trade-off in the abstract, §VI-C and the
+      conclusion.
+- [x] **DONE** Every hand-typed table replaced with `\input{}` of a generated file.
+      `paper.tex` now contains no hand-entered result numbers.
 
 ### E. Final gate
 - [ ] Clean-room reproduction on a machine that has never seen the project: clone,

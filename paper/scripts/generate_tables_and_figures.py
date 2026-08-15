@@ -280,6 +280,272 @@ def table_benchmark(bench: Dict[str, Any]) -> bool:
     return True
 
 
+def _pct(g: Dict[str, Any]) -> str:
+    """Success rate with its Wilson interval."""
+    lo, hi = g.get("success_ci95", [0.0, 0.0])
+    return f"{g.get('success_rate', 0.0):.1f}\\% [{lo:.1f}, {hi:.1f}]"
+
+
+def _med(d: Optional[Dict[str, Any]], p: int = 0) -> str:
+    """Median [IQR] - the honest summary for skewed, zero-inflated metrics."""
+    if not d or not d.get("n"):
+        return "--"
+    q1, q3 = d.get("iqr", [0.0, 0.0])
+    return f"{d.get('median', 0.0):.{p}f} [{q1:.{p}f}, {q3:.{p}f}]"
+
+
+def _p(v: Optional[float]) -> str:
+    if v is None:
+        return "--"
+    if v >= 0.001:
+        return f"${v:.3g}$"
+    mant, exp = f"{v:.1e}".split("e")
+    return f"${mant} \\times 10^{{{int(exp)}}}$"
+
+
+def _header(caption: str, label: str, colspec: str, heads: str,
+            wide: bool = False, resize: bool = False) -> List[str]:
+    env = "table*" if wide else "table"
+    L = [
+        "% GENERATED FILE - do not edit by hand.",
+        "% Source: experiments/data/analysis_results.json",
+        "% Produced by paper/scripts/generate_tables_and_figures.py",
+        f"\\begin{{{env}}}[t]",
+        "\\centering",
+        f"\\caption{{{caption}}}",
+        f"\\label{{{label}}}",
+    ]
+    if resize:
+        # A single-column float must scale to \columnwidth: inside a two-column
+        # IEEEtran page \textwidth is the FULL page width, so using it here
+        # overflows the column by ~264pt.
+        L.append("\\resizebox{%s}{!}{%%" % ("\\textwidth" if wide else "\\columnwidth"))
+    L += [f"\\begin{{tabular}}{{{colspec}}}", "\\toprule", heads, "\\midrule"]
+    return L
+
+
+def _footer(wide: bool = False, resize: bool = False) -> List[str]:
+    env = "table*" if wide else "table"
+    L = ["\\bottomrule", "\\end{tabular}" + ("%" if resize else "")]
+    if resize:
+        L.append("}")
+    L += [f"\\end{{{env}}}", ""]
+    return L
+
+
+def _emit(name: str, lines: List[str]) -> bool:
+    with open(os.path.join(TAB_DIR, f"{name}.tex"), "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+    print(f"  [ok]   generated/{name}.tex")
+    return True
+
+
+# --------------------------------------------------------------------------- #
+# Component ablation
+# --------------------------------------------------------------------------- #
+ABLATION_LABEL = {
+    "Full D2RO Framework": "\\textbf{Full $\\text{D}^2\\text{RO}$}",
+    "w/o V2V Mesh Telemetry": "w/o V2V mesh $W_{\\text{mesh}}$",
+    "w/o Corridor Mutex Lock": "w/o corridor mutex $R_{\\text{lock}}$",
+    "w/o Human Gaussian Proxemics": "w/o proxemics $H_{\\text{prox}}$",
+    "w/o Trolley Kinetic Safety Bubble": "w/o safety envelope $S_{\\text{trolley}}$",
+}
+
+
+def table_ablation(res: Dict[str, Any]) -> bool:
+    if not _usable(res.get("status")) or not res.get("groups"):
+        _placeholder("table_ablation", f"ablation dataset {res.get('status', 'missing')}")
+        return False
+    groups = res["groups"]
+    order = [k for k in ABLATION_LABEL if k in groups] or list(groups)
+    n = groups[order[0]].get("n", 0)
+    L = _header(
+        f"Component ablation of the five cost terms in the retail supermarket domain "
+        f"($N={n}$ trials per configuration). Each row removes exactly one term from "
+        f"Eq.~(1); all other parameters are held fixed.",
+        "tab:ablation", "lccccc",
+        "\\textbf{Configuration} & \\textbf{Success (95\\% CI)} & \\textbf{Makespan (s)} & "
+        "\\textbf{Discomfort} & \\textbf{Deadlocks} & \\textbf{Shelf scrapes} \\\\",
+        wide=True, resize=True)
+    for k in order:
+        g = groups[k]
+        L.append(f"{ABLATION_LABEL.get(k, k)} & {_pct(g)} & {_f(g['makespan'])} & "
+                 f"{_f(g['discomfort'])} & {_f(g['deadlocks'])} & {_f(g['shelf_scrapes'])} \\\\")
+    L += _footer(wide=True, resize=True)
+    return _emit("table_ablation", L)
+
+
+# --------------------------------------------------------------------------- #
+# Cross-domain generalisation
+# --------------------------------------------------------------------------- #
+def table_cross_domain(res: Dict[str, Any]) -> bool:
+    if not _usable(res.get("status")) or not res.get("groups"):
+        _placeholder("table_cross_domain", f"cross_domain dataset {res.get('status', 'missing')}")
+        return False
+    groups = res["groups"]
+    order = ["Retail Supermarket", "Clinical Hospital", "Airport Terminal"]
+    order = [k for k in order if k in groups] or list(groups)
+    n = groups[order[0]].get("n", 0)
+    L = _header(
+        f"Cross-domain generalisation of the unchanged planner across three "
+        f"topologically distinct environments ($N={n}$ trials per domain). Intimate "
+        f"exposure is reported as median [IQR]; the distribution is zero-inflated.",
+        "tab:cross_domain", "lccccc",
+        "\\textbf{Domain} & \\textbf{Success (95\\% CI)} & \\textbf{Makespan (s)} & "
+        "\\textbf{Mean transit (s)} & \\textbf{Intimate exposure} & "
+        "\\textbf{$\\text{D}^*$ Lite replans} \\\\",
+        wide=True, resize=True)
+    for k in order:
+        g = groups[k]
+        L.append(f"{k} & {_pct(g)} & {_f(g['makespan'])} & {_f(g['transit'])} & "
+                 f"{_med(g['intimate_exposure'])} & {_f(g['replans'], 1)} \\\\")
+    L += _footer(wide=True, resize=True)
+    return _emit("table_cross_domain", L)
+
+
+# --------------------------------------------------------------------------- #
+# Mechanism experiments A and B - paired ON/OFF designs
+# --------------------------------------------------------------------------- #
+def _table_mechanism(res: Dict[str, Any], name: str, label: str,
+                     caption: str, rows: List[tuple]) -> bool:
+    if not _usable(res.get("status")) or not res.get("conditions"):
+        _placeholder(name, f"{name.replace('table_', '')} dataset {res.get('status', 'missing')}")
+        return False
+    on = res["conditions"]["on"]
+    off = res["conditions"]["off"]
+    comp = res.get("comparisons", {})
+    adj = res.get("holm_adjusted_p", {})
+    n = res.get("n_pairs", 0)
+    # The test column is abbreviated ("Wilcoxon", "McNemar") and expanded in the
+    # caption: spelling the tests out in full forces \resizebox to shrink the
+    # whole table well below the surrounding body text.
+    short_test = {"Wilcoxon signed-rank": "Wilcoxon", "McNemar (exact)": "McNemar"}
+    L = _header(
+        f"{caption} ($N={n}$ paired trials; the same seed drives both arms, so each "
+        f"row is a within-pair comparison). Continuous outcomes use the Wilcoxon "
+        f"signed-rank test and mission success McNemar's exact test; rows marked "
+        f"\\emph{{identical}} were equal in every pair. $p$-values are Holm-adjusted "
+        f"across the rows of this table.",
+        label, "lcccc",
+        "\\textbf{Metric} & \\textbf{ON} & \\textbf{OFF} & "
+        "\\textbf{Test} & \\textbf{$p$ (Holm)} \\\\",
+        wide=False, resize=True)
+    for key, pretty, prec in rows:
+        if key not in on:
+            continue
+        test = comp.get(key, {}).get("test", "--")
+        L.append(f"{pretty} & {_f(on[key], prec)} & {_f(off[key], prec)} & "
+                 f"{short_test.get(test, test)} & {_p(adj.get(key))} \\\\")
+    L.append("\\midrule")
+    st = comp.get("success", {}).get("test", "McNemar (exact)")
+    L.append(f"Mission success & {on.get('success_rate', 0.0):.1f}\\% & "
+             f"{off.get('success_rate', 0.0):.1f}\\% & {short_test.get(st, st)} & "
+             f"{_p(adj.get('success'))} \\\\")
+    L += _footer(wide=False, resize=True)
+    return _emit(name, L)
+
+
+def table_mesh_anticipation(res: Dict[str, Any]) -> bool:
+    return _table_mechanism(
+        res, "table_mesh_anticipation", "tab:mech_mesh",
+        "Mechanism experiment A: V2V mesh anticipation. A corridor is blocked out of "
+        "line of sight; with the mesh enabled the follower learns of the obstruction "
+        "before observing it",
+        [("anticipation_lead_time_s", "Anticipation lead time (s)", 2),
+         ("backtrack_distance_m", "Backtrack distance (m)", 2),
+         ("path_length_m", "Path length (m)", 2),
+         ("makespan_s", "Makespan (s)", 2)])
+
+
+def table_corridor_lock(res: Dict[str, Any]) -> bool:
+    return _table_mechanism(
+        res, "table_corridor_lock", "tab:mech_lock",
+        "Mechanism experiment B: distributed corridor mutex. Two carts are routed into "
+        "the same single-file corridor from opposite ends",
+        [("head_on_events", "Head-on encounters", 2),
+         ("deadlocks", "Deadlocks", 2),
+         ("lock_wait_s", "Lock wait (s)", 2),
+         ("corridor_time_s", "Corridor occupancy (s)", 2),
+         ("makespan_s", "Makespan (s)", 2)])
+
+
+# --------------------------------------------------------------------------- #
+# Scalability figures
+# --------------------------------------------------------------------------- #
+def _figure_scalability(res: Dict[str, Any], name: str, xlabel: str,
+                        panels: List[tuple], caption: str, label: str) -> bool:
+    """Small multiples over an ordered sweep; one panel per metric."""
+    if not _usable(res.get("status")) or not res.get("groups"):
+        _placeholder(name, f"{name.replace('fig_', '')} dataset {res.get('status', 'missing')}")
+        return False
+    groups = res["groups"]
+    xs = sorted(groups, key=lambda k: float(k))
+    xv = [float(k) for k in xs]
+
+    fig, axes = plt.subplots(1, len(panels), figsize=(3.5 * len(panels), 3.2))
+    for ax, (key, ylabel, title, prec) in zip(axes, panels):
+        if key == "success_rate":
+            vals = [groups[k]["success_rate"] for k in xs]
+            lo = [max(0.0, v - groups[k]["success_ci95"][0]) for v, k in zip(vals, xs)]
+            hi = [max(0.0, groups[k]["success_ci95"][1] - v) for v, k in zip(vals, xs)]
+            ax.set_ylim(0, 108)
+        else:
+            vals = [groups[k][key]["mean"] for k in xs]
+            sd = [groups[k][key]["sd"] for k in xs]
+            lo = hi = sd
+        ax.errorbar(xv, vals, yerr=[lo, hi], color=PALETTE[0], marker="o",
+                    markersize=4, linewidth=1.4, elinewidth=0.9, capsize=2.5, zorder=3)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_title(title, loc="left")
+        ax.set_xticks(xv)
+        ax.yaxis.set_major_locator(MaxNLocator(5))
+        _style(ax)
+
+    if _provisional(res.get("status")):
+        fig.text(0.5, 0.985, "PROVISIONAL - dataset generated by superseded code",
+                 ha="center", va="top", fontsize=7.5, color="#b02418")
+    fig.tight_layout()
+    for ext in ("pdf", "png"):
+        fig.savefig(os.path.join(FIG_DIR, f"{name}.{ext}"))
+    plt.close(fig)
+    print(f"  [ok]   {name}.{{pdf,png}}")
+
+    return _emit(name, [
+        "% GENERATED FILE - do not edit by hand.",
+        "% Produced by paper/scripts/generate_tables_and_figures.py",
+        "\\begin{figure*}[t]",
+        "\\centering",
+        f"\\includegraphics[width=\\textwidth]{{{name}.pdf}}",
+        f"\\caption{{{caption}}}",
+        f"\\label{{{label}}}",
+        "\\end{figure*}",
+        "",
+    ])
+
+
+def figure_crowd_density(res: Dict[str, Any]) -> bool:
+    return _figure_scalability(
+        res, "fig_crowd_density", "Pedestrians in the environment",
+        [("replan_latency_ms", "Replan latency (ms)", "(a) Incremental replan cost", 3),
+         ("mesh_packets", "V2V packets per trial", "(b) Mesh traffic", 1),
+         ("success_rate", "Mission success (%)", "(c) Success rate", 1)],
+        "Crowd-density scalability at a fixed fleet of four carts. Error bars are "
+        "$\\pm$1 SD, except (c) which shows the Wilson 95\\% interval.",
+        "fig:scalability_crowd")
+
+
+def figure_fleet_size(res: Dict[str, Any]) -> bool:
+    return _figure_scalability(
+        res, "fig_fleet_size", "Carts in the fleet",
+        [("makespan", "Makespan (s)", "(a) Fleet makespan", 2),
+         ("mesh_packets", "V2V packets per trial", "(b) Mesh traffic", 1),
+         ("success_rate", "Mission success (%)", "(c) Success rate", 1)],
+        "Fleet-size scalability at a fixed crowd of ten pedestrians. Error bars are "
+        "$\\pm$1 SD, except (c) which shows the Wilson 95\\% interval.",
+        "fig:scalability_fleet")
+
+
 def table_availability(results: Dict[str, Any]) -> None:
     """A table recording which datasets back the manuscript, and which do not."""
     L = [
@@ -318,19 +584,27 @@ def table_availability(results: Dict[str, Any]) -> None:
 def main() -> None:
     results = load_analysis()
     print("Generating manuscript artefacts from analysis_results.json\n")
-    figure_benchmark(results.get("benchmark", {}))
+    bench_ok = figure_benchmark(results.get("benchmark", {}))
     table_benchmark(results.get("benchmark", {}))
     table_availability(results)
 
-    for key, name in (("ablation", "table_ablation"),
-                      ("cross_domain", "table_cross_domain"),
-                      ("crowd_density", "fig_crowd_density"),
-                      ("fleet_size", "fig_fleet_size"),
-                      ("mesh_anticipation", "table_mesh_anticipation"),
-                      ("corridor_lock", "table_corridor_lock")):
-        res = results.get(key, {})
-        if not _usable(res.get("status")):
-            _placeholder(name, f"{key} dataset {res.get('status', 'missing')}")
+    # Each generator emits its artefact when the dataset is usable and a
+    # placeholder recording the reason when it is not, so a missing experiment can
+    # never be silently represented by values left over from an earlier run.
+    table_ablation(results.get("ablation", {}))
+    table_cross_domain(results.get("cross_domain", {}))
+    table_mesh_anticipation(results.get("mesh_anticipation", {}))
+    table_corridor_lock(results.get("corridor_lock", {}))
+    figure_crowd_density(results.get("crowd_density", {}))
+    figure_fleet_size(results.get("fleet_size", {}))
+
+    # fig1_note.tex exists only to explain an ABSENT Figure 1. Once the benchmark
+    # figure is produced the note is stale by definition, so it is removed rather
+    # than left to contradict the artefact beside it.
+    note = os.path.join(TAB_DIR, "fig1_note.tex")
+    if bench_ok and os.path.exists(note):
+        os.remove(note)
+        print("  [rm]   generated/fig1_note.tex (obsolete: Figure 1 was generated)")
 
     print("\nDone. Tables in paper/generated/, figures in paper/figures/.")
 

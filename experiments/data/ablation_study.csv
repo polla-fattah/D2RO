@@ -1,0 +1,501 @@
+trial_id,configuration,omitted_component,success,travel_time_s,deadlocks,discomfort_integral,shelf_corner_scrapes,inter_cart_crowding
+1,Full D2RO Framework,None (Complete Equation),1,44.35,0,0.03,174,0
+1,w/o V2V Mesh Telemetry,W_mesh = 0,1,29.8,0,0.03,106,0
+1,w/o Corridor Mutex Lock,R_lock = 0,1,29.8,0,0.03,106,0
+1,w/o Human Gaussian Proxemics,H_prox = 0,1,100.7,0,6.97,413,0
+1,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.03,224,0
+2,Full D2RO Framework,None (Complete Equation),1,35.45,0,0.01,57,0
+2,w/o V2V Mesh Telemetry,W_mesh = 0,1,37.5,0,0.01,299,0
+2,w/o Corridor Mutex Lock,R_lock = 0,1,37.5,0,0.01,299,0
+2,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,14.91,465,0
+2,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,42.8,0,0.0,279,0
+3,Full D2RO Framework,None (Complete Equation),1,51.7,0,0.01,156,0
+3,w/o V2V Mesh Telemetry,W_mesh = 0,1,31.2,0,0.01,94,0
+3,w/o Corridor Mutex Lock,R_lock = 0,1,31.2,0,0.01,94,0
+3,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,11.24,188,0
+3,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,41.65,0,0.0,252,0
+4,Full D2RO Framework,None (Complete Equation),1,120.7,0,0.04,819,0
+4,w/o V2V Mesh Telemetry,W_mesh = 0,1,34.65,0,0.03,264,0
+4,w/o Corridor Mutex Lock,R_lock = 0,1,34.65,0,0.03,264,0
+4,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,10.69,185,0
+4,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.2,0,0.01,353,0
+5,Full D2RO Framework,None (Complete Equation),1,44.35,0,0.01,131,0
+5,w/o V2V Mesh Telemetry,W_mesh = 0,1,28.85,0,0.0,63,0
+5,w/o Corridor Mutex Lock,R_lock = 0,1,28.85,0,0.0,63,0
+5,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,17.31,367,0
+5,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.02,224,0
+6,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.0,154,0
+6,w/o V2V Mesh Telemetry,W_mesh = 0,1,28.3,0,0.01,80,0
+6,w/o Corridor Mutex Lock,R_lock = 0,1,28.3,0,0.01,80,0
+6,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,10.33,620,0
+6,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.05,0,0.0,216,0
+7,Full D2RO Framework,None (Complete Equation),1,36.5,0,0.01,110,0
+7,w/o V2V Mesh Telemetry,W_mesh = 0,1,31.6,0,0.01,122,0
+7,w/o Corridor Mutex Lock,R_lock = 0,1,31.6,0,0.01,122,0
+7,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,11.66,122,0
+7,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,42.05,0,0.01,261,0
+8,Full D2RO Framework,None (Complete Equation),1,38.1,0,0.05,183,0
+8,w/o V2V Mesh Telemetry,W_mesh = 0,1,49.2,0,0.47,194,0
+8,w/o Corridor Mutex Lock,R_lock = 0,1,44.7,0,0.48,182,0
+8,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.28,122,0
+8,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,44.25,0,0.01,310,0
+9,Full D2RO Framework,None (Complete Equation),1,25.65,0,0.09,56,0
+9,w/o V2V Mesh Telemetry,W_mesh = 0,1,53.4,0,0.05,304,0
+9,w/o Corridor Mutex Lock,R_lock = 0,1,53.4,0,0.05,304,0
+9,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.58,356,0
+9,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,45.35,0,0.05,183,0
+10,Full D2RO Framework,None (Complete Equation),1,46.15,0,0.02,167,0
+10,w/o V2V Mesh Telemetry,W_mesh = 0,1,38.15,0,0.01,139,0
+10,w/o Corridor Mutex Lock,R_lock = 0,1,38.15,0,0.01,139,0
+10,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,14.68,302,0
+10,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,42.85,0,0.02,250,0
+11,Full D2RO Framework,None (Complete Equation),1,50.95,0,0.02,114,0
+11,w/o V2V Mesh Telemetry,W_mesh = 0,1,34.7,0,0.01,326,0
+11,w/o Corridor Mutex Lock,R_lock = 0,1,34.7,0,0.01,326,0
+11,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,12.98,105,0
+11,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,47.8,0,0.02,216,0
+12,Full D2RO Framework,None (Complete Equation),1,64.1,0,0.01,291,0
+12,w/o V2V Mesh Telemetry,W_mesh = 0,1,32.45,0,0.01,109,0
+12,w/o Corridor Mutex Lock,R_lock = 0,1,32.45,0,0.01,109,0
+12,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,18.78,312,0
+12,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,43.9,0,0.01,303,0
+13,Full D2RO Framework,None (Complete Equation),1,61.45,0,0.22,253,0
+13,w/o V2V Mesh Telemetry,W_mesh = 0,1,35.4,0,0.02,143,0
+13,w/o Corridor Mutex Lock,R_lock = 0,1,35.4,0,0.02,143,0
+13,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,14.14,727,0
+13,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,56.0,0,0.32,353,0
+14,Full D2RO Framework,None (Complete Equation),1,51.45,0,0.01,174,0
+14,w/o V2V Mesh Telemetry,W_mesh = 0,1,38.1,0,0.01,314,0
+14,w/o Corridor Mutex Lock,R_lock = 0,1,38.1,0,0.01,314,0
+14,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,17.43,156,0
+14,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,43.25,0,0.01,287,0
+15,Full D2RO Framework,None (Complete Equation),1,42.6,0,0.0,114,0
+15,w/o V2V Mesh Telemetry,W_mesh = 0,1,27.55,0,0.0,52,0
+15,w/o Corridor Mutex Lock,R_lock = 0,1,27.55,0,0.0,52,0
+15,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.32,293,0
+15,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.45,0,0.0,216,0
+16,Full D2RO Framework,None (Complete Equation),1,80.45,0,0.08,378,0
+16,w/o V2V Mesh Telemetry,W_mesh = 0,1,45.65,0,0.07,266,0
+16,w/o Corridor Mutex Lock,R_lock = 0,1,45.65,0,0.07,266,0
+16,w/o Human Gaussian Proxemics,H_prox = 0,1,155.45,0,13.97,281,0
+16,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,46.8,0,0.01,357,0
+17,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.0,152,0
+17,w/o V2V Mesh Telemetry,W_mesh = 0,1,28.55,0,0.0,38,0
+17,w/o Corridor Mutex Lock,R_lock = 0,1,28.55,0,0.0,38,0
+17,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.99,228,0
+17,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.0,224,0
+18,Full D2RO Framework,None (Complete Equation),1,26.4,0,0.04,103,0
+18,w/o V2V Mesh Telemetry,W_mesh = 0,1,64.25,0,0.04,866,0
+18,w/o Corridor Mutex Lock,R_lock = 0,1,64.25,0,0.04,866,0
+18,w/o Human Gaussian Proxemics,H_prox = 0,1,84.25,0,3.11,148,0
+18,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,24.6,0,0.03,267,0
+19,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.0,114,0
+19,w/o V2V Mesh Telemetry,W_mesh = 0,1,34.55,0,0.0,113,0
+19,w/o Corridor Mutex Lock,R_lock = 0,1,34.55,0,0.0,113,0
+19,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.75,242,0
+19,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.05,0,0.0,339,0
+20,Full D2RO Framework,None (Complete Equation),1,33.45,0,0.01,194,0
+20,w/o V2V Mesh Telemetry,W_mesh = 0,1,39.95,0,0.01,288,0
+20,w/o Corridor Mutex Lock,R_lock = 0,1,39.95,0,0.01,288,0
+20,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.52,116,0
+20,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,25.7,0,0.0,222,0
+21,Full D2RO Framework,None (Complete Equation),1,39.95,0,0.59,311,0
+21,w/o V2V Mesh Telemetry,W_mesh = 0,1,39.5,0,0.57,241,0
+21,w/o Corridor Mutex Lock,R_lock = 0,1,39.5,0,0.57,241,0
+21,w/o Human Gaussian Proxemics,H_prox = 0,1,46.1,0,1.24,268,0
+21,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,70.5,0,1.18,416,0
+22,Full D2RO Framework,None (Complete Equation),1,43.0,0,0.01,114,0
+22,w/o V2V Mesh Telemetry,W_mesh = 0,1,27.95,0,0.01,51,0
+22,w/o Corridor Mutex Lock,R_lock = 0,1,27.95,0,0.01,51,0
+22,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,11.19,80,0
+22,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.01,224,0
+23,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.01,114,0
+23,w/o V2V Mesh Telemetry,W_mesh = 0,1,26.8,0,0.01,52,0
+23,w/o Corridor Mutex Lock,R_lock = 0,1,26.8,0,0.01,52,0
+23,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,16.72,170,0
+23,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.05,0,0.01,216,0
+24,Full D2RO Framework,None (Complete Equation),1,44.35,0,0.01,170,0
+24,w/o V2V Mesh Telemetry,W_mesh = 0,1,29.35,0,0.01,93,0
+24,w/o Corridor Mutex Lock,R_lock = 0,1,29.35,0,0.01,93,0
+24,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,11.22,184,0
+24,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.01,224,0
+25,Full D2RO Framework,None (Complete Equation),1,47.5,0,0.02,84,0
+25,w/o V2V Mesh Telemetry,W_mesh = 0,1,34.7,0,0.01,136,0
+25,w/o Corridor Mutex Lock,R_lock = 0,1,34.7,0,0.01,136,0
+25,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,20.29,274,0
+25,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,44.95,0,0.01,326,0
+26,Full D2RO Framework,None (Complete Equation),1,44.6,0,0.03,187,0
+26,w/o V2V Mesh Telemetry,W_mesh = 0,1,39.3,0,0.01,425,0
+26,w/o Corridor Mutex Lock,R_lock = 0,1,39.3,0,0.01,425,0
+26,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,10.98,292,0
+26,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,42.8,0,0.02,279,0
+27,Full D2RO Framework,None (Complete Equation),1,36.75,0,0.04,128,0
+27,w/o V2V Mesh Telemetry,W_mesh = 0,1,33.6,0,0.04,123,0
+27,w/o Corridor Mutex Lock,R_lock = 0,1,33.6,0,0.04,123,0
+27,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,14.59,285,0
+27,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,43.9,0,0.08,303,0
+28,Full D2RO Framework,None (Complete Equation),1,46.3,0,0.04,51,0
+28,w/o V2V Mesh Telemetry,W_mesh = 0,1,27.75,0,0.01,52,0
+28,w/o Corridor Mutex Lock,R_lock = 0,1,27.75,0,0.01,52,0
+28,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,11.06,70,0
+28,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,45.0,0,0.02,130,0
+29,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.0,153,0
+29,w/o V2V Mesh Telemetry,W_mesh = 0,1,31.75,0,0.0,91,0
+29,w/o Corridor Mutex Lock,R_lock = 0,1,31.75,0,0.0,91,0
+29,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,16.59,379,0
+29,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.05,0,0.0,216,0
+30,Full D2RO Framework,None (Complete Equation),1,47.6,0,0.04,139,0
+30,w/o V2V Mesh Telemetry,W_mesh = 0,1,55.8,0,0.13,249,0
+30,w/o Corridor Mutex Lock,R_lock = 0,1,55.8,0,0.13,249,0
+30,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.16,172,0
+30,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,45.3,0,0.02,181,0
+31,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.0,160,0
+31,w/o V2V Mesh Telemetry,W_mesh = 0,1,28.05,0,0.0,46,0
+31,w/o Corridor Mutex Lock,R_lock = 0,1,28.05,0,0.0,46,0
+31,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,18.43,151,0
+31,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.05,0,0.0,216,0
+32,Full D2RO Framework,None (Complete Equation),1,47.6,0,0.14,100,0
+32,w/o V2V Mesh Telemetry,W_mesh = 0,1,27.15,0,0.01,80,0
+32,w/o Corridor Mutex Lock,R_lock = 0,1,27.15,0,0.01,80,0
+32,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.09,126,0
+32,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,99.4,0,0.71,414,0
+33,Full D2RO Framework,None (Complete Equation),1,43.1,0,0.1,412,0
+33,w/o V2V Mesh Telemetry,W_mesh = 0,1,38.65,0,0.02,162,0
+33,w/o Corridor Mutex Lock,R_lock = 0,1,38.65,0,0.02,162,0
+33,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,10.48,182,0
+33,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,44.95,0,0.03,326,0
+34,Full D2RO Framework,None (Complete Equation),1,45.3,0,0.01,144,0
+34,w/o V2V Mesh Telemetry,W_mesh = 0,1,27.95,0,0.01,51,0
+34,w/o Corridor Mutex Lock,R_lock = 0,1,27.95,0,0.01,51,0
+34,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.85,742,0
+34,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.95,0,0.0,235,0
+35,Full D2RO Framework,None (Complete Equation),1,33.2,0,0.09,32,0
+35,w/o V2V Mesh Telemetry,W_mesh = 0,1,61.15,0,0.09,644,0
+35,w/o Corridor Mutex Lock,R_lock = 0,1,61.15,0,0.09,644,0
+35,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,12.4,107,0
+35,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,53.4,0,0.18,513,0
+36,Full D2RO Framework,None (Complete Equation),1,44.35,0,0.03,131,0
+36,w/o V2V Mesh Telemetry,W_mesh = 0,1,29.2,0,0.03,63,0
+36,w/o Corridor Mutex Lock,R_lock = 0,1,29.2,0,0.03,63,0
+36,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.37,58,0
+36,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.04,347,0
+37,Full D2RO Framework,None (Complete Equation),1,35.8,0,0.01,52,0
+37,w/o V2V Mesh Telemetry,W_mesh = 0,1,32.05,0,0.02,104,0
+37,w/o Corridor Mutex Lock,R_lock = 0,1,32.05,0,0.02,104,0
+37,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.33,319,0
+37,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,42.5,0,0.01,271,0
+38,Full D2RO Framework,None (Complete Equation),1,45.25,0,0.03,79,0
+38,w/o V2V Mesh Telemetry,W_mesh = 0,1,29.35,0,0.02,69,0
+38,w/o Corridor Mutex Lock,R_lock = 0,1,29.35,0,0.02,69,0
+38,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,12.87,256,0
+38,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.75,0,0.03,231,0
+39,Full D2RO Framework,None (Complete Equation),1,48.1,0,0.01,145,0
+39,w/o V2V Mesh Telemetry,W_mesh = 0,1,33.35,0,0.01,148,0
+39,w/o Corridor Mutex Lock,R_lock = 0,1,33.35,0,0.01,148,0
+39,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.92,236,0
+39,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,43.55,0,0.0,295,0
+40,Full D2RO Framework,None (Complete Equation),1,46.05,0,0.02,142,0
+40,w/o V2V Mesh Telemetry,W_mesh = 0,1,38.25,0,0.02,432,0
+40,w/o Corridor Mutex Lock,R_lock = 0,1,38.25,0,0.02,432,0
+40,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,20.23,220,0
+40,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,44.25,0,0.02,310,0
+41,Full D2RO Framework,None (Complete Equation),1,43.35,0,0.01,153,0
+41,w/o V2V Mesh Telemetry,W_mesh = 0,1,27.45,0,0.0,80,0
+41,w/o Corridor Mutex Lock,R_lock = 0,1,27.45,0,0.0,80,0
+41,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,14.78,181,0
+41,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,42.5,0,0.01,224,0
+42,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.0,114,0
+42,w/o V2V Mesh Telemetry,W_mesh = 0,1,26.9,0,0.05,51,0
+42,w/o Corridor Mutex Lock,R_lock = 0,1,26.9,0,0.05,51,0
+42,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,17.31,530,0
+42,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.05,0,0.0,216,0
+43,Full D2RO Framework,None (Complete Equation),1,37.95,0,0.02,52,0
+43,w/o V2V Mesh Telemetry,W_mesh = 0,1,37.35,0,0.0,147,0
+43,w/o Corridor Mutex Lock,R_lock = 0,1,37.35,0,0.0,147,0
+43,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.87,291,0
+43,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,38.55,0,0.02,236,0
+44,Full D2RO Framework,None (Complete Equation),1,42.8,0,0.0,158,0
+44,w/o V2V Mesh Telemetry,W_mesh = 0,1,46.65,0,0.03,250,0
+44,w/o Corridor Mutex Lock,R_lock = 0,1,46.65,0,0.03,250,0
+44,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.99,109,0
+44,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.01,224,0
+45,Full D2RO Framework,None (Complete Equation),1,77.4,0,0.12,802,0
+45,w/o V2V Mesh Telemetry,W_mesh = 0,1,60.7,0,0.07,437,0
+45,w/o Corridor Mutex Lock,R_lock = 0,1,60.7,0,0.07,437,0
+45,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,11.32,316,0
+45,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,70.95,0,1.0,219,0
+46,Full D2RO Framework,None (Complete Equation),1,44.35,0,0.0,170,0
+46,w/o V2V Mesh Telemetry,W_mesh = 0,1,152.1,0,4.13,1158,0
+46,w/o Corridor Mutex Lock,R_lock = 0,1,125.5,0,3.61,742,0
+46,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.48,663,0
+46,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.0,224,0
+47,Full D2RO Framework,None (Complete Equation),1,36.4,0,0.02,90,0
+47,w/o V2V Mesh Telemetry,W_mesh = 0,1,31.25,0,0.0,78,0
+47,w/o Corridor Mutex Lock,R_lock = 0,1,31.25,0,0.0,78,0
+47,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,12.9,316,0
+47,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,37.0,0,0.0,238,0
+48,Full D2RO Framework,None (Complete Equation),1,59.6,0,0.03,250,0
+48,w/o V2V Mesh Telemetry,W_mesh = 0,1,34.3,0,0.02,131,0
+48,w/o Corridor Mutex Lock,R_lock = 0,1,34.3,0,0.02,131,0
+48,w/o Human Gaussian Proxemics,H_prox = 0,1,155.75,0,13.61,95,0
+48,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,44.6,0,0.01,318,0
+49,Full D2RO Framework,None (Complete Equation),1,45.9,0,0.0,150,0
+49,w/o V2V Mesh Telemetry,W_mesh = 0,1,32.5,0,0.01,149,0
+49,w/o Corridor Mutex Lock,R_lock = 0,1,32.5,0,0.01,149,0
+49,w/o Human Gaussian Proxemics,H_prox = 0,1,45.15,0,0.94,83,0
+49,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,42.8,0,0.0,279,0
+50,Full D2RO Framework,None (Complete Equation),1,35.4,0,0.02,60,0
+50,w/o V2V Mesh Telemetry,W_mesh = 0,1,33.95,0,0.01,127,0
+50,w/o Corridor Mutex Lock,R_lock = 0,1,33.95,0,0.01,127,0
+50,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,11.06,204,0
+50,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,44.25,0,0.01,310,0
+51,Full D2RO Framework,None (Complete Equation),1,43.0,0,0.0,114,0
+51,w/o V2V Mesh Telemetry,W_mesh = 0,1,62.1,0,0.5,344,0
+51,w/o Corridor Mutex Lock,R_lock = 0,1,46.2,0,0.47,184,0
+51,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.61,288,0
+51,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.0,224,0
+52,Full D2RO Framework,None (Complete Equation),1,44.35,0,0.0,131,0
+52,w/o V2V Mesh Telemetry,W_mesh = 0,1,39.2,0,0.02,199,0
+52,w/o Corridor Mutex Lock,R_lock = 0,1,39.2,0,0.02,199,0
+52,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,14.27,80,0
+52,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.0,224,0
+53,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.01,155,0
+53,w/o V2V Mesh Telemetry,W_mesh = 0,1,45.2,0,0.01,369,0
+53,w/o Corridor Mutex Lock,R_lock = 0,1,45.2,0,0.01,369,0
+53,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.54,371,0
+53,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.05,0,0.02,216,0
+54,Full D2RO Framework,None (Complete Equation),1,51.4,0,0.02,154,0
+54,w/o V2V Mesh Telemetry,W_mesh = 0,1,28.9,0,0.01,93,0
+54,w/o Corridor Mutex Lock,R_lock = 0,1,28.9,0,0.01,93,0
+54,w/o Human Gaussian Proxemics,H_prox = 0,1,72.2,0,1.83,349,0
+54,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,42.8,0,0.02,279,0
+55,Full D2RO Framework,None (Complete Equation),1,65.25,0,0.04,212,0
+55,w/o V2V Mesh Telemetry,W_mesh = 0,1,32.65,0,0.01,140,0
+55,w/o Corridor Mutex Lock,R_lock = 0,1,32.65,0,0.01,140,0
+55,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.94,123,0
+55,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,46.4,0,0.03,277,0
+56,Full D2RO Framework,None (Complete Equation),1,21.15,0,0.01,102,0
+56,w/o V2V Mesh Telemetry,W_mesh = 0,1,22.25,0,0.01,115,0
+56,w/o Corridor Mutex Lock,R_lock = 0,1,22.25,0,0.01,115,0
+56,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.43,290,0
+56,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,19.55,0,0.01,157,0
+57,Full D2RO Framework,None (Complete Equation),1,36.7,0,0.0,52,0
+57,w/o V2V Mesh Telemetry,W_mesh = 0,1,31.5,0,0.0,52,0
+57,w/o Corridor Mutex Lock,R_lock = 0,1,31.5,0,0.0,52,0
+57,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.49,293,0
+57,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,37.3,0,0.0,238,0
+58,Full D2RO Framework,None (Complete Equation),1,52.25,0,0.01,202,0
+58,w/o V2V Mesh Telemetry,W_mesh = 0,1,51.35,0,0.11,276,0
+58,w/o Corridor Mutex Lock,R_lock = 0,1,51.35,0,0.11,276,0
+58,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.77,217,0
+58,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,48.2,0,0.01,229,0
+59,Full D2RO Framework,None (Complete Equation),1,84.35,0,0.19,1017,0
+59,w/o V2V Mesh Telemetry,W_mesh = 0,1,38.15,0,0.01,202,0
+59,w/o Corridor Mutex Lock,R_lock = 0,1,38.15,0,0.01,202,0
+59,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,12.11,81,0
+59,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,38.7,0,0.01,216,0
+60,Full D2RO Framework,None (Complete Equation),1,70.2,0,1.09,228,0
+60,w/o V2V Mesh Telemetry,W_mesh = 0,1,40.0,0,0.09,182,0
+60,w/o Corridor Mutex Lock,R_lock = 0,1,40.0,0,0.09,182,0
+60,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,17.35,303,0
+60,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,43.25,0,0.02,169,0
+61,Full D2RO Framework,None (Complete Equation),1,44.35,0,0.0,131,0
+61,w/o V2V Mesh Telemetry,W_mesh = 0,1,27.55,0,0.01,52,0
+61,w/o Corridor Mutex Lock,R_lock = 0,1,27.55,0,0.01,52,0
+61,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,10.31,321,0
+61,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.0,224,0
+62,Full D2RO Framework,None (Complete Equation),1,95.5,0,0.3,990,0
+62,w/o V2V Mesh Telemetry,W_mesh = 0,1,46.95,0,0.01,279,0
+62,w/o Corridor Mutex Lock,R_lock = 0,1,46.95,0,0.01,279,0
+62,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,12.81,54,0
+62,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,44.95,0,0.01,326,0
+63,Full D2RO Framework,None (Complete Equation),1,42.8,0,0.0,114,0
+63,w/o V2V Mesh Telemetry,W_mesh = 0,1,27.75,0,0.0,52,0
+63,w/o Corridor Mutex Lock,R_lock = 0,1,27.75,0,0.0,52,0
+63,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.67,50,0
+63,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.0,224,0
+64,Full D2RO Framework,None (Complete Equation),1,45.5,0,0.06,480,0
+64,w/o V2V Mesh Telemetry,W_mesh = 0,1,33.7,0,0.03,245,0
+64,w/o Corridor Mutex Lock,R_lock = 0,1,33.7,0,0.03,245,0
+64,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.6,378,0
+64,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,42.1,0,0.03,318,0
+65,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.01,179,0
+65,w/o V2V Mesh Telemetry,W_mesh = 0,1,34.35,0,0.01,186,0
+65,w/o Corridor Mutex Lock,R_lock = 0,1,34.35,0,0.01,186,0
+65,w/o Human Gaussian Proxemics,H_prox = 0,1,148.65,0,10.98,153,0
+65,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.05,0,0.01,216,0
+66,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.0,114,0
+66,w/o V2V Mesh Telemetry,W_mesh = 0,1,30.35,0,0.0,52,0
+66,w/o Corridor Mutex Lock,R_lock = 0,1,30.35,0,0.0,52,0
+66,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.08,276,0
+66,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.05,0,0.0,216,0
+67,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.0,152,0
+67,w/o V2V Mesh Telemetry,W_mesh = 0,1,27.65,0,0.0,90,0
+67,w/o Corridor Mutex Lock,R_lock = 0,1,27.65,0,0.0,90,0
+67,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.72,143,0
+67,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.05,0,0.0,216,0
+68,Full D2RO Framework,None (Complete Equation),1,38.6,0,0.22,419,0
+68,w/o V2V Mesh Telemetry,W_mesh = 0,1,53.05,0,1.11,660,0
+68,w/o Corridor Mutex Lock,R_lock = 0,1,62.8,0,1.09,702,0
+68,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.89,143,0
+68,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,32.8,0,0.11,475,0
+69,Full D2RO Framework,None (Complete Equation),1,44.35,0,0.0,131,0
+69,w/o V2V Mesh Telemetry,W_mesh = 0,1,27.95,0,0.0,51,0
+69,w/o Corridor Mutex Lock,R_lock = 0,1,27.95,0,0.0,51,0
+69,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,11.25,72,0
+69,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.0,224,0
+70,Full D2RO Framework,None (Complete Equation),1,50.35,0,0.02,217,0
+70,w/o V2V Mesh Telemetry,W_mesh = 0,1,34.7,0,0.02,174,0
+70,w/o Corridor Mutex Lock,R_lock = 0,1,34.7,0,0.02,174,0
+70,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.38,117,0
+70,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,44.95,0,0.01,326,0
+71,Full D2RO Framework,None (Complete Equation),1,42.8,0,0.0,154,0
+71,w/o V2V Mesh Telemetry,W_mesh = 0,1,27.8,0,0.0,80,0
+71,w/o Corridor Mutex Lock,R_lock = 0,1,27.8,0,0.0,80,0
+71,w/o Human Gaussian Proxemics,H_prox = 0,1,113.05,0,5.41,137,0
+71,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.0,224,0
+72,Full D2RO Framework,None (Complete Equation),1,44.45,0,0.06,326,0
+72,w/o V2V Mesh Telemetry,W_mesh = 0,1,54.55,0,0.04,224,0
+72,w/o Corridor Mutex Lock,R_lock = 0,1,54.55,0,0.04,224,0
+72,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,11.23,211,0
+72,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,44.6,0,0.01,318,0
+73,Full D2RO Framework,None (Complete Equation),1,54.3,0,0.01,189,0
+73,w/o V2V Mesh Telemetry,W_mesh = 0,1,31.2,0,0.02,125,0
+73,w/o Corridor Mutex Lock,R_lock = 0,1,31.2,0,0.02,125,0
+73,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,16.13,390,0
+73,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,41.65,0,0.01,252,0
+74,Full D2RO Framework,None (Complete Equation),1,38.05,0,0.0,39,0
+74,w/o V2V Mesh Telemetry,W_mesh = 0,1,43.95,0,0.0,451,0
+74,w/o Corridor Mutex Lock,R_lock = 0,1,43.95,0,0.0,451,0
+74,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.33,299,0
+74,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,37.3,0,0.0,238,0
+75,Full D2RO Framework,None (Complete Equation),1,44.35,0,0.0,170,0
+75,w/o V2V Mesh Telemetry,W_mesh = 0,1,27.75,0,0.0,80,0
+75,w/o Corridor Mutex Lock,R_lock = 0,1,27.75,0,0.0,80,0
+75,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,12.23,329,0
+75,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.0,224,0
+76,Full D2RO Framework,None (Complete Equation),1,44.35,0,0.04,131,0
+76,w/o V2V Mesh Telemetry,W_mesh = 0,1,28.85,0,0.0,63,0
+76,w/o Corridor Mutex Lock,R_lock = 0,1,28.85,0,0.0,63,0
+76,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,11.27,198,0
+76,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,52.4,0,0.02,268,0
+77,Full D2RO Framework,None (Complete Equation),1,47.15,0,0.01,257,0
+77,w/o V2V Mesh Telemetry,W_mesh = 0,1,37.2,0,0.01,260,0
+77,w/o Corridor Mutex Lock,R_lock = 0,1,37.2,0,0.01,260,0
+77,w/o Human Gaussian Proxemics,H_prox = 0,1,165.2,0,16.96,792,0
+77,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,44.25,0,0.01,310,0
+78,Full D2RO Framework,None (Complete Equation),1,57.95,0,0.01,172,0
+78,w/o V2V Mesh Telemetry,W_mesh = 0,1,33.6,0,0.01,123,0
+78,w/o Corridor Mutex Lock,R_lock = 0,1,33.6,0,0.01,123,0
+78,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.68,87,0
+78,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,43.9,0,0.01,303,0
+79,Full D2RO Framework,None (Complete Equation),1,44.35,0,0.0,171,0
+79,w/o V2V Mesh Telemetry,W_mesh = 0,1,28.25,0,0.01,92,0
+79,w/o Corridor Mutex Lock,R_lock = 0,1,28.25,0,0.01,92,0
+79,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,10.14,336,0
+79,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.0,224,0
+80,Full D2RO Framework,None (Complete Equation),1,43.25,0,0.0,114,0
+80,w/o V2V Mesh Telemetry,W_mesh = 0,1,28.25,0,0.01,52,0
+80,w/o Corridor Mutex Lock,R_lock = 0,1,28.25,0,0.01,52,0
+80,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,12.59,70,0
+80,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.0,224,0
+81,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.0,114,0
+81,w/o V2V Mesh Telemetry,W_mesh = 0,1,57.8,0,0.04,210,0
+81,w/o Corridor Mutex Lock,R_lock = 0,1,57.8,0,0.04,210,0
+81,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,10.83,229,0
+81,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.05,0,0.0,216,0
+82,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.0,152,0
+82,w/o V2V Mesh Telemetry,W_mesh = 0,1,28.55,0,0.01,38,0
+82,w/o Corridor Mutex Lock,R_lock = 0,1,28.55,0,0.01,38,0
+82,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,16.78,136,0
+82,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.05,0,0.0,216,0
+83,Full D2RO Framework,None (Complete Equation),1,71.3,0,0.02,260,0
+83,w/o V2V Mesh Telemetry,W_mesh = 0,1,33.6,0,0.02,123,0
+83,w/o Corridor Mutex Lock,R_lock = 0,1,33.6,0,0.02,123,0
+83,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,12.89,86,0
+83,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,43.9,0,0.01,303,0
+84,Full D2RO Framework,None (Complete Equation),1,50.75,0,0.01,112,0
+84,w/o V2V Mesh Telemetry,W_mesh = 0,1,33.95,0,0.01,127,0
+84,w/o Corridor Mutex Lock,R_lock = 0,1,33.95,0,0.01,127,0
+84,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,10.87,303,0
+84,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,44.25,0,0.01,310,0
+85,Full D2RO Framework,None (Complete Equation),1,67.05,0,0.01,252,0
+85,w/o V2V Mesh Telemetry,W_mesh = 0,1,29.35,0,0.01,69,0
+85,w/o Corridor Mutex Lock,R_lock = 0,1,29.35,0,0.01,69,0
+85,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,14.21,434,0
+85,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,46.95,0,0.01,325,0
+86,Full D2RO Framework,None (Complete Equation),1,67.4,0,0.02,357,0
+86,w/o V2V Mesh Telemetry,W_mesh = 0,1,34.3,0,0.02,131,0
+86,w/o Corridor Mutex Lock,R_lock = 0,1,34.3,0,0.02,131,0
+86,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,12.43,218,0
+86,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,44.6,0,0.01,318,0
+87,Full D2RO Framework,None (Complete Equation),1,49.3,0,0.01,193,0
+87,w/o V2V Mesh Telemetry,W_mesh = 0,1,34.3,0,0.01,131,0
+87,w/o Corridor Mutex Lock,R_lock = 0,1,34.3,0,0.01,131,0
+87,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,18.07,247,0
+87,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,44.6,0,0.01,318,0
+88,Full D2RO Framework,None (Complete Equation),1,48.15,0,0.02,121,0
+88,w/o V2V Mesh Telemetry,W_mesh = 0,1,47.0,0,0.27,381,0
+88,w/o Corridor Mutex Lock,R_lock = 0,1,47.0,0,0.27,381,0
+88,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,12.95,99,0
+88,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,51.55,0,0.02,364,0
+89,Full D2RO Framework,None (Complete Equation),1,26.8,0,0.05,233,0
+89,w/o V2V Mesh Telemetry,W_mesh = 0,1,77.4,0,0.05,647,0
+89,w/o Corridor Mutex Lock,R_lock = 0,1,77.4,0,0.05,647,0
+89,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,10.97,184,0
+89,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.6,0,0.41,802,0
+90,Full D2RO Framework,None (Complete Equation),1,51.2,0,0.0,185,0
+90,w/o V2V Mesh Telemetry,W_mesh = 0,1,30.4,0,0.01,120,0
+90,w/o Corridor Mutex Lock,R_lock = 0,1,30.4,0,0.01,120,0
+90,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,17.29,127,0
+90,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.95,0,0.0,235,0
+91,Full D2RO Framework,None (Complete Equation),1,42.2,0,0.0,114,0
+91,w/o V2V Mesh Telemetry,W_mesh = 0,1,28.2,0,0.0,52,0
+91,w/o Corridor Mutex Lock,R_lock = 0,1,28.2,0,0.0,52,0
+91,w/o Human Gaussian Proxemics,H_prox = 0,1,98.2,0,4.35,374,0
+91,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,39.05,0,0.0,216,0
+92,Full D2RO Framework,None (Complete Equation),1,35.05,0,0.03,190,0
+92,w/o V2V Mesh Telemetry,W_mesh = 0,1,33.35,0,0.01,236,0
+92,w/o Corridor Mutex Lock,R_lock = 0,1,33.35,0,0.01,236,0
+92,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.21,272,0
+92,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,43.55,0,0.01,295,0
+93,Full D2RO Framework,None (Complete Equation),1,31.45,0,0.04,43,0
+93,w/o V2V Mesh Telemetry,W_mesh = 0,1,33.85,0,0.05,43,0
+93,w/o Corridor Mutex Lock,R_lock = 0,1,33.85,0,0.05,43,0
+93,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,11.69,150,0
+93,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,29.8,0,0.04,158,0
+94,Full D2RO Framework,None (Complete Equation),1,47.7,0,0.11,122,0
+94,w/o V2V Mesh Telemetry,W_mesh = 0,1,108.0,0,0.22,567,0
+94,w/o Corridor Mutex Lock,R_lock = 0,1,108.0,0,0.22,567,0
+94,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.87,154,0
+94,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,48.85,0,0.11,266,0
+95,Full D2RO Framework,None (Complete Equation),1,53.05,0,0.01,158,0
+95,w/o V2V Mesh Telemetry,W_mesh = 0,1,26.4,0,0.0,84,0
+95,w/o Corridor Mutex Lock,R_lock = 0,1,26.4,0,0.0,84,0
+95,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,10.79,42,0
+95,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,48.9,0,0.0,216,0
+96,Full D2RO Framework,None (Complete Equation),1,40.8,0,0.02,66,0
+96,w/o V2V Mesh Telemetry,W_mesh = 0,1,34.3,0,0.01,131,0
+96,w/o Corridor Mutex Lock,R_lock = 0,1,34.3,0,0.01,131,0
+96,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,10.83,524,0
+96,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,52.0,0,0.05,258,0
+97,Full D2RO Framework,None (Complete Equation),1,59.25,0,0.07,359,0
+97,w/o V2V Mesh Telemetry,W_mesh = 0,1,43.45,0,0.0,142,0
+97,w/o Corridor Mutex Lock,R_lock = 0,1,43.45,0,0.0,142,0
+97,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,12.63,318,0
+97,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,29.9,0,0.02,340,0
+98,Full D2RO Framework,None (Complete Equation),1,42.6,0,0.0,154,0
+98,w/o V2V Mesh Telemetry,W_mesh = 0,1,27.55,0,0.0,92,0
+98,w/o Corridor Mutex Lock,R_lock = 0,1,27.55,0,0.0,92,0
+98,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,15.69,168,0
+98,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,40.5,0,0.0,224,0
+99,Full D2RO Framework,None (Complete Equation),1,55.4,0,0.03,187,0
+99,w/o V2V Mesh Telemetry,W_mesh = 0,1,50.4,0,0.2,225,0
+99,w/o Corridor Mutex Lock,R_lock = 0,1,50.4,0,0.2,225,0
+99,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,13.62,292,0
+99,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,51.9,0,0.02,330,0
+100,Full D2RO Framework,None (Complete Equation),1,43.35,0,0.05,175,0
+100,w/o V2V Mesh Telemetry,W_mesh = 0,1,35.75,0,0.03,147,0
+100,w/o Corridor Mutex Lock,R_lock = 0,1,35.75,0,0.03,147,0
+100,w/o Human Gaussian Proxemics,H_prox = 0,0,180.0,0,11.33,71,0
+100,w/o Trolley Kinetic Safety Bubble,S_trolley = 0,1,50.85,0,0.02,385,0

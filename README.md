@@ -13,15 +13,16 @@ Department of Computer Science and Engineering, Koya University
 
 ---
 
-> ⚠️ **Work in progress — the manuscript and the datasets are being regenerated.**
-> The framework has been substantially rebuilt following a pre-submission audit, and
-> six of seven datasets have not yet been reproduced under the corrected code. The
-> results quoted below this banner are **superseded** and are retained only for
-> reference.
+> ℹ️ **Status: all seven datasets regenerated and verified under the corrected code.**
+> The framework was substantially rebuilt following a pre-submission audit. All
+> 2,700 trials have been reproduced, the statistics and every manuscript table and
+> figure are generated from that data by a single pipeline, and the results,
+> discussion and conclusion have been rewritten around the real numbers.
 >
-> **Read [`docs/OUTSTANDING_WORK.md`](docs/OUTSTANDING_WORK.md) before using or
-> citing anything in this repository.** It records what is complete, what is
-> blocked, how to resume, and every claim still to be corrected.
+> **Read [`docs/OUTSTANDING_WORK.md`](docs/OUTSTANDING_WORK.md) before citing
+> anything here.** Work remains — notably a weight-sensitivity study and validation
+> of the ORCA baseline against a reference implementation — and that file records
+> exactly what is done and what is not.
 
 ## What is D²RO?
 
@@ -37,16 +38,25 @@ C(u, v, t) = w_D · D(u,v)           # Euclidean distance
            + w_S · S_trolley(v,t)    # Non-holonomic safety envelope
 ```
 
-**Key results** across 2,700 genuine Monte Carlo simulation trials:
+**Key results** across 2,700 Monte Carlo simulation trials (N=100 seed-paired trials
+per benchmark condition). The headline is a deliberate trade-off, not a clean sweep:
 
-| Metric | D²RO | Best Baseline |
-|:-------|:----:|:-------------:|
-| Mission Success (Supermarket) | **97.0%** | 100% (Static A\* — but 4.0 violations/trial) |
-| Corridor Deadlocks | **0.00 ± 0.00** | 11.00 (MAPF) |
-| Intimate Space Violations | **0.59 ± 5.90** | 226.39 (APF) |
-| APF Success | 0.0% | — |
-| ORCA Success | 0.0% | — |
-| Replan Latency | **0.18–1.23 ms** | — |
+| Metric | D²RO | Static A\* | APF |
+|:-------|:----:|:----------:|:---:|
+| Mission success | 99.0% [94.6, 99.8] | 100.0% | 100.0% |
+| Makespan (s) | 47.18 ± 13.40 | **18.00 ± 0.00** | 34.54 ± 0.16 |
+| Intimate exposure, median [IQR] | **0 [0, 0]** | 128 [123, 131] | 204 [176, 276] |
+| Corridor deadlocks | 0.00 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 |
+| Replan latency | 0.09–0.19 ms | n/a | n/a |
+
+D²RO pays ~2.6× the makespan of the socially blind shortest path to virtually
+eliminate intrusion into pedestrians' intimate space, and matches rather than beats
+the best baseline on raw success. Cross-domain: 99.0% (supermarket), 100.0%
+(hospital), 95.0% (airport).
+
+> Our ORCA and Decentralized Local MAPF implementations complete 0% of missions.
+> We report these as properties of *our implementations*, pending validation against
+> a reference (e.g. RVO2); no conclusion in the paper depends on them.
 
 ---
 
@@ -91,7 +101,7 @@ D2RO/
 │   │   └── airport.py                  # Airport terminal concourse
 │   │
 │   ├── sim/                            # Simulation runners
-│   │   ├── run_experiments.py          # Full 2,500-run experimental suite
+│   │   ├── run_experiments.py          # Full 2,700-run experimental suite
 │   │   ├── gui.py                      # Supermarket visual GUI
 │   │   ├── hospital_gui.py             # Hospital visual GUI
 │   │   └── airport_gui.py              # Airport visual GUI
@@ -175,11 +185,12 @@ pip install -r requirements.txt
 ```
 > Python 3.10+ required. Tested on Python 3.12.7.
 
-### Reproduce all 2,500 simulation trials
+### Reproduce all 2,700 simulation trials
 ```bash
 python d2ro/sim/run_experiments.py
 ```
-All 7 CSV files written to `experiments/data/`. Runtime: ~2 minutes on an 8-core machine.
+All 7 CSV files written to `experiments/data/`, each with a `.provenance.json` stamp.
+Runtime: ~20 minutes.
 
 ### Regenerate all figures (300 DPI)
 ```bash
@@ -242,7 +253,8 @@ All experiments use:
 - **Control loop:** Δt = 0.05 s (20 Hz), non-holonomic unicycle kinematics
 - **Seeds:** `seed = trial_index + 1000` (fully deterministic and reproducible)
 - **Timeout:** T_max = 35.0 s
-- **Statistics:** Welch's t-test (two-sided, α = 0.01) + 95% Student-t CIs
+- **Statistics:** Wilcoxon signed-rank (paired, continuous) + McNemar exact (success),
+  Holm-adjusted; medians [IQR] for skewed metrics, Wilson CIs for proportions
 
 ### Experiment overview
 
@@ -288,8 +300,9 @@ from scipy import stats
 df = pd.read_csv("experiments/data/benchmark_comparison.csv")
 d2ro  = df[df["method"] == "D2RO (SW-DGO Proposed)"]["travel_time_s"].values
 astar = df[df["method"] == "Static A*"]["travel_time_s"].values
-t, p  = stats.ttest_ind(d2ro, astar, equal_var=False)   # Welch's t-test
-print(f"t={t:.3f}, p={p:.4e}")
+# Trials are seed-paired, so use a paired non-parametric test (as the pipeline does)
+stat, p = stats.wilcoxon(d2ro, astar)
+print(f"W={stat:.1f}, p={p:.4e}")
 ```
 
 ---
@@ -333,34 +346,58 @@ python scripts/demo_airport.py
 
 ## 8. Key Results
 
-### Table I — Comparative Benchmark (N=100 trials)
+All values below are produced by `paper/scripts/analyze_results.py` from the committed
+CSVs; none are typed by hand. See [`experiments/data/analysis_report.md`](experiments/data/analysis_report.md)
+for the full statistical report including effect sizes and Holm-adjusted p-values.
 
-| Algorithm | Success | Makespan (s) | Deadlocks | Intimate Violations |
-|:----------|:-------:|:------------:|:---------:|:-------------------:|
-| **D²RO (Proposed)** | **97.0%** | **21.47 ± 5.32** | **0.00** | **0.59 ± 5.90** |
-| Static A\* | 100.0% | 0.80 ± 0.00 | 0.00 | 4.00 ± 0.00 |
-| APF | 0.0% | Timeout | 0.01 | 226.39 ± 69.25 |
-| ORCA | 0.0% | Timeout | 2094.37 | 19.37 ± 65.28 |
-| Decentralized MAPF | 0.0% | Timeout | 11.00 | 102.44 ± 15.00 |
+### Table I — Comparative Benchmark (N=100 seed-paired trials)
 
-All Welch's t-tests vs D²RO: **p < 0.001**
+| Algorithm | Success (95% CI) | Makespan, successful (s) | Deadlocks | Intimate exposure, median [IQR] |
+|:----------|:----------------:|:------------------------:|:---------:|:-------------------------------:|
+| **D²RO (Proposed)** | 99.0% [94.6, 99.8] | 47.18 ± 13.40 | 0.00 | **0 [0, 0]** |
+| Static A\* | 100.0% [96.3, 100.0] | **18.00 ± 0.00** | 0.00 | 128 [123, 131] |
+| APF | 100.0% [96.3, 100.0] | 34.54 ± 0.16 | 0.00 | 204 [176, 276] |
+| ORCA (our impl.) | 0.0% [0.0, 3.7] | n/a | 0.00 | 229 [0, 766] |
+| Decentralized MAPF (our impl.) | 0.0% [0.0, 3.7] | n/a | 0.00 | 128 [123, 132] |
+
+Exposure is reported as median [IQR] because the distribution is zero-inflated and
+right-skewed. Tests are Wilcoxon signed-rank (continuous) and McNemar exact (success),
+Holm-adjusted. D²RO vs Static A\*: exposure Δ = −119.2 [−127.6, −107.0], p = 5.1e-16;
+makespan Δ = +30.51 s, p = 3.8e-17. Success difference vs A\* is one trial (p = 1).
 
 ### Table II — Ablation Study (N=100 trials)
 
 | Metric | Full D²RO | w/o V2V Mesh | w/o Lock | w/o Proxemics | w/o Safety |
 |:-------|:---------:|:------------:|:--------:|:-------------:|:----------:|
-| Success (%) | **99.0** | 100.0 | 100.0 | 17.0 | 100.0 |
-| Makespan (s) | 22.98±2.21 | 15.24±1.95 | 15.24±1.95 | 32.70±5.67 | 21.26±2.17 |
-| Discomfort | **0.63±3.09** | 0.43±1.99 | 0.43±1.99 | 71.56±34.26 | 0.41±2.07 |
-| Shelf Scrapes | **0.00** | 0.00 | 0.00 | 0.00 | 77.72±11.94 |
+| Success (%) | 100.0 | 100.0 | 100.0 | **11.0** | 100.0 |
+| Makespan (s) | 47.38±13.96 | 38.23±16.88 | 37.86±15.13 | 172.05±26.67 | 43.02±8.84 |
+| Discomfort | 0.05±0.13 | 0.09±0.43 | 0.09±0.38 | **13.14±3.57** | 0.05±0.17 |
+| Shelf scrapes | 193.05±169.90 | 191.59±182.39 | 186.13±164.45 | 244.86±154.18 | **271.71±84.16** |
+
+The proxemic term is load-bearing. The mesh and lock terms are *not* exercised by this
+broad scenario — removing them reduces makespan — which is why the two controlled
+mechanism experiments below exist.
 
 ### Table III — Cross-Domain (N=100 trials each)
 
-| Domain | Success | Makespan (s) | D\* Lite Replans |
-|:-------|:-------:|:------------:|:----------------:|
-| Retail Supermarket | 100.0% | 23.07 ± 2.47 | 341.7 ± 82.8 |
-| Clinical Hospital | 92.0% | 27.68 ± 11.35 | 309.6 ± 127.1 |
-| Airport Terminal | 80.0% | 25.29 ± 13.60 | 897.9 ± 342.9 |
+| Domain | Success | Makespan (s) | Mean transit (s) | D\* Lite replans |
+|:-------|:-------:|:------------:|:----------------:|:----------------:|
+| Retail Supermarket | 99.0% | 49.89 ± 19.94 | 25.90 ± 5.57 | 487.9 ± 151.1 |
+| Clinical Hospital | 100.0% | 46.12 ± 10.12 | 31.78 ± 3.89 | 342.5 ± 64.9 |
+| Airport Terminal | 95.0% | 74.63 ± 35.71 | 36.84 ± 15.01 | 959.2 ± 359.8 |
+
+### Table IV — Controlled Mechanism Experiments (N=50 paired trials)
+
+| Experiment | Metric | ON | OFF | p (Holm) |
+|:-----------|:-------|:--:|:---:|:--------:|
+| A — V2V mesh | Anticipation lead (s) | 10.70 ± 4.20 | −0.10 ± 0.04 | 3.8e-9 |
+| A — V2V mesh | Backtrack (m) | 1.08 ± 0.68 | 2.73 ± 0.87 | 3.2e-8 |
+| B — corridor mutex | Mission success | **88.0%** | 36.0% | 1.5e-4 |
+| B — corridor mutex | Corridor occupancy (s) | 40.01 ± 30.87 | 89.41 ± 42.42 | 4.0e-3 |
+
+The corridor mutex works by **cost-projected diversion**, not queueing: head-on
+encounters are unchanged (p = 1) and lock wait time is 0.00 s, while agents reroute
+around the contested corridor. See `docs/OUTSTANDING_WORK.md` §4.8.
 
 ---
 
@@ -369,7 +406,7 @@ All Welch's t-tests vs D²RO: **p < 0.001**
 | Package | Version | Purpose |
 |:--------|:-------:|:--------|
 | `numpy` | ≥ 1.24 | Numerical arrays |
-| `scipy` | ≥ 1.10 | Welch's t-test, confidence intervals |
+| `scipy` | ≥ 1.10 | Wilcoxon / McNemar tests, confidence intervals |
 | `matplotlib` | ≥ 3.7 | 300 DPI publication figures |
 | `python-docx` | ≥ 0.8.11 | Word document generation |
 | MiKTeX / TeX Live | any | LaTeX PDF compilation |

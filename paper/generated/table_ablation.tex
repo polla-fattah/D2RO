@@ -1,3 +1,21 @@
-% NOT GENERATED: ablation dataset missing
-% This experiment has no complete dataset. The manuscript must not
-% cite numbers for it until the run completes.
+% GENERATED FILE - do not edit by hand.
+% Source: experiments/data/analysis_results.json
+% Produced by paper/scripts/generate_tables_and_figures.py
+\begin{table*}[t]
+\centering
+\caption{Component ablation of the five cost terms in the retail supermarket domain ($N=100$ trials per configuration). Each row removes exactly one term from Eq.~(1); all other parameters are held fixed.}
+\label{tab:ablation}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Configuration} & \textbf{Success (95\% CI)} & \textbf{Makespan (s)} & \textbf{Discomfort} & \textbf{Deadlocks} & \textbf{Shelf scrapes} \\
+\midrule
+\textbf{Full $\text{D}^2\text{RO}$} & 100.0\% [96.3, 100.0] & $47.38 \pm 13.96$ & $0.05 \pm 0.13$ & $0.00 \pm 0.00$ & $193.05 \pm 169.90$ \\
+w/o V2V mesh $W_{\text{mesh}}$ & 100.0\% [96.3, 100.0] & $38.23 \pm 16.88$ & $0.09 \pm 0.43$ & $0.00 \pm 0.00$ & $191.59 \pm 182.39$ \\
+w/o corridor mutex $R_{\text{lock}}$ & 100.0\% [96.3, 100.0] & $37.86 \pm 15.13$ & $0.09 \pm 0.38$ & $0.00 \pm 0.00$ & $186.13 \pm 164.45$ \\
+w/o proxemics $H_{\text{prox}}$ & 11.0\% [6.3, 18.6] & $172.05 \pm 26.67$ & $13.14 \pm 3.57$ & $0.00 \pm 0.00$ & $244.86 \pm 154.18$ \\
+w/o safety envelope $S_{\text{trolley}}$ & 100.0\% [96.3, 100.0] & $43.02 \pm 8.84$ & $0.05 \pm 0.17$ & $0.00 \pm 0.00$ & $271.71 \pm 84.16$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
