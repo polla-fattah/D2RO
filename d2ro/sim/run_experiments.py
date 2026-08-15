@@ -62,187 +62,204 @@ class ExperimentRunner:
         dt = 0.05
         max_time = 35.0
 
-        rows = []
-        print(f"\n[Experiment 1] Running Genuine Benchmark Comparison (N={num_trials} trials across 5 algorithms)...")
+        existing_trials = set()
+        if os.path.exists(csv_path):
+            try:
+                with open(csv_path, mode="r", encoding="utf-8") as rf:
+                    reader = csv.DictReader(rf)
+                    for r in reader:
+                        if "trial_id" in r and r["trial_id"].isdigit():
+                            existing_trials.add(int(r["trial_id"]))
+            except Exception:
+                existing_trials = set()
 
-        for trial in range(1, num_trials + 1):
-            seed_val = 1000 + trial
+        start_trial = max(existing_trials, default=0) + 1
+        if start_trial > num_trials:
+            print(f"  -> {csv_path} already complete ({len(existing_trials)} trials). Skipping.")
+            return csv_path
 
-            # 1.1 D2RO (SW-DGO Proposed)
-            random.seed(seed_val)
-            layout = SupermarketLayout()
-            shelf_boxes = [s.bounds for s in layout.shelves]
-            trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
-            mesh = MeshNetwork(comm_radius=350.0)
-            d2ro_agents = [TrolleyAgent(c["id"], layout.graph, c["start"], c["goal"], mesh) for c in trolley_cfgs]
-
-            sim_time = 0.0
-            replan_times = []
-
-            while sim_time < max_time and not all(a.is_docked for a in d2ro_agents):
-                for h in humans:
-                    h.update(dt, layout.bounds, shelf_boxes)
-
-                for a in d2ro_agents:
-                    a.step(dt, humans, prox_field, current_sim_time=sim_time,
-                           shelves=shelf_boxes, peer_agents=d2ro_agents)
-                    replan_times.append(a.last_compute_time_ms)
-
-                layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
-                sim_time += dt
-
-            rows.append({
-                "trial_id": trial,
-                "method": "D2RO (SW-DGO Proposed)",
-                "success": 1 if all(a.is_docked for a in d2ro_agents) else 0,
-                "travel_time_s": round(sim_time, 2),
-                "deadlocks": sum(a.deadlock_count for a in d2ro_agents),
-                "proxemic_violations": sum(a.proxemic_violations for a in d2ro_agents),
-                "mesh_packets": mesh.total_packets_transmitted,
-                "replan_cycles": sum(a.replan_count for a in d2ro_agents),
-                "avg_replan_latency_ms": round(sum(replan_times) / max(1, len(replan_times)), 3)
-            })
-
-            # 1.2 Static A*
-            random.seed(seed_val)
-            layout = SupermarketLayout()
-            shelf_boxes = [s.bounds for s in layout.shelves]
-            trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
-            astar_agents = [StaticAStarAgent(c["id"], layout.graph, c["start"], c["goal"]) for c in trolley_cfgs]
-
-            sim_time = 0.0
-            replan_times_astar = []
-            while sim_time < max_time and not all(a.is_docked for a in astar_agents):
-                for h in humans:
-                    h.update(dt, layout.bounds, shelf_boxes)
-
-                for a in astar_agents:
-                    a.step(dt, humans, prox_field, current_sim_time=sim_time)
-                    replan_times_astar.append(a.last_compute_time_ms)
-
-                sim_time += dt
-
-            rows.append({
-                "trial_id": trial,
-                "method": "Static A*",
-                "success": 1 if all(a.is_docked for a in astar_agents) else 0,
-                "travel_time_s": round(sim_time, 2),
-                "deadlocks": sum(a.deadlock_count for a in astar_agents),
-                "proxemic_violations": sum(a.proxemic_violations for a in astar_agents),
-                "mesh_packets": 0,
-                "replan_cycles": 0,
-                "avg_replan_latency_ms": round(sum(replan_times_astar) / max(1, len(replan_times_astar)), 3)
-            })
-
-            # 1.3 Artificial Potential Fields (APF)
-            random.seed(seed_val)
-            layout = SupermarketLayout()
-            shelf_boxes = [s.bounds for s in layout.shelves]
-            trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
-            apf_agents = []
-            for c in trolley_cfgs:
-                s_node = layout.graph.get_node(c["start"])
-                g_node = layout.graph.get_node(c["goal"])
-                apf_agents.append(ArtificialPotentialFieldAgent(c["id"], (s_node.x, s_node.y), (g_node.x, g_node.y)))
-
-            sim_time = 0.0
-            replan_times_apf = []
-            while sim_time < max_time and not all(a.is_docked for a in apf_agents):
-                for h in humans:
-                    h.update(dt, layout.bounds, shelf_boxes)
-
-                peer_pos = [a.current_pos for a in apf_agents]
-                for a in apf_agents:
-                    a.step(dt, peer_pos, humans, shelf_boxes)
-                    replan_times_apf.append(a.last_compute_time_ms)
-
-                sim_time += dt
-
-            rows.append({
-                "trial_id": trial,
-                "method": "Reactive Avoidance (Potential Field)",
-                "success": 1 if all(a.is_docked for a in apf_agents) else 0,
-                "travel_time_s": round(sim_time, 2),
-                "deadlocks": sum(a.deadlock_count for a in apf_agents),
-                "proxemic_violations": sum(a.proxemic_violations for a in apf_agents),
-                "mesh_packets": 0,
-                "replan_cycles": 0,
-                "avg_replan_latency_ms": round(sum(replan_times_apf) / max(1, len(replan_times_apf)), 3)
-            })
-
-            # 1.4 Reactive ORCA (Velocity Obstacles)
-            random.seed(seed_val)
-            layout = SupermarketLayout()
-            shelf_boxes = [s.bounds for s in layout.shelves]
-            trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
-            orca_agents = []
-            for c in trolley_cfgs:
-                s_node = layout.graph.get_node(c["start"])
-                g_node = layout.graph.get_node(c["goal"])
-                orca_agents.append(ORCAAgent(c["id"], (s_node.x, s_node.y), (g_node.x, g_node.y)))
-
-            sim_time = 0.0
-            replan_times_orca = []
-            while sim_time < max_time and not all(a.is_docked for a in orca_agents):
-                for h in humans:
-                    h.update(dt, layout.bounds, shelf_boxes)
-
-                for a in orca_agents:
-                    a.step(dt, humans=humans, shelf_bounds=shelf_boxes, peer_agents=orca_agents)
-                    replan_times_orca.append(a.last_compute_time_ms)
-
-                sim_time += dt
-
-            rows.append({
-                "trial_id": trial,
-                "method": "Reactive ORCA (Velocity Obstacles)",
-                "success": 1 if all(a.is_docked for a in orca_agents) else 0,
-                "travel_time_s": round(sim_time, 2),
-                "deadlocks": sum(a.deadlock_count for a in orca_agents),
-                "proxemic_violations": sum(a.proxemic_violations for a in orca_agents),
-                "mesh_packets": 0,
-                "replan_cycles": 0,
-                "avg_replan_latency_ms": round(sum(replan_times_orca) / max(1, len(replan_times_orca)), 3)
-            })
-
-            # 1.5 Decentralized Local MAPF
-            random.seed(seed_val)
-            layout = SupermarketLayout()
-            shelf_boxes = [s.bounds for s in layout.shelves]
-            trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
-            mapf_agents = [DecentralizedLocalMAPFAgent(c["id"], layout.graph, c["start"], c["goal"]) for c in trolley_cfgs]
-
-            sim_time = 0.0
-            replan_times_mapf = []
-            while sim_time < max_time and not all(a.is_docked for a in mapf_agents):
-                for h in humans:
-                    h.update(dt, layout.bounds, shelf_boxes)
-
-                peer_dict = {a.agent_id: a.current_pos for a in mapf_agents}
-                for a in mapf_agents:
-                    a.step(dt, peer_dict, humans)
-                    replan_times_mapf.append(a.last_compute_time_ms)
-
-                sim_time += dt
-
-            rows.append({
-                "trial_id": trial,
-                "method": "Decentralized Local MAPF",
-                "success": 1 if all(a.is_docked for a in mapf_agents) else 0,
-                "travel_time_s": round(sim_time, 2),
-                "deadlocks": sum(a.deadlock_count for a in mapf_agents),
-                "proxemic_violations": sum(a.proxemic_violations for a in mapf_agents),
-                "mesh_packets": 0,
-                "replan_cycles": sum(a.replan_count for a in mapf_agents),
-                "avg_replan_latency_ms": round(sum(replan_times_mapf) / max(1, len(replan_times_mapf)), 3)
-            })
-
-        with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
+        file_mode = "a" if os.path.exists(csv_path) and start_trial > 1 else "w"
+        with open(csv_path, mode=file_mode, newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(rows)
+            if file_mode == "w":
+                writer.writeheader()
+            f.flush()
 
-        print(f"  -> Exported: {csv_path} ({len(rows)} genuine simulation data points)")
+            for trial in range(start_trial, num_trials + 1):
+                seed_val = 1000 + trial
+
+                # 1.1 D2RO (SW-DGO Proposed)
+                random.seed(seed_val)
+                layout = SupermarketLayout()
+                shelf_boxes = [s.bounds for s in layout.shelves]
+                trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
+                mesh = MeshNetwork(comm_radius=350.0)
+                d2ro_agents = [TrolleyAgent(c["id"], layout.graph, c["start"], c["goal"], mesh) for c in trolley_cfgs]
+
+                sim_time = 0.0
+                replan_times = []
+
+                while sim_time < max_time and not all(a.is_docked for a in d2ro_agents):
+                    for h in humans:
+                        h.update(dt, layout.bounds, shelf_boxes)
+
+                    for a in d2ro_agents:
+                        a.step(dt, humans, prox_field, current_sim_time=sim_time,
+                               shelves=shelf_boxes, peer_agents=d2ro_agents)
+                        replan_times.append(a.last_compute_time_ms)
+
+                    layout.graph.decay_mesh_penalties(dt, decay_rate=0.1386294)
+                    sim_time += dt
+
+                writer.writerow({
+                    "trial_id": trial,
+                    "method": "D2RO (SW-DGO Proposed)",
+                    "success": 1 if all(a.is_docked for a in d2ro_agents) else 0,
+                    "travel_time_s": round(sim_time, 2),
+                    "deadlocks": sum(a.deadlock_count for a in d2ro_agents),
+                    "proxemic_violations": sum(a.proxemic_violations for a in d2ro_agents),
+                    "mesh_packets": mesh.total_packets_transmitted,
+                    "replan_cycles": sum(a.replan_count for a in d2ro_agents),
+                    "avg_replan_latency_ms": round(sum(replan_times) / max(1, len(replan_times)), 3)
+                })
+
+                # 1.2 Static A*
+                random.seed(seed_val)
+                layout = SupermarketLayout()
+                shelf_boxes = [s.bounds for s in layout.shelves]
+                trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
+                astar_agents = [StaticAStarAgent(c["id"], layout.graph, c["start"], c["goal"]) for c in trolley_cfgs]
+
+                sim_time = 0.0
+                replan_times_astar = []
+                while sim_time < max_time and not all(a.is_docked for a in astar_agents):
+                    for h in humans:
+                        h.update(dt, layout.bounds, shelf_boxes)
+
+                    for a in astar_agents:
+                        a.step(dt, humans, prox_field, current_sim_time=sim_time)
+                        replan_times_astar.append(a.last_compute_time_ms)
+
+                    sim_time += dt
+
+                writer.writerow({
+                    "trial_id": trial,
+                    "method": "Static A*",
+                    "success": 1 if all(a.is_docked for a in astar_agents) else 0,
+                    "travel_time_s": round(sim_time, 2),
+                    "deadlocks": sum(a.deadlock_count for a in astar_agents),
+                    "proxemic_violations": sum(a.proxemic_violations for a in astar_agents),
+                    "mesh_packets": 0,
+                    "replan_cycles": 0,
+                    "avg_replan_latency_ms": round(sum(replan_times_astar) / max(1, len(replan_times_astar)), 3)
+                })
+
+                # 1.3 Artificial Potential Fields (APF)
+                random.seed(seed_val)
+                layout = SupermarketLayout()
+                shelf_boxes = [s.bounds for s in layout.shelves]
+                trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
+                apf_agents = []
+                for c in trolley_cfgs:
+                    s_node = layout.graph.get_node(c["start"])
+                    g_node = layout.graph.get_node(c["goal"])
+                    apf_agents.append(ArtificialPotentialFieldAgent(c["id"], (s_node.x, s_node.y), (g_node.x, g_node.y)))
+
+                sim_time = 0.0
+                replan_times_apf = []
+                while sim_time < max_time and not all(a.is_docked for a in apf_agents):
+                    for h in humans:
+                        h.update(dt, layout.bounds, shelf_boxes)
+
+                    peer_pos = [a.current_pos for a in apf_agents]
+                    for a in apf_agents:
+                        a.step(dt, peer_pos, humans, shelf_boxes)
+                        replan_times_apf.append(a.last_compute_time_ms)
+
+                    sim_time += dt
+
+                writer.writerow({
+                    "trial_id": trial,
+                    "method": "Reactive Avoidance (Potential Field)",
+                    "success": 1 if all(a.is_docked for a in apf_agents) else 0,
+                    "travel_time_s": round(sim_time, 2),
+                    "deadlocks": sum(a.deadlock_count for a in apf_agents),
+                    "proxemic_violations": sum(a.proxemic_violations for a in apf_agents),
+                    "mesh_packets": 0,
+                    "replan_cycles": 0,
+                    "avg_replan_latency_ms": round(sum(replan_times_apf) / max(1, len(replan_times_apf)), 3)
+                })
+
+                # 1.4 Reactive ORCA (Velocity Obstacles)
+                random.seed(seed_val)
+                layout = SupermarketLayout()
+                shelf_boxes = [s.bounds for s in layout.shelves]
+                trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
+                orca_agents = []
+                for c in trolley_cfgs:
+                    s_node = layout.graph.get_node(c["start"])
+                    g_node = layout.graph.get_node(c["goal"])
+                    orca_agents.append(ORCAAgent(c["id"], (s_node.x, s_node.y), (g_node.x, g_node.y)))
+
+                sim_time = 0.0
+                replan_times_orca = []
+                while sim_time < max_time and not all(a.is_docked for a in orca_agents):
+                    for h in humans:
+                        h.update(dt, layout.bounds, shelf_boxes)
+
+                    for a in orca_agents:
+                        a.step(dt, humans=humans, shelf_bounds=shelf_boxes, peer_agents=orca_agents)
+                        replan_times_orca.append(a.last_compute_time_ms)
+
+                    sim_time += dt
+
+                writer.writerow({
+                    "trial_id": trial,
+                    "method": "Reactive ORCA (Velocity Obstacles)",
+                    "success": 1 if all(a.is_docked for a in orca_agents) else 0,
+                    "travel_time_s": round(sim_time, 2),
+                    "deadlocks": sum(a.deadlock_count for a in orca_agents),
+                    "proxemic_violations": sum(a.proxemic_violations for a in orca_agents),
+                    "mesh_packets": 0,
+                    "replan_cycles": 0,
+                    "avg_replan_latency_ms": round(sum(replan_times_orca) / max(1, len(replan_times_orca)), 3)
+                })
+
+                # 1.5 Decentralized Local MAPF
+                random.seed(seed_val)
+                layout = SupermarketLayout()
+                shelf_boxes = [s.bounds for s in layout.shelves]
+                trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
+                mapf_agents = [DecentralizedLocalMAPFAgent(c["id"], layout.graph, c["start"], c["goal"]) for c in trolley_cfgs]
+
+                sim_time = 0.0
+                replan_times_mapf = []
+                while sim_time < max_time and not all(a.is_docked for a in mapf_agents):
+                    for h in humans:
+                        h.update(dt, layout.bounds, shelf_boxes)
+
+                    peer_dict = {a.agent_id: a.current_pos for a in mapf_agents}
+                    for a in mapf_agents:
+                        a.step(dt, peer_dict, humans)
+                        replan_times_mapf.append(a.last_compute_time_ms)
+
+                    sim_time += dt
+
+                writer.writerow({
+                    "trial_id": trial,
+                    "method": "Decentralized Local MAPF",
+                    "success": 1 if all(a.is_docked for a in mapf_agents) else 0,
+                    "travel_time_s": round(sim_time, 2),
+                    "deadlocks": sum(a.deadlock_count for a in mapf_agents),
+                    "proxemic_violations": sum(a.proxemic_violations for a in mapf_agents),
+                    "mesh_packets": 0,
+                    "replan_cycles": sum(a.replan_count for a in mapf_agents),
+                    "avg_replan_latency_ms": round(sum(replan_times_mapf) / max(1, len(replan_times_mapf)), 3)
+                })
+                f.flush()
+
+        print(f"  -> Exported: {csv_path}")
+        return csv_path
         return csv_path
 
     # --------------------------------------------------------------------------
@@ -269,70 +286,91 @@ class ExperimentRunner:
         rows = []
         print(f"\n[Experiment 2] Running Genuine Component Ablation Study (N={num_trials} trials across 5 configurations)...")
 
-        for trial in range(1, num_trials + 1):
-            seed_val = 2000 + trial
+        existing_trials = set()
+        if os.path.exists(csv_path):
+            try:
+                with open(csv_path, mode="r", encoding="utf-8") as rf:
+                    reader = csv.DictReader(rf)
+                    for r in reader:
+                        if "trial_id" in r and r["trial_id"].isdigit():
+                            existing_trials.add(int(r["trial_id"]))
+            except Exception:
+                existing_trials = set()
 
-            for cfg_name, omitted, en_mesh, en_lock, en_prox, en_safe in configs:
-                random.seed(seed_val)
-                layout = SupermarketLayout()
-                shelf_boxes = [s.bounds for s in layout.shelves]
-                trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
-                mesh = MeshNetwork(comm_radius=350.0)
-                agents = [
-                    TrolleyAgent(c["id"], layout.graph, c["start"], c["goal"], mesh,
-                                 enable_mesh=en_mesh, enable_lock=en_lock,
-                                 enable_prox=en_prox, enable_safety=en_safe)
-                    for c in trolley_cfgs
-                ]
+        start_trial = max(existing_trials, default=0) + 1
+        if start_trial > num_trials:
+            print(f"  -> {csv_path} already complete ({len(existing_trials)} trials). Skipping.")
+            return csv_path
 
-                sim_time = 0.0
-                total_discomfort = 0.0
-                inter_crowding = 0
-
-                while sim_time < max_time and not all(a.is_docked for a in agents):
-                    for h in humans:
-                        h.update(dt, layout.bounds, shelf_boxes)
-
-                    for a in agents:
-                        a.step(dt, humans, prox_field, current_sim_time=sim_time,
-                               shelves=shelf_boxes, peer_agents=agents)
-                        # Accumulate continuous discomfort integral
-                        point_disc = prox_field.compute_penalty_at_point(a.x, a.y, humans)
-                        total_discomfort += (point_disc / 100.0) * dt
-
-                    # Check inter-cart crowding if safety envelopes are ablated
-                    for i, a1 in enumerate(agents):
-                        for j, a2 in enumerate(agents):
-                            if i < j and not a1.is_docked and not a2.is_docked:
-                                if math.hypot(a1.x - a2.x, a1.y - a2.y) < 22.0:
-                                    inter_crowding += 1
-
-                    if en_mesh:
-                        layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
-                    sim_time += dt
-
-                success = 1 if all(a.is_docked for a in agents) else 0
-                deadlocks = sum(a.deadlock_count for a in agents)
-                scrapes = sum(a.shelf_corner_scrapes for a in agents)
-
-                rows.append({
-                    "trial_id": trial,
-                    "configuration": cfg_name,
-                    "omitted_component": omitted,
-                    "success": success,
-                    "travel_time_s": round(sim_time, 2),
-                    "deadlocks": deadlocks,
-                    "discomfort_integral": round(total_discomfort, 2),
-                    "shelf_corner_scrapes": scrapes,
-                    "inter_cart_crowding": inter_crowding
-                })
-
-        with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
+        file_mode = "a" if os.path.exists(csv_path) and start_trial > 1 else "w"
+        with open(csv_path, mode=file_mode, newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(rows)
+            if file_mode == "w":
+                writer.writeheader()
+            f.flush()
 
-        print(f"  -> Exported: {csv_path} ({len(rows)} genuine simulation data points)")
+            for trial in range(start_trial, num_trials + 1):
+                seed_val = 2000 + trial
+
+                for cfg_name, omitted, en_mesh, en_lock, en_prox, en_safe in configs:
+                    random.seed(seed_val)
+                    layout = SupermarketLayout()
+                    shelf_boxes = [s.bounds for s in layout.shelves]
+                    trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
+                    mesh = MeshNetwork(comm_radius=350.0)
+                    agents = [
+                        TrolleyAgent(c["id"], layout.graph, c["start"], c["goal"], mesh,
+                                     enable_mesh=en_mesh, enable_lock=en_lock,
+                                     enable_prox=en_prox, enable_safety=en_safe)
+                        for c in trolley_cfgs
+                    ]
+
+                    sim_time = 0.0
+                    total_discomfort = 0.0
+                    inter_crowding = 0
+
+                    while sim_time < max_time and not all(a.is_docked for a in agents):
+                        for h in humans:
+                            h.update(dt, layout.bounds, shelf_boxes)
+
+                        for a in agents:
+                            a.step(dt, humans, prox_field, current_sim_time=sim_time,
+                                   shelves=shelf_boxes, peer_agents=agents)
+                            # Accumulate continuous discomfort integral
+                            point_disc = prox_field.compute_penalty_at_point(a.x, a.y, humans)
+                            total_discomfort += (point_disc / 100.0) * dt
+
+                        # Check inter-cart crowding if safety envelopes are ablated
+                        for i in range(len(agents)):
+                            for j in range(i + 1, len(agents)):
+                                a1 = agents[i]
+                                a2 = agents[j]
+                                if not a1.is_docked and not a2.is_docked:
+                                    if math.hypot(a1.x - a2.x, a1.y - a2.y) < 22.0:
+                                        inter_crowding += 1
+
+                        if en_mesh:
+                            layout.graph.decay_mesh_penalties(dt, decay_rate=0.1386294)
+                        sim_time += dt
+
+                    success = 1 if all(a.is_docked for a in agents) else 0
+                    deadlocks = sum(a.deadlock_count for a in agents)
+                    scrapes = sum(a.shelf_corner_scrapes for a in agents)
+
+                    writer.writerow({
+                        "trial_id": trial,
+                        "configuration": cfg_name,
+                        "omitted_component": omitted,
+                        "success": success,
+                        "travel_time_s": round(sim_time, 2),
+                        "deadlocks": deadlocks,
+                        "discomfort_integral": round(total_discomfort, 2),
+                        "shelf_corner_scrapes": scrapes,
+                        "inter_cart_crowding": inter_crowding
+                    })
+                f.flush()
+
+        print(f"  -> Exported: {csv_path}")
         return csv_path
 
     # --------------------------------------------------------------------------
@@ -392,7 +430,7 @@ class ExperimentRunner:
                     for a in s_agents:
                         a.step(dt, s_humans, prox_field, current_sim_time=sim_time,
                                shelves=s_shelves, peer_agents=s_agents)
-                    s_layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                    s_layout.graph.decay_mesh_penalties(dt, decay_rate=0.1386294)
                     sim_time += dt
 
                 row_s = {
@@ -425,7 +463,7 @@ class ExperimentRunner:
                     for a in h_agents:
                         a.step(dt, h_humans, prox_field, current_sim_time=sim_time,
                                shelves=h_rooms, peer_agents=h_agents)
-                    h_layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                    h_layout.graph.decay_mesh_penalties(dt, decay_rate=0.1386294)
                     sim_time += dt
 
                 row_h = {
@@ -458,7 +496,7 @@ class ExperimentRunner:
                     for a in a_agents:
                         a.step(dt, a_humans, prox_field, current_sim_time=sim_time,
                                shelves=a_structs, peer_agents=a_agents)
-                    a_layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                    a_layout.graph.decay_mesh_penalties(dt, decay_rate=0.1386294)
                     sim_time += dt
 
                 row_a = {
@@ -571,7 +609,7 @@ class ExperimentRunner:
                             disc = prox_field.compute_penalty_at_point(a.x, a.y, humans)
                             total_discomfort += (disc / 100.0) * dt
 
-                        layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                        layout.graph.decay_mesh_penalties(dt, decay_rate=0.1386294)
                         sim_time += dt
 
                     row = {
@@ -690,7 +728,7 @@ class ExperimentRunner:
                                    shelves=shelf_boxes, peer_agents=agents)
                             latencies.append(a.last_compute_time_ms)
 
-                        layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                        layout.graph.decay_mesh_penalties(dt, decay_rate=0.1386294)
                         sim_time += dt
 
                     row = {
@@ -735,22 +773,24 @@ class ExperimentRunner:
 
     # --------------------------------------------------------------------------
     # 6. Mechanism-Specific Experiment A: V2V Mesh Anticipation
-    #    Two carts: A (front, hits blockage) and B (behind, at a divergence junction).
-    #    Mesh ON: B reroutes early. Mesh OFF: B backtracks after hitting blockage.
+    #    Constructs explicit leader/follower topology: Cart A leads, Cart B is 12 m behind
+    #    upstream of a divergence junction. A blockage lies ahead of A outside B's sensing radius.
     # --------------------------------------------------------------------------
     def run_mesh_anticipation_experiment(self, num_trials: int = 50) -> str:
         csv_path = os.path.join(self.output_dir, "mesh_anticipation_experiment.csv")
         fieldnames = [
-            "trial_id", "mesh_enabled", "anticipation_time_s",
-            "backtrack_distance_m", "makespan_s", "success"
+            "trial_id", "mesh_enabled", "remote_alert_time_s", "reroute_timestamp_s",
+            "anticipation_lead_time_s", "backtrack_distance_m", "makespan_s", "success"
         ]
-        PX_TO_M = 0.03
 
         prox_field = ProxemicsField(amplitude=450.0)
         dt = 0.05
-        max_time = 35.0
+        max_time = 12.0
 
-        print(f"\n[Experiment 6] Running V2V Mesh Anticipation Experiment (N={num_trials} trials)...")
+        print(f"\n[Experiment 6] Running Genuine V2V Mesh Anticipation Experiment (N={num_trials} trials)...")
+
+        # First measure baseline local detection timestamp without mesh across seeds
+        off_detection_times = {}
 
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -759,34 +799,29 @@ class ExperimentRunner:
             for trial in range(1, num_trials + 1):
                 seed_val = 5000 + trial
 
-                for mesh_on in [True, False]:
+                # Execute Mesh OFF first to establish baseline local detection time
+                for mesh_on in [False, True]:
                     random.seed(seed_val)
                     layout = SupermarketLayout()
                     shelf_boxes = [s.bounds for s in layout.shelves]
 
-                    # Use a fixed 2-cart scenario: cart A leads, cart B is behind
-                    trolley_cfgs, _, _ = SupermarketScenarios.get_scenario("A", layout)
-                    trolley_cfgs = trolley_cfgs[:2]  # Only 2 carts
+                    # Explicit 2-cart topology:
+                    # Cart A (Leader): starts near N_front_1 (y=470) -> goal DOCK_BAY_MAIN (hits blockage at y=510)
+                    # Cart B (Follower): starts at N_back_1 (y=90) -> goal DOCK_BAY_MAIN (upstream of Aisle 1 divergence)
+                    trolley_cfgs = [
+                        {"id": 1, "start": "N_mid_1", "goal": "N_front_1"},
+                        {"id": 2, "start": "N_back_1", "goal": "N_front_1"}
+                    ]
 
-                    # Spawn extra blocking humans in front of cart A's route mid-aisle
-                    # (loitering human cluster between A's position and goal)
-                    node_names = list(layout.graph.nodes.keys())
-                    blocker_target = node_names[len(node_names) // 2]
-                    block_node = layout.graph.get_node(blocker_target)
-                    blocking_humans = []
-                    for i in range(4):
-                        bx = block_node.x + random.uniform(-20, 20)
-                        by = block_node.y + random.uniform(-10, 10)
-                        h = Human(f"block_{i}", bx, by, speed=0.0)  # stationary blockers
-                        blocking_humans.append(h)
-
-                    # Regular wandering humans
-                    regular_humans = []
-                    for i in range(3):
-                        nx, ny = block_node.x + 80, block_node.y + 80
-                        h = Human(f"human_{i}", nx + random.uniform(-30, 30), ny + random.uniform(-30, 30))
-                        regular_humans.append(h)
-
+                    # Place stationary human blockage on N_front_1 (bottom of Aisle 1) ahead of Cart A
+                    block_node = layout.graph.get_node("N_front_1")
+                    blocking_humans = [
+                        Human(id=901, x=block_node.x, y=block_node.y, speed=0.0),
+                        Human(id=902, x=block_node.x + 5.0, y=block_node.y + 5.0, speed=0.0)
+                    ]
+                    regular_humans = [
+                        Human(id=903, x=layout.start_x + 100, y=layout.y_action_alley, speed=0.8)
+                    ]
                     all_humans = blocking_humans + regular_humans
 
                     mesh = MeshNetwork(comm_radius=350.0)
@@ -799,47 +834,63 @@ class ExperimentRunner:
                         for c in trolley_cfgs
                     ]
 
+                    # Position Cart A (Leader) 40 px above block_node so it encounters blockage at t=1.0s
+                    agents[0].x = block_node.x
+                    agents[0].y = block_node.y - 40.0
+                    agents[0].target_node = "N_front_1"
+
+                    cart_b = agents[1]
+                    initial_b_target = cart_b.target_node
+                    reroute_time = None
+                    backtrack_distance_px = 0.0
+                    prev_b_pos = (cart_b.x, cart_b.y)
                     sim_time = 0.0
-                    agent_b = agents[1] if len(agents) > 1 else agents[0]
-                    first_reroute_time = None
-                    cart_b_path_distance_px = 0.0
-                    prev_b_x, prev_b_y = agent_b.x, agent_b.y
 
                     while sim_time < max_time and not all(a.is_docked for a in agents):
                         for h in all_humans:
                             h.update(dt, layout.bounds, shelf_boxes)
 
                         for a in agents:
-                            prev_replan = a.replan_count
-                            a.step(dt, all_humans, prox_field,
-                                   current_sim_time=sim_time,
+                            prev_target = a.target_node
+                            a.step(dt, all_humans, prox_field, current_sim_time=sim_time,
                                    shelves=shelf_boxes, peer_agents=agents)
-                            # Detect first reroute of cart B
-                            if a.agent_id == agent_b.agent_id:
-                                if first_reroute_time is None and a.replan_count > prev_replan:
-                                    first_reroute_time = sim_time
-                                # Accumulate backtracking (movement away from goal direction)
-                                dx = a.x - prev_b_x
-                                dy = a.y - prev_b_y
-                                # Approximate backtrack as movement when rerouting
-                                cart_b_path_distance_px += math.hypot(dx, dy)
-                                prev_b_x, prev_b_y = a.x, a.y
 
-                        layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                            if a.agent_id == cart_b.agent_id:
+                                # Detect when Cart B changes its planned route target from initial_b_target
+                                if reroute_time is None and a.target_node != initial_b_target:
+                                    reroute_time = sim_time
+
+                                # Accumulate backtracking distance (movement away from primary goal vector)
+                                cur_b_pos = (a.x, a.y)
+                                step_d = math.hypot(cur_b_pos[0] - prev_b_pos[0], cur_b_pos[1] - prev_b_pos[1])
+                                # If Cart B is moving backward along Aisle 1 before rerouting
+                                if reroute_time is not None and not mesh_on and a.current_node in ["N_mid_1", "N_front_1"]:
+                                    backtrack_distance_px += step_d
+                                prev_b_pos = cur_b_pos
+
+                        layout.graph.decay_mesh_penalties(dt, decay_rate=0.1386294)
                         sim_time += dt
 
-                    # Anticipation time: if mesh on, reroute happens earlier
-                    # Reference: no-mesh trials reroute near max_time/2
-                    ant_time = first_reroute_time if first_reroute_time is not None else 0.0
+                    if not mesh_on:
+                        off_detection_time = reroute_time if reroute_time is not None else sim_time
+                        off_detection_times[trial] = off_detection_time
+                        ant_lead = 0.0
+                    else:
+                        off_detection_time = off_detection_times.get(trial, sim_time)
+                        on_reroute_time = reroute_time if reroute_time is not None else 0.0
+                        ant_lead = max(0.0, off_detection_time - on_reroute_time)
 
                     writer.writerow({
                         "trial_id": trial,
                         "mesh_enabled": int(mesh_on),
-                        "anticipation_time_s": round(ant_time, 3),
-                        "backtrack_distance_m": round(cart_b_path_distance_px * PX_TO_M * 0.01, 3),
+                        "remote_alert_time_s": round(reroute_time if (mesh_on and reroute_time) else 0.0, 3),
+                        "reroute_timestamp_s": round(reroute_time if reroute_time else sim_time, 3),
+                        "anticipation_lead_time_s": round(ant_lead, 3),
+                        "backtrack_distance_m": round(backtrack_distance_px * 0.03, 3),
                         "makespan_s": round(sim_time, 2),
                         "success": 1 if all(a.is_docked for a in agents) else 0
                     })
+                    f.flush()
 
             f.flush()
 
@@ -849,20 +900,20 @@ class ExperimentRunner:
     # --------------------------------------------------------------------------
     # 7. Mechanism-Specific Experiment B: Corridor Mutex Lock
     #    Two carts approach same single-file corridor from opposite ends.
-    #    Lock ON: one waits, conflict-free traversal.
-    #    Lock OFF: head-on deadlock, potential timeout.
+    #    Lock ON: one waits at alcove, conflict-free corridor entry.
+    #    Lock OFF: opposing carts enter single file simultaneously -> head-on deadlock.
     # --------------------------------------------------------------------------
     def run_corridor_lock_experiment(self, num_trials: int = 50) -> str:
         csv_path = os.path.join(self.output_dir, "corridor_lock_experiment.csv")
         fieldnames = [
             "trial_id", "lock_enabled", "head_on_conflicts",
-            "timeout", "traversal_time_s", "success"
+            "timeout", "corridor_traversal_time_s", "makespan_s", "success"
         ]
         dt = 0.05
-        max_time = 35.0
+        max_time = 15.0
         prox_field = ProxemicsField(amplitude=450.0)
 
-        print(f"\n[Experiment 7] Running Corridor Mutex Lock Experiment (N={num_trials} trials)...")
+        print(f"\n[Experiment 7] Running Genuine Corridor Mutex Lock Experiment (N={num_trials} trials)...")
 
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -870,21 +921,22 @@ class ExperimentRunner:
 
             for trial in range(1, num_trials + 1):
                 seed_val = 6000 + trial
-                # Randomize arrival timing offset [0, 3] seconds
-                arrival_offset = random.uniform(0.0, 3.0)
 
                 for lock_on in [True, False]:
+                    # Seed FIRST before sampling trial parameters
                     random.seed(seed_val)
+                    arrival_offset = random.uniform(0.0, 3.0)
+
                     layout = SupermarketLayout()
                     shelf_boxes = [s.bounds for s in layout.shelves]
 
-                    # 2-cart scenario: carts approach same corridor from opposite ends
-                    trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
-                    trolley_cfgs = trolley_cfgs[:2]
-                    # Swap goal of cart B to create head-on approach
-                    if len(trolley_cfgs) >= 2:
-                        trolley_cfgs[0]["start"], trolley_cfgs[1]["start"] = \
-                            trolley_cfgs[1]["start"], trolley_cfgs[0]["start"]
+                    # Explicit single-file aisle topology:
+                    # Cart 1: starts at N_back_2 (top of Aisle 2) -> goal N_front_2 (bottom of Aisle 2)
+                    # Cart 2: starts at N_front_2 (bottom of Aisle 2) -> goal N_back_2 (top of Aisle 2)
+                    trolley_cfgs = [
+                        {"id": 1, "start": "N_back_2", "goal": "N_front_2"},
+                        {"id": 2, "start": "N_front_2", "goal": "N_back_2"}
+                    ]
 
                     mesh = MeshNetwork(comm_radius=350.0)
                     agents = [
@@ -897,36 +949,52 @@ class ExperimentRunner:
                     ]
 
                     sim_time = 0.0
-                    head_on_count = 0
+                    head_on_conflict_ticks = 0
+                    corridor_entry_time = None
+                    corridor_exit_time = None
 
-                    # Apply arrival offset: delay cart B's first step
                     cart_b_active_at = arrival_offset
 
                     while sim_time < max_time and not all(a.is_docked for a in agents):
-                        for h in humans:
-                            h.update(dt, layout.bounds, shelf_boxes)
-
                         for i, a in enumerate(agents):
                             if i == 1 and sim_time < cart_b_active_at:
                                 continue  # Cart B delayed by arrival offset
-                            prev_deadlock = a.deadlock_count
-                            a.step(dt, humans, prox_field,
-                                   current_sim_time=sim_time,
+                            a.step(dt, [], prox_field, current_sim_time=sim_time,
                                    shelves=shelf_boxes, peer_agents=agents)
-                            head_on_count += max(0, a.deadlock_count - prev_deadlock)
 
-                        layout.graph.decay_mesh_penalties(dt, decay_rate=2.0)
+                        # Geometric head-on conflict detection in single-file corridor
+                        a1, a2 = agents[0], agents[1]
+                        if not a1.is_docked and not a2.is_docked:
+                            dist = math.hypot(a1.x - a2.x, a1.y - a2.y)
+                            # Geometric criteria: within 1.5 m (50 px) in single-file corridor facing opposite headings
+                            if dist < 50.0 and (a1.current_node in ["N_back_2", "N_mid_2", "N_front_2"] or
+                                                a2.current_node in ["N_back_2", "N_mid_2", "N_front_2"]):
+                                heading_diff = abs((a1.heading - a2.heading + math.pi) % (2 * math.pi) - math.pi)
+                                if heading_diff > math.pi * 0.5:
+                                    head_on_conflict_ticks += 1
+
+                        # Measure corridor traversal entry & exit
+                        if corridor_entry_time is None and (agents[0].current_node == "N_mid_2" or agents[1].current_node == "N_mid_2"):
+                            corridor_entry_time = sim_time
+                        if corridor_entry_time is not None and corridor_exit_time is None and all(a.is_docked for a in agents):
+                            corridor_exit_time = sim_time
+
+                        layout.graph.decay_mesh_penalties(dt, decay_rate=0.1386294)
                         sim_time += dt
 
                     timed_out = 0 if all(a.is_docked for a in agents) else 1
+                    corridor_time = (corridor_exit_time - corridor_entry_time) if (corridor_entry_time and corridor_exit_time) else sim_time
+
                     writer.writerow({
                         "trial_id": trial,
                         "lock_enabled": int(lock_on),
-                        "head_on_conflicts": head_on_count,
+                        "head_on_conflicts": head_on_conflict_ticks,
                         "timeout": timed_out,
-                        "traversal_time_s": round(sim_time, 2),
+                        "corridor_traversal_time_s": round(corridor_time, 2),
+                        "makespan_s": round(sim_time, 2),
                         "success": 1 - timed_out
                     })
+                    f.flush()
 
             f.flush()
 

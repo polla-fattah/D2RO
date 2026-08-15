@@ -23,7 +23,9 @@ ROBOT_RADIUS_PX: float = ROBOT_RADIUS_M * M_TO_PX
 
 # Non-Holonomic Kinematic Limits
 ROBOT_VMAX_MPS: float = 1.20   # Maximum linear velocity: 1.2 m/s (~40 px/s)
+ROBOT_VMAX_PXPS: float = ROBOT_VMAX_MPS * M_TO_PX  # 40.0 px/s
 ROBOT_AMAX_MPS2: float = 1.50  # Maximum linear acceleration: 1.5 m/s^2
+ROBOT_AMAX_PXPS2: float = ROBOT_AMAX_MPS2 * M_TO_PX # 50.0 px/s^2
 ROBOT_WMAX_RADPS: float = 2.50 # Maximum angular steering velocity: 2.5 rad/s
 
 # Safety Clearance Margins
@@ -37,7 +39,7 @@ V2V_MESH_COMM_RANGE_M: float = 10.5  # 350 pixels ad-hoc transmission radius
 V2V_MESH_COMM_RANGE_PX: float = V2V_MESH_COMM_RANGE_M * M_TO_PX
 V2V_PACKET_SIZE_BYTES: int = 64      # Standard telemetry packet size (Timestamp, Edge, Cost, ID)
 V2V_TTL_HOPS: int = 3                # Maximum multi-hop forwarding hops
-V2V_DECAY_RATE_PER_SEC: float = 2.0  # Exponential decay rate lambda (s^-1)
+V2V_DECAY_RATE_PER_SEC: float = 0.1386294  # Exponential decay rate lambda (s^-1), half-life = 5 s
 
 # Asymmetric Anisotropic Human Proxemics Parameters (HA-VLN 2.0 / Hall's Proxemics)
 HUMAN_RADIUS_M: float = 0.36         # Physical human body radius (12 px)

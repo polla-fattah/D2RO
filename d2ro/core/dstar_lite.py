@@ -157,8 +157,8 @@ class DStarLite:
         """Advances agent position along trajectory and accumulates heuristic key shift."""
         if new_start == self.s_start:
             return
-        self.km += self._heuristic(self.s_last, new_start)
-        self.s_last = self.s_start
+        self.km += self._heuristic(self.s_start, new_start)
+        self.s_last = new_start
         self.s_start = new_start
 
     def get_next_waypoint(self) -> Optional[str]:

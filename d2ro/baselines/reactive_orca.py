@@ -166,7 +166,7 @@ class ORCAAgent:
 
             if d_h < 70.0:
                 rel_pos = (human.x - self.x, human.y - self.y)
-                rel_vel = (self.vx - human.vx * 30.0, self.vy - human.vy * 30.0)
+                rel_vel = (self.vx - human.vx, self.vy - human.vy)
                 combined_r = self.radius + human.radius + 10.0
                 line = self._compute_orca_halfplane(rel_pos, rel_vel, combined_r, self.time_horizon, reciprocity=1.0)
                 orca_lines.append(line)

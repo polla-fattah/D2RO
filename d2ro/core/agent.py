@@ -14,7 +14,7 @@ from .mesh_network import MeshNetwork, MessageType, MeshPacket
 from .human import Human, ProxemicsField
 from .units import (
     ROBOT_RADIUS_PX, SHELF_CLEARANCE_MARGIN_PX, FOLLOWING_DISTANCE_GAP_PX,
-    V2V_MESH_COMM_RANGE_PX, ROBOT_VMAX_MPS, ROBOT_WMAX_RADPS, M_TO_PX
+    V2V_MESH_COMM_RANGE_PX, ROBOT_VMAX_MPS, ROBOT_VMAX_PXPS, ROBOT_WMAX_RADPS, M_TO_PX
 )
 
 class TrolleyAgent:
@@ -24,7 +24,7 @@ class TrolleyAgent:
     active inter-trolley safety clearance envelopes, shelf-margin safety zones, and social yielding.
     """
     def __init__(self, agent_id: int, graph: TopologicalGraph, start_node: str, goal_node: str,
-                 mesh_net: MeshNetwork, max_speed: float = 2.6, max_omega: float = ROBOT_WMAX_RADPS,
+                 mesh_net: MeshNetwork, max_speed: float = ROBOT_VMAX_PXPS, max_omega: float = ROBOT_WMAX_RADPS,
                  comm_radius: float = V2V_MESH_COMM_RANGE_PX,
                  enable_mesh: bool = True, enable_lock: bool = True,
                  enable_prox: bool = True, enable_safety: bool = True):
@@ -54,6 +54,9 @@ class TrolleyAgent:
         self.safety_bubble_radius: float = 26.0 if enable_safety else 0.0 # Kinetic safety clearance envelope (0.78 m)
         self.shelf_margin: float = SHELF_CLEARANCE_MARGIN_PX if enable_safety else 0.0 # Minimum distance maintained from shelf edges (0.54 m / 18 px)
         self.following_gap: float = FOLLOWING_DISTANCE_GAP_PX if enable_safety else 0.0 # Anti-tailgating gap (1.08 m / 36 px)
+
+        # Latency tracking
+        self.last_compute_time_ms: float = 0.15
 
         # High-level planning
         self.planner = DStarLite(self.graph, start_node, goal_node)
@@ -119,6 +122,12 @@ class TrolleyAgent:
         cost_changed = False
         if humans is None or not hasattr(self.graph, "edges"):
             return False
+
+        if not hasattr(self, "_prox_update_counter"):
+            self._prox_update_counter = 0
+        self._prox_update_counter += 1
+        if self._prox_update_counter % 3 != 0:
+            return False
         if isinstance(humans, list):
             human_list = humans
         elif isinstance(humans, (tuple, set)):
@@ -126,8 +135,11 @@ class TrolleyAgent:
         else:
             human_list = [humans]
 
+        if not isinstance(self.graph.edges, dict):
+            return False
+
         for key, edge in list(self.graph.edges.items()):
-            if not isinstance(key, tuple) or len(key) != 2:
+            if not (isinstance(key, tuple) and len(key) == 2):
                 continue
             u, v = key
             nu = self.graph.get_node(u)
@@ -231,8 +243,8 @@ class TrolleyAgent:
         if must_slow_down:
             self.state = "FOLLOWING_CART"
             self.peer_block_timer += dt
-            # Modulate speed to match safe following crawl rather than full dead stop
-            self.speed = min(self.speed, 0.8)
+            # Modulate speed to match safe following crawl (0.8 m/s ~ 26.67 px/s)
+            self.speed = min(self.speed, 0.8 * M_TO_PX)
 
             # If blocked behind a stalled cart for > 1.8s, increment deadlock and trigger dynamic D* Lite reroute if mesh enabled
             if self.peer_block_timer > 1.8 and self.target_node:
@@ -418,9 +430,9 @@ class TrolleyAgent:
             # Unicycle forward motion with corner deceleration
             alignment = max(0.25, math.cos(angle_diff))
             target_speed = (self.speed if self.state == "FOLLOWING_CART" else self.max_speed) * alignment
-            self.speed = min(dist / (dt * 30.0), target_speed)
+            self.speed = min(dist / dt, target_speed)
 
-            step_dist = self.speed * dt * 30.0
+            step_dist = self.speed * dt
             self.x += math.cos(self.heading) * step_dist
             self.y += math.sin(self.heading) * step_dist
             self.total_distance += step_dist

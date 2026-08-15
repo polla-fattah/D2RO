@@ -78,12 +78,13 @@ class Human:
             dx = self.target_x - self.x
             dy = self.target_y - self.y
             dist = math.hypot(dx, dy)
+            speed_pxps = self.speed * M_TO_PX  # 1.0 m/s ~ 33.3 px/s
             if dist > 6.0:
-                self.vx = (dx / dist) * self.speed
-                self.vy = (dy / dist) * self.speed
+                self.vx = (dx / dist) * speed_pxps
+                self.vy = (dy / dist) * speed_pxps
                 self.heading = math.atan2(self.vy, self.vx)
-                self.x += self.vx * dt * 30.0
-                self.y += self.vy * dt * 30.0
+                self.x += self.vx * dt
+                self.y += self.vy * dt
             else:
                 self.state = "browsing"
                 self.state_timer = random.uniform(2.0, 4.0)
@@ -178,15 +179,22 @@ class ProxemicsField:
         for h in human_list:
             if not (hasattr(h, 'x') and hasattr(h, 'y') and hasattr(h, 'heading')):
                 continue
-            dx = x - h.x
-            dy = y - h.y
+            try:
+                hx = float(h.x)
+                hy = float(h.y)
+                hheading = float(h.heading)
+            except Exception:
+                continue
+
+            dx = x - hx
+            dy = y - hy
             raw_dist_sq = dx * dx + dy * dy
 
             if raw_dist_sq > max_cutoff_sq:
                 continue
 
-            cos_h = math.cos(h.heading)
-            sin_h = math.sin(h.heading)
+            cos_h = math.cos(hheading)
+            sin_h = math.sin(hheading)
             x_ego = -sin_h * dx + cos_h * dy
             y_ego = cos_h * dx + sin_h * dy
 
@@ -203,23 +211,30 @@ class ProxemicsField:
 
     def compute_edge_segment_penalty(self, p1: Tuple[float, float], p2: Tuple[float, float],
                                      humans: Any, num_samples: int = 6) -> float:
-        """
+        r"""
         Integrates the continuous 2D anisotropic Gaussian discomfort field along corridor segment (p1 -> p2).
-        Returns the peak discomfort sampled along the segment.
+        Uses trapezoidal numerical quadrature over segment length L (meters):
+        \int_0^L H_prox(s) ds \approx (L / N) * (0.5*H_0 + 0.5*H_N + sum_{i=1}^{N-1} H_i)
         """
         if not humans:
             return 0.0
 
-        max_penalty = 0.0
         x1, y1 = p1[0], p1[1]
         x2, y2 = p2[0], p2[1]
+        seg_len_px = math.hypot(x2 - x1, y2 - y1)
+        seg_len_m = seg_len_px * PX_TO_M
 
+        if seg_len_px < 1e-5:
+            return self.compute_penalty_at_point(x1, y1, humans) * PX_TO_M
+
+        H_sum = 0.0
         for step_idx in range(num_samples + 1):
             t_val = step_idx / float(num_samples)
             sx = (1.0 - t_val) * x1 + t_val * x2
             sy = (1.0 - t_val) * y1 + t_val * y2
             pt_penalty = self.compute_penalty_at_point(sx, sy, humans)
-            if pt_penalty > max_penalty:
-                max_penalty = pt_penalty
+            weight = 0.5 if (step_idx == 0 or step_idx == num_samples) else 1.0
+            H_sum += weight * pt_penalty
 
-        return max_penalty
+        integral = (seg_len_m / float(num_samples)) * H_sum
+        return integral

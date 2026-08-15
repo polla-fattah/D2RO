@@ -113,7 +113,7 @@ class StaticAStarAgent:
                 self.is_docked = True
         else:
             self.heading = math.atan2(dy, dx)
-            step_dist = min(dist, self.max_speed * dt * 30.0)
+            step_dist = min(dist, self.max_speed * dt)
             self.x += math.cos(self.heading) * step_dist
             self.y += math.sin(self.heading) * step_dist
             self.total_distance += step_dist

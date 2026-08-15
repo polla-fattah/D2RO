@@ -64,14 +64,17 @@ class Edge:
         """Returns total calibrated composite traversal cost."""
         if self.r_lock == math.inf:
             return math.inf
-        total_cost = (
-            self.weight_d * self.d +
-            self.weight_m * self.w_mesh +
-            self.weight_h * self.h_prox +
-            self.weight_r * self.r_lock +
-            self.weight_s * self.s_trolley
-        )
-        return max(0.001, total_cost)
+        try:
+            total_cost = (
+                float(self.weight_d) * float(self.d) +
+                float(self.weight_m) * float(self.w_mesh) +
+                float(self.weight_h) * float(self.h_prox) +
+                float(self.weight_r) * float(self.r_lock) +
+                float(self.weight_s) * float(self.s_trolley)
+            )
+            return max(0.001, total_cost)
+        except (TypeError, ValueError):
+            return max(0.001, float(self.weight_d) * float(self.d))
 
 class TopologicalGraph:
     """
@@ -125,10 +128,11 @@ class TopologicalGraph:
 
         p_u = self.nodes[u]
         p_v = self.nodes[v]
-        dist = math.hypot(p_u.x - p_v.x, p_u.y - p_v.y)
+        dist_px = math.hypot(p_u.x - p_v.x, p_u.y - p_v.y)
+        dist_m = dist_px * PX_TO_M  # Edge distance in meters (SI metric)
 
         # Forward edge
-        edge_uv = Edge(u=u, v=v, d=dist, is_single_file=is_single_file)
+        edge_uv = Edge(u=u, v=v, d=dist_m, is_single_file=is_single_file)
         self.edges[(u, v)] = edge_uv
         if v not in self._succ[u]:
             self._succ[u].append(v)
@@ -136,7 +140,7 @@ class TopologicalGraph:
             self._pred[v].append(u)
 
         if bidirectional:
-            edge_vu = Edge(u=v, v=u, d=dist, is_single_file=is_single_file)
+            edge_vu = Edge(u=v, v=u, d=dist_m, is_single_file=is_single_file)
             self.edges[(v, u)] = edge_vu
             if u not in self._succ[v]:
                 self._succ[v].append(u)
@@ -162,10 +166,10 @@ class TopologicalGraph:
         return self._pred.get(v, [])
 
     def distance(self, u: str, v: str) -> float:
-        """Euclidean distance heuristic between two nodes."""
+        """Euclidean distance heuristic between two nodes in meters (SI metric)."""
         n1 = self.nodes[u]
         n2 = self.nodes[v]
-        return math.hypot(n1.x - n2.x, n1.y - n2.y)
+        return math.hypot(n1.x - n2.x, n1.y - n2.y) * PX_TO_M
 
     def update_mesh_penalty(self, u: str, v: str, penalty: float) -> bool:
         """Updates mesh congestion penalty on an edge. Returns True if modified."""
@@ -185,19 +189,27 @@ class TopologicalGraph:
                 changed_edges.append((u, v))
         return changed_edges
 
-    def decay_mesh_penalties(self, dt: float, decay_rate: float = 2.0) -> List[Tuple[str, str]]:
-        """Decays mesh congestion penalties over time."""
+    def decay_mesh_penalties(self, dt: float, decay_rate: float = 0.1386294) -> List[Tuple[str, str]]:
+        """Decays mesh congestion penalties exponentially over time: w_mesh(t + dt) = w_mesh(t) * exp(-decay_rate * dt)."""
+        if not isinstance(self.edges, dict):
+            return []
         changed_edges = []
+        decay_factor = math.exp(-decay_rate * dt)
         for key, edge in list(self.edges.items()):
             if isinstance(edge, Edge) and edge.w_mesh > 0.0:
                 old_val = edge.w_mesh
-                edge.w_mesh = max(0.0, edge.w_mesh - decay_rate * dt)
-                if math.fabs(old_val - edge.w_mesh) > 0.1:
+                new_val = edge.w_mesh * decay_factor
+                if new_val < 0.01:
+                    new_val = 0.0
+                edge.w_mesh = new_val
+                if math.fabs(old_val - edge.w_mesh) > 0.01:
                     changed_edges.append((edge.u, edge.v))
         return changed_edges
 
     def clean_expired_locks(self, current_time: float) -> List[Tuple[str, str]]:
         """Releases expired corridor locks."""
+        if not isinstance(self.edges, dict):
+            return []
         unlocked_edges = []
         for key, edge in list(self.edges.items()):
             if isinstance(edge, Edge) and edge.lock_owner is not None and current_time >= edge.lock_expiry:

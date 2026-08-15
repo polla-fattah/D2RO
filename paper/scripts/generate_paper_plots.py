@@ -36,6 +36,14 @@ os.makedirs(OUT_DIR, exist_ok=True)
 # ------------------------------------------------------------------------------
 def generate_figure_1():
     csv_path = os.path.join(DATA_DIR, "benchmark_comparison.csv")
+    method_map = {
+        "Static A*": "Static A*",
+        "Reactive Avoidance (Potential Field)": "Artificial Potential Fields (APF)",
+        "Artificial Potential Fields (APF)": "Artificial Potential Fields (APF)",
+        "Reactive ORCA (Velocity Obstacles)": "Reactive ORCA (Velocity Obstacles)",
+        "Decentralized Local MAPF": "Decentralized Local MAPF",
+        "D2RO (SW-DGO Proposed)": "D2RO (SW-DGO Proposed)"
+    }
     methods = [
         "Static A*",
         "Artificial Potential Fields (APF)",
@@ -58,7 +66,8 @@ def generate_figure_1():
     with open(csv_path, mode="r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            m = row["method"]
+            raw_m = row["method"]
+            m = method_map.get(raw_m, raw_m)
             if m in methods:
                 success_rates[m].append(float(row["success"]) * 100.0)
                 travel_times[m].append(float(row["travel_time_s"]))
@@ -158,7 +167,7 @@ def generate_figure_2():
     disc_means = [np.mean(discomfort[c]) for c in configs]
     bars1 = axs[0].bar(labels, disc_means, color=["#0284c7", "#f59e0b", "#a855f7", "#ef4444", "#06b6d4"],
                        width=0.6, edgecolor="#0f172a", linewidth=1.2)
-    axs[0].set_ylabel("Discomfort Integral $\mathcal{J}_{prox}$", fontsize=11, fontweight="bold")
+    axs[0].set_ylabel(r"Discomfort Integral $\mathcal{J}_{prox}$", fontsize=11, fontweight="bold")
     axs[0].set_title("(a) Pedestrian Discomfort Penalty", fontsize=12, fontweight="bold", pad=10)
     axs[0].set_ylim(0, 110)
     axs[0].grid(axis="y")

@@ -63,20 +63,19 @@ def analyze_benchmark() -> Dict[str, Any]:
     stats_summary = {}
     for m, metrics in data.items():
         stats_summary[m] = {k: compute_group_stats(v) for k, v in metrics.items()}
-        # Compute overall success rate
         stats_summary[m]["success_rate_pct"] = float(np.mean(metrics["success"])) * 100.0
 
-    # Perform Welch's t-test comparing each baseline against D²RO
+    # Perform Paired t-test comparing each baseline against D2RO (since seeds are identical across methods)
     d2ro_key = "D2RO (SW-DGO Proposed)"
     if d2ro_key in data:
         for m, metrics in data.items():
             if m == d2ro_key:
                 continue
-            # Travel time t-test
-            t_stat_t, p_val_t = stats.ttest_ind(metrics["travel_time_s"], data[d2ro_key]["travel_time_s"], equal_var=False)
-            t_stat_p, p_val_p = stats.ttest_ind(metrics["proxemic_violations"], data[d2ro_key]["proxemic_violations"], equal_var=False)
-            stats_summary[m]["welch_p_travel_time"] = float(p_val_t) if not math.isnan(p_val_t) else 1.0
-            stats_summary[m]["welch_p_proxemics"] = float(p_val_p) if not math.isnan(p_val_p) else 1.0
+            # Paired t-test for continuous metrics
+            t_stat_t, p_val_t = stats.ttest_rel(data[d2ro_key]["travel_time_s"], metrics["travel_time_s"])
+            t_stat_p, p_val_p = stats.ttest_rel(data[d2ro_key]["proxemic_violations"], metrics["proxemic_violations"])
+            stats_summary[m]["paired_p_travel_time"] = float(p_val_t) if not math.isnan(p_val_t) else 1.0
+            stats_summary[m]["paired_p_proxemics"] = float(p_val_p) if not math.isnan(p_val_p) else 1.0
 
     return stats_summary
 
@@ -134,6 +133,50 @@ def analyze_cross_domain() -> Dict[str, Any]:
             data[env]["dynamic_replans"].append(float(row["dynamic_replans"]))
 
     return {env: {k: compute_group_stats(v) for k, v in metrics.items()} for env, metrics in data.items()}
+
+def analyze_mesh_anticipation() -> Dict[str, Any]:
+    csv_file = os.path.join(DATA_DIR, "mesh_anticipation_experiment.csv")
+    if not os.path.exists(csv_file):
+        return {}
+
+    on_lead, off_lead = [], []
+    on_back, off_back = [], []
+    with open(csv_file, mode="r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row["mesh_enabled"] == "1":
+                on_lead.append(float(row["anticipation_lead_time_s"]))
+                on_back.append(float(row["backtrack_distance_m"]))
+            else:
+                off_lead.append(float(row["anticipation_lead_time_s"]))
+                off_back.append(float(row["backtrack_distance_m"]))
+
+    return {
+        "Mesh ON": {"lead_time": compute_group_stats(on_lead), "backtrack_m": compute_group_stats(on_back)},
+        "Mesh OFF": {"lead_time": compute_group_stats(off_lead), "backtrack_m": compute_group_stats(off_back)}
+    }
+
+def analyze_corridor_lock() -> Dict[str, Any]:
+    csv_file = os.path.join(DATA_DIR, "corridor_lock_experiment.csv")
+    if not os.path.exists(csv_file):
+        return {}
+
+    on_conf, off_conf = [], []
+    on_succ, off_succ = [], []
+    with open(csv_file, mode="r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row["lock_enabled"] == "1":
+                on_conf.append(float(row["head_on_conflicts"]))
+                on_succ.append(float(row["success"]))
+            else:
+                off_conf.append(float(row["head_on_conflicts"]))
+                off_succ.append(float(row["success"]))
+
+    return {
+        "Lock ON": {"conflicts": compute_group_stats(on_conf), "success_pct": float(np.mean(on_succ)) * 100.0},
+        "Lock OFF": {"conflicts": compute_group_stats(off_conf), "success_pct": float(np.mean(off_succ)) * 100.0}
+    }
 
 def generate_markdown_report(bench: Dict[str, Any], ablat: Dict[str, Any], cross: Dict[str, Any]) -> str:
     md = "# Master Genuine Simulation Benchmark & Statistical Report\n\n"

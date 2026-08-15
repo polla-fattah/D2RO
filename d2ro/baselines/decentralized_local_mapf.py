@@ -169,7 +169,7 @@ class DecentralizedLocalMAPFAgent:
         angle_diff = (target_heading - self.heading + math.pi) % (2.0 * math.pi) - math.pi
         self.heading += max(-2.5 * dt, min(2.5 * dt, angle_diff * 4.0))
 
-        self.speed = min(self.max_speed, self.speed + 1.5 * dt * 30.0)
+        self.speed = min(self.max_speed, self.speed + 50.0 * dt)
         step_len = self.speed * dt
         self.x += self.speed * math.cos(self.heading) * dt
         self.y += self.speed * math.sin(self.heading) * dt

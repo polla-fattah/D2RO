@@ -40,12 +40,12 @@ class TestMeshNetwork(unittest.TestCase):
         g.update_mesh_penalty("A", "B", penalty=50.0)
         self.assertEqual(g.get_edge("A", "B").w_mesh, 50.0)
 
-        # Decay over 5 seconds at rate 5.0/sec
-        g.decay_mesh_penalties(dt=5.0, decay_rate=5.0)
-        self.assertEqual(g.get_edge("A", "B").w_mesh, 25.0)
+        # Decay over 5 seconds at lambda=0.1386294 (5s half-life)
+        g.decay_mesh_penalties(dt=5.0, decay_rate=0.1386294)
+        self.assertAlmostEqual(g.get_edge("A", "B").w_mesh, 25.0, delta=0.1)
 
-        # Decay further until 0.0
-        g.decay_mesh_penalties(dt=10.0, decay_rate=5.0)
+        # Decay further over 60 seconds until 0.0
+        g.decay_mesh_penalties(dt=60.0, decay_rate=0.1386294)
         self.assertEqual(g.get_edge("A", "B").w_mesh, 0.0)
 
 if __name__ == "__main__":
