@@ -13,6 +13,16 @@ Department of Computer Science and Engineering, Koya University
 
 ---
 
+> ⚠️ **Work in progress — the manuscript and the datasets are being regenerated.**
+> The framework has been substantially rebuilt following a pre-submission audit, and
+> six of seven datasets have not yet been reproduced under the corrected code. The
+> results quoted below this banner are **superseded** and are retained only for
+> reference.
+>
+> **Read [`docs/OUTSTANDING_WORK.md`](docs/OUTSTANDING_WORK.md) before using or
+> citing anything in this repository.** It records what is complete, what is
+> blocked, how to resume, and every claim still to be corrected.
+
 ## What is D²RO?
 
 **D²RO** enables fleets of autonomous trolleys — retail shopping carts, clinical hospital pushchairs, airport luggage trolleys — to navigate crowded, human-shared environments **safely, efficiently, and socially-compliantly**.
@@ -27,7 +37,7 @@ C(u, v, t) = w_D · D(u,v)           # Euclidean distance
            + w_S · S_trolley(v,t)    # Non-holonomic safety envelope
 ```
 
-**Key results** across 2,500 genuine Monte Carlo simulation trials:
+**Key results** across 2,700 genuine Monte Carlo simulation trials:
 
 | Metric | D²RO | Best Baseline |
 |:-------|:----:|:-------------:|

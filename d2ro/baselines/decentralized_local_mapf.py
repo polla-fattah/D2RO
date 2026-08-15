@@ -12,7 +12,8 @@ from math import hypot as math_hypot, atan2 as math_atan2
 from typing import List, Tuple, Optional, Dict
 from ..core.graph import TopologicalGraph, Node
 from ..core.human import Human
-from ..core.units import (
+from ..core.metrics import init_social_metrics, update_social_metrics
+from ..core.units import (ARRIVAL_RADIUS_PX, 
     PX_TO_M, M_TO_PX, ROBOT_RADIUS_PX, ROBOT_VMAX_MPS
 )
 
@@ -57,7 +58,8 @@ class DecentralizedLocalMAPFAgent:
         self.travel_time: float = 0.0
         self.replan_count: int = 0
         self.deadlock_count: int = 0
-        self.proxemic_violations: int = 0
+        init_social_metrics(self)
+        self.head_on_events: int = 0
         self.is_docked: bool = False
         self.last_compute_time_ms: float = 0.0
 
@@ -103,17 +105,15 @@ class DecentralizedLocalMAPFAgent:
 
         # Check goal arrival
         goal_obj = self.graph.get_node(self.goal_node)
-        if math_hypot(self.x - goal_obj.x, self.y - goal_obj.y) < 14.0:
+        if math_hypot(self.x - goal_obj.x, self.y - goal_obj.y) < ARRIVAL_RADIUS_PX:
             self.is_docked = True
             self.speed = 0.0
             self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0
             return
 
-        # Check human proxemic violations (< 0.8 meters / 26.67 px)
-        for human in humans:
-            if math_hypot(self.x - human.x, self.y - human.y) < 26.67:
-                self.proxemic_violations += 1
-                break
+        # Social compliance measured by the shared helper (identical threshold and
+        # identical per-human semantics as every other planner).
+        update_social_metrics(self, humans, dt)
 
         if not self.target_node:
             self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0
@@ -139,7 +139,7 @@ class DecentralizedLocalMAPFAgent:
             self.speed = 0.0
             self.yield_timer += dt
             if self.yield_timer > 3.0:
-                self.deadlock_count += 1
+                self.head_on_events += 1
                 # Trigger local 1-hop reroute
                 self.replan_count += 1
                 self.path = self._compute_static_astar(self.current_node, self.goal_node)

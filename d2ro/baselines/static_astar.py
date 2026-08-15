@@ -10,6 +10,7 @@ import heapq
 from typing import Dict, List, Tuple, Optional
 from ..core.graph import TopologicalGraph
 from ..core.human import Human, ProxemicsField
+from ..core.metrics import init_social_metrics, update_social_metrics
 from ..core.units import (
     PX_TO_M, M_TO_PX, ROBOT_RADIUS_PX, ROBOT_VMAX_MPS
 )
@@ -42,7 +43,8 @@ class StaticAStarAgent:
         self.total_distance: float = 0.0
         self.travel_time: float = 0.0
         self.deadlock_count: int = 0
-        self.proxemic_violations: int = 0
+        init_social_metrics(self)
+        self.head_on_events: int = 0
         self.is_docked: bool = False
         self.last_compute_time_ms: float = 0.0
 
@@ -89,11 +91,9 @@ class StaticAStarAgent:
         t0 = time.perf_counter()
         self.travel_time += dt
 
-        # Comfort violation check (close to humans)
-        for human in humans:
-            if math.hypot(self.x - human.x, self.y - human.y) < 25.0:
-                self.proxemic_violations += 1
-                break
+        # Social compliance measured by the shared helper (identical threshold
+        # and identical per-human semantics as every other planner).
+        update_social_metrics(self, humans, dt)
 
         if self.path_index >= len(self.path) - 1:
             self.is_docked = True

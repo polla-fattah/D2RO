@@ -61,6 +61,13 @@ class AirportLayout:
         self.y_depot = 510.0
 
         self._build_airport_topology()
+        # Seed the static geometric component of S_trolley (Eq. 8).
+        self.graph.compute_clearance_penalties(self.obstacle_bounds)
+
+    @property
+    def obstacle_bounds(self) -> List[Tuple[float, float, float, float]]:
+        """Uniform accessor for solid fixtures (shared across all three domains)."""
+        return [s.bounds for s in self.structures]
 
     def _build_airport_topology(self) -> None:
         # 1. WAYPOINT ROADMAP

@@ -58,6 +58,13 @@ class HospitalLayout:
         self.y_south_hall = 670.0     # South Inpatient Promenade
 
         self._build_hospital_topology()
+        # Seed the static geometric component of S_trolley (Eq. 8).
+        self.graph.compute_clearance_penalties(self.obstacle_bounds)
+
+    @property
+    def obstacle_bounds(self) -> List[Tuple[float, float, float, float]]:
+        """Uniform accessor for solid fixtures (shared across all three domains)."""
+        return [r.bounds for r in self.rooms]
 
     def _build_hospital_topology(self) -> None:
         # 1. WAYPOINT NODES

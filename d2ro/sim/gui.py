@@ -25,7 +25,7 @@ class SupermarketSimApp:
 
         # Simulation parameters
         self.layout = SupermarketLayout()
-        self.prox_field = ProxemicsField(amplitude=450.0, sigma=38.0)
+        self.prox_field = ProxemicsField()
         self.current_scenario_key = "A"
         self.is_running = True
         self.dt = 0.05
@@ -157,7 +157,7 @@ class SupermarketSimApp:
         if nearest_node and min_d < 45.0:
             for a in self.agents:
                 for succ in self.layout.graph.successors(nearest_node):
-                    a.broadcast_congestion(nearest_node, succ, penalty=500.0, current_time=self.sim_time)
+                    a.broadcast_congestion(nearest_node, succ, penalty=MESH_ALERT_EQUIV_M, current_time=self.sim_time)
             print(f"[User Click] Spawned Dynamic Blockage near {nearest_node}")
 
     def _sim_loop(self) -> None:

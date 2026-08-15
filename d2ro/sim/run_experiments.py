@@ -20,6 +20,7 @@ if hasattr(sys.stdout, 'reconfigure'):
     except Exception:
         pass
 import csv
+import json
 import time
 import math
 import random
@@ -37,10 +38,100 @@ from d2ro.environments.airport import AirportLayout, AirportScenarioSuite
 from d2ro.core.mesh_network import MeshNetwork
 from d2ro.core.agent import TrolleyAgent
 from d2ro.core.human import Human, ProxemicsField
+from d2ro.core.units import (PX_TO_M, HEAD_ON_CONFLICT_RADIUS_PX,
+                             SENSING_RADIUS_PX, SENSING_RADIUS_M)
 from d2ro.baselines import (
     StaticAStarAgent, ArtificialPotentialFieldAgent,
     ORCAAgent, DecentralizedLocalMAPFAgent
 )
+
+# ---------------------------------------------------------------------------- #
+# Simulation time budgets (T_max)
+#
+# These are derived from measured mission durations under the CORRECTED 1.20 m/s
+# kinematics, not inherited from the earlier mis-scaled integration. Empirical
+# completion times (25 seeds per domain, generous 300 s probe cap):
+#
+#     Supermarket : median  47.6 s,  p95 123.4 s,  max 170.3 s
+#     Hospital    : median  43.4 s,  p95  80.8 s,  max  89.1 s
+#     Airport     : ~93 s, with routed paths up to 97 m
+#
+# At 1.20 m/s a 97 m route costs ~81 s of pure travel before any yielding, so the
+# previous 35 s cap truncated missions roughly 4x too early and manifested as a
+# spurious 0% success rate. T_MAX_MISSION is set above the observed maximum so
+# that a timeout represents a genuine navigation failure rather than an artefact
+# of the clock. Fleet-scaling runs get a larger budget because corridor queueing
+# grows with cart count.
+# ---------------------------------------------------------------------------- #
+T_MAX_MISSION: float = 180.0    # Benchmark, ablation, cross-domain, crowd density
+T_MAX_FLEET: float = 240.0      # Fleet-size scalability (queueing grows with N)
+T_MAX_MECHANISM: float = 120.0  # Controlled two-cart mechanism experiments
+
+
+
+
+def _code_fingerprint() -> str:
+    """
+    SHA-256 over the simulation source tree.
+
+    Stamped beside every dataset so the analysis can prove that the numbers were
+    produced by the code currently in the working tree. Without this, a dataset
+    left over from an earlier version is indistinguishable from a fresh one -- which
+    is precisely how superseded results survived previous "regenerations".
+    """
+    import hashlib
+    pkg = os.path.join(PROJECT_ROOT, "d2ro")
+    h = hashlib.sha256()
+    for root, _dirs, files in os.walk(pkg):
+        if "__pycache__" in root:
+            continue
+        for fn in sorted(files):
+            if fn.endswith(".py"):
+                with open(os.path.join(root, fn), "rb") as f:
+                    h.update(f.read())
+    return h.hexdigest()[:16]
+
+
+def _row_count(path: str) -> int:
+    if not os.path.exists(path):
+        return 0
+    with open(path, "r", encoding="utf-8") as f:
+        return max(0, sum(1 for _ in f) - 1)
+
+
+def _write_provenance(csv_path: str, rows: int) -> None:
+    """Records how, and by which code, a dataset was produced."""
+    import datetime
+    meta = {
+        "dataset": os.path.basename(csv_path),
+        "rows": rows,
+        "code_fingerprint": _code_fingerprint(),
+        "generated_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    }
+    with open(csv_path + ".provenance.json", "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2)
+
+
+def _atomic_write_csv(path: str, fieldnames: List[str], rows: List[Dict[str, Any]]) -> None:
+    """
+    Writes a dataset atomically: build a temporary file, then replace the target.
+
+    An interrupted run must never leave a half-written row behind. Partial writes
+    from the previous append-and-resume scheme are what produced truncated datasets
+    (444/600 rows) and a malformed record in which a makespan value landed in the
+    fleet-size column.
+    """
+    tmp = path + ".tmp"
+    with open(tmp, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for r in rows:
+            writer.writerow(r)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+    _write_provenance(path, len(rows))
+
 
 class ExperimentRunner:
     """Executes automated multi-domain MAPF experiments with N=100 genuine simulation trials."""
@@ -58,31 +149,19 @@ class ExperimentRunner:
             "proxemic_violations", "mesh_packets", "replan_cycles", "avg_replan_latency_ms"
         ]
 
-        prox_field = ProxemicsField(amplitude=450.0)
+        prox_field = ProxemicsField()
         dt = 0.05
-        max_time = 35.0
+        max_time = T_MAX_MISSION
 
-        existing_trials = set()
-        if os.path.exists(csv_path):
-            try:
-                with open(csv_path, mode="r", encoding="utf-8") as rf:
-                    reader = csv.DictReader(rf)
-                    for r in reader:
-                        if "trial_id" in r and r["trial_id"].isdigit():
-                            existing_trials.add(int(r["trial_id"]))
-            except Exception:
-                existing_trials = set()
-
-        start_trial = max(existing_trials, default=0) + 1
-        if start_trial > num_trials:
-            print(f"  -> {csv_path} already complete ({len(existing_trials)} trials). Skipping.")
-            return csv_path
-
-        file_mode = "a" if os.path.exists(csv_path) and start_trial > 1 else "w"
-        with open(csv_path, mode=file_mode, newline="", encoding="utf-8") as f:
+        # Datasets are ALWAYS regenerated from scratch. The previous resume-and-append
+        # scheme treated a stale file as "already complete" and silently skipped the
+        # experiment, so a rerun could quietly republish results produced by an older
+        # version of the code. Results must never outlive the code that made them.
+        start_trial = 1
+        tmp_path = csv_path + ".tmp"
+        with open(tmp_path, mode="w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
-            if file_mode == "w":
-                writer.writeheader()
+            writer.writeheader()
             f.flush()
 
             for trial in range(start_trial, num_trials + 1):
@@ -258,8 +337,9 @@ class ExperimentRunner:
                 })
                 f.flush()
 
+        os.replace(tmp_path, csv_path)
+        _write_provenance(csv_path, _row_count(csv_path))
         print(f"  -> Exported: {csv_path}")
-        return csv_path
         return csv_path
 
     # --------------------------------------------------------------------------
@@ -280,33 +360,21 @@ class ExperimentRunner:
             ("w/o Trolley Kinetic Safety Bubble", "S_trolley = 0", True, True, True, False)
         ]
 
-        prox_field = ProxemicsField(amplitude=450.0)
+        prox_field = ProxemicsField()
         dt = 0.05
-        max_time = 35.0
+        max_time = T_MAX_MISSION
         rows = []
         print(f"\n[Experiment 2] Running Genuine Component Ablation Study (N={num_trials} trials across 5 configurations)...")
 
-        existing_trials = set()
-        if os.path.exists(csv_path):
-            try:
-                with open(csv_path, mode="r", encoding="utf-8") as rf:
-                    reader = csv.DictReader(rf)
-                    for r in reader:
-                        if "trial_id" in r and r["trial_id"].isdigit():
-                            existing_trials.add(int(r["trial_id"]))
-            except Exception:
-                existing_trials = set()
-
-        start_trial = max(existing_trials, default=0) + 1
-        if start_trial > num_trials:
-            print(f"  -> {csv_path} already complete ({len(existing_trials)} trials). Skipping.")
-            return csv_path
-
-        file_mode = "a" if os.path.exists(csv_path) and start_trial > 1 else "w"
-        with open(csv_path, mode=file_mode, newline="", encoding="utf-8") as f:
+        # Datasets are ALWAYS regenerated from scratch. The previous resume-and-append
+        # scheme treated a stale file as "already complete" and silently skipped the
+        # experiment, so a rerun could quietly republish results produced by an older
+        # version of the code. Results must never outlive the code that made them.
+        start_trial = 1
+        tmp_path = csv_path + ".tmp"
+        with open(tmp_path, mode="w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
-            if file_mode == "w":
-                writer.writeheader()
+            writer.writeheader()
             f.flush()
 
             for trial in range(start_trial, num_trials + 1):
@@ -370,6 +438,8 @@ class ExperimentRunner:
                     })
                 f.flush()
 
+        os.replace(tmp_path, csv_path)
+        _write_provenance(csv_path, _row_count(csv_path))
         print(f"  -> Exported: {csv_path}")
         return csv_path
 
@@ -385,31 +455,19 @@ class ExperimentRunner:
         ]
 
         dt = 0.05
-        max_time = 55.0
-        prox_field = ProxemicsField(amplitude=450.0)
+        max_time = T_MAX_MISSION
+        prox_field = ProxemicsField()
         print(f"\n[Experiment 3] Running Genuine Cross-Domain Generalization (N={num_trials} trials across 3 domains)...")
 
-        existing_trials = set()
-        if os.path.exists(csv_path):
-            try:
-                with open(csv_path, mode="r", encoding="utf-8") as rf:
-                    reader = csv.DictReader(rf)
-                    for r in reader:
-                        if "trial_id" in r and r["trial_id"].isdigit():
-                            existing_trials.add(int(r["trial_id"]))
-            except Exception:
-                existing_trials = set()
-
-        start_trial = max(existing_trials, default=0) + 1
-        if start_trial > num_trials:
-            print(f"  -> {csv_path} already complete ({len(existing_trials)} trials). Skipping.")
-            return csv_path
-
-        file_mode = "a" if os.path.exists(csv_path) and start_trial > 1 else "w"
-        with open(csv_path, mode=file_mode, newline="", encoding="utf-8") as f:
+        # Datasets are ALWAYS regenerated from scratch. The previous resume-and-append
+        # scheme treated a stale file as "already complete" and silently skipped the
+        # experiment, so a rerun could quietly republish results produced by an older
+        # version of the code. Results must never outlive the code that made them.
+        start_trial = 1
+        tmp_path = csv_path + ".tmp"
+        with open(tmp_path, mode="w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
-            if file_mode == "w":
-                writer.writeheader()
+            writer.writeheader()
             f.flush()
 
             for trial in range(start_trial, num_trials + 1):
@@ -515,6 +573,8 @@ class ExperimentRunner:
                 writer.writerow(row_a)
                 f.flush()
 
+        os.replace(tmp_path, csv_path)
+        _write_provenance(csv_path, _row_count(csv_path))
         print(f"  -> Exported: {csv_path} ({num_trials * 3} genuine simulation data points)")
         return csv_path
 
@@ -530,39 +590,17 @@ class ExperimentRunner:
 
         density_levels = [2, 6, 12, 18, 24, 30]
         dt = 0.05
-        max_time = 65.0
-        prox_field = ProxemicsField(amplitude=450.0)
+        max_time = T_MAX_MISSION
+        prox_field = ProxemicsField()
         rows = []
         print(f"\n[Experiment 4A] Running Genuine Crowd Density Scalability (Fixed Fleet N_carts=4, N_humans in [2..30], N={num_trials} trials)...")
 
-        existing_trial_counts = {}
-        valid_rows = []
-        if os.path.exists(csv_path):
-            try:
-                with open(csv_path, mode="r", encoding="utf-8") as rf:
-                    reader = csv.DictReader(rf)
-                    for r in reader:
-                        if "trial_id" in r and r["trial_id"].isdigit():
-                            tid = int(r["trial_id"])
-                            existing_trial_counts[tid] = existing_trial_counts.get(tid, 0) + 1
-                            valid_rows.append(r)
-            except Exception:
-                existing_trial_counts = {}
-                valid_rows = []
-
-        complete_trials = {tid for tid, cnt in existing_trial_counts.items() if cnt >= len(density_levels)}
-        start_trial = max(complete_trials, default=0) + 1
-        if start_trial > num_trials:
-            print(f"  -> {csv_path} already complete ({len(complete_trials)} trials). Skipping.")
-            return csv_path
-
-        # Retain only fully completed trials
-        filtered_rows = [r for r in valid_rows if int(r["trial_id"]) in complete_trials]
-        with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
+        # Always regenerate; never resume from a file written by older code.
+        start_trial = 1
+        tmp_path = csv_path + ".tmp"
+        with open(tmp_path, mode="w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            for r in filtered_rows:
-                writer.writerow(r)
             f.flush()
 
             for trial in range(start_trial, num_trials + 1):
@@ -625,6 +663,8 @@ class ExperimentRunner:
                     writer.writerow(row)
                 f.flush()
 
+        os.replace(tmp_path, csv_path)
+        _write_provenance(csv_path, _row_count(csv_path))
         print(f"  -> Exported: {csv_path} ({num_trials * len(density_levels)} genuine simulation data points)")
         return csv_path
 
@@ -640,8 +680,8 @@ class ExperimentRunner:
 
         fleet_levels = [2, 4, 6, 8, 10, 12]
         dt = 0.05
-        max_time = 65.0
-        prox_field = ProxemicsField(amplitude=450.0)
+        max_time = T_MAX_FLEET
+        prox_field = ProxemicsField()
         print(f"\n[Experiment 4B] Running Genuine Fleet Size Scalability (Fixed Crowd N_humans=10, N_carts in [2..12], N={num_trials} trials)...")
 
         candidate_starts = [
@@ -668,21 +708,16 @@ class ExperimentRunner:
                 existing_trial_counts = {}
                 valid_rows = []
 
-        complete_trials = {tid for tid, cnt in existing_trial_counts.items() if cnt >= len(fleet_levels)}
-        start_trial = max(complete_trials, default=0) + 1
-        if start_trial > num_trials:
-            print(f"  -> {csv_path} already complete ({len(complete_trials)} trials). Skipping.")
-            return csv_path
-
-        filtered_rows = [r for r in valid_rows if int(r["trial_id"]) in complete_trials]
-        with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
+        # Always regenerate; never resume from a file written by older code.
+        start_trial = 1
+        tmp_path = csv_path + ".tmp"
+        with open(tmp_path, mode="w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            for r in filtered_rows:
-                writer.writerow(r)
             f.flush()
 
             for trial in range(start_trial, num_trials + 1):
+                t_trial_start = time.time()
                 for num_c in fleet_levels:
                     random.seed(5000 + trial * 50 + num_c)
                     layout = SupermarketLayout()
@@ -742,8 +777,11 @@ class ExperimentRunner:
                         "v2v_mesh_packets": mesh.total_packets_transmitted
                     }
                     writer.writerow(row)
-                f.flush()
+                    f.flush()
+                print(f"  -> Finished Exp 4B trial {trial}/{num_trials} in {time.time() - t_trial_start:.2f} s", flush=True)
 
+        os.replace(tmp_path, csv_path)
+        _write_provenance(csv_path, _row_count(csv_path))
         print(f"  -> Exported: {csv_path} ({num_trials * len(fleet_levels)} genuine simulation data points)")
         return csv_path
 
@@ -777,124 +815,142 @@ class ExperimentRunner:
     #    upstream of a divergence junction. A blockage lies ahead of A outside B's sensing radius.
     # --------------------------------------------------------------------------
     def run_mesh_anticipation_experiment(self, num_trials: int = 50) -> str:
+        r"""
+        Mechanism Experiment A: V2V anticipatory horizon extension.
+
+        Controlled leader/follower topology in Aisle 1 of the supermarket:
+          * Leader starts mid-aisle (N_mid_1) and meets a stationary pedestrian
+            cluster blocking the lower aisle segment (N_mid_1 -> N_front_1).
+          * Follower starts at the aisle head (N_back_1). The blockage lies
+            9.45 m away -- beyond its 7.2 m onboard sensing radius -- so it cannot
+            perceive the obstruction directly.
+          * The follower's shortest route (12.6 m) uses the blocked segment; the
+            parallel detour costs 20.4 m, so an early warning is genuinely
+            actionable rather than cosmetic.
+
+        Randomisation: blockage position along the segment and lateral jitter vary
+        per trial, so trials are not replicas of one another.
+
+        Metrics (each measured as the quantity its name claims):
+          anticipation_lead_time_s = t_local_detection - t_reroute, i.e. how much
+              earlier the route changed than unaided sensing would have allowed.
+          backtrack_distance_m = distance travelled AWAY from the goal, measured
+              identically under both conditions.
+        """
         csv_path = os.path.join(self.output_dir, "mesh_anticipation_experiment.csv")
         fieldnames = [
-            "trial_id", "mesh_enabled", "remote_alert_time_s", "reroute_timestamp_s",
-            "anticipation_lead_time_s", "backtrack_distance_m", "makespan_s", "success"
+            "trial_id", "mesh_enabled", "separation_m", "local_detection_time_s",
+            "reroute_time_s", "anticipation_lead_time_s", "backtrack_distance_m",
+            "path_length_m", "makespan_s", "success"
         ]
 
-        prox_field = ProxemicsField(amplitude=450.0)
         dt = 0.05
-        max_time = 12.0
+        max_time = T_MAX_MECHANISM
+        BLOCKED_EDGE = ("N_mid_1", "N_front_1")
 
-        print(f"\n[Experiment 6] Running Genuine V2V Mesh Anticipation Experiment (N={num_trials} trials)...")
+        print(f"\n[Experiment A] V2V Mesh Anticipation "
+              f"(N={num_trials} paired trials, T_max={max_time:.0f}s)...")
 
-        # First measure baseline local detection timestamp without mesh across seeds
-        off_detection_times = {}
+        def edges_of(path):
+            return set(zip(path, path[1:]))
 
-        with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
+        def simulate(mesh_on, seed_val):
+            random.seed(seed_val)
+            layout = SupermarketLayout()
+            obstacles = layout.obstacle_bounds
+            g = layout.graph
 
-            for trial in range(1, num_trials + 1):
-                seed_val = 5000 + trial
+            # Randomised blockage on the lower aisle segment.
+            by = random.uniform(360.0, 450.0)
+            bx = 310.0 + random.uniform(-6.0, 6.0)
+            humans = [
+                Human(id=901, x=bx, y=by, speed=0.0),
+                Human(id=902, x=bx + random.uniform(4, 10),
+                      y=by + random.uniform(4, 12), speed=0.0),
+                Human(id=903, x=bx - random.uniform(4, 10),
+                      y=by - random.uniform(4, 12), speed=0.0),
+            ]
 
-                # Execute Mesh OFF first to establish baseline local detection time
-                for mesh_on in [False, True]:
-                    random.seed(seed_val)
-                    layout = SupermarketLayout()
-                    shelf_boxes = [s.bounds for s in layout.shelves]
+            follower_start = g.get_node("N_back_1")
+            separation_m = math.hypot(follower_start.x - bx,
+                                      follower_start.y - by) * PX_TO_M
+            # Precondition: the follower must NOT be able to sense the blockage.
+            if separation_m <= SENSING_RADIUS_M:
+                return None
 
-                    # Explicit 2-cart topology:
-                    # Cart A (Leader): starts near N_front_1 (y=470) -> goal DOCK_BAY_MAIN (hits blockage at y=510)
-                    # Cart B (Follower): starts at N_back_1 (y=90) -> goal DOCK_BAY_MAIN (upstream of Aisle 1 divergence)
-                    trolley_cfgs = [
-                        {"id": 1, "start": "N_mid_1", "goal": "N_front_1"},
-                        {"id": 2, "start": "N_back_1", "goal": "N_front_1"}
-                    ]
+            mesh = MeshNetwork(comm_radius=350.0, seed=seed_val)
+            leader = TrolleyAgent(1, g, "N_mid_1", "N_front_1", mesh,
+                                  enable_mesh=mesh_on)
+            follower = TrolleyAgent(2, g, "N_back_1", "N_front_1", mesh,
+                                    enable_mesh=mesh_on)
+            agents = [leader, follower]
 
-                    # Place stationary human blockage on N_front_1 (bottom of Aisle 1) ahead of Cart A
-                    block_node = layout.graph.get_node("N_front_1")
-                    blocking_humans = [
-                        Human(id=901, x=block_node.x, y=block_node.y, speed=0.0),
-                        Human(id=902, x=block_node.x + 5.0, y=block_node.y + 5.0, speed=0.0)
-                    ]
-                    regular_humans = [
-                        Human(id=903, x=layout.start_x + 100, y=layout.y_action_alley, speed=0.8)
-                    ]
-                    all_humans = blocking_humans + regular_humans
+            # Precondition: the blocked segment must actually be on the follower's plan.
+            if BLOCKED_EDGE not in edges_of(follower.planner.extract_full_path()):
+                return None
 
-                    mesh = MeshNetwork(comm_radius=350.0)
-                    agents = [
-                        TrolleyAgent(
-                            c["id"], layout.graph, c["start"], c["goal"], mesh,
-                            enable_mesh=mesh_on, enable_lock=True,
-                            enable_prox=True, enable_safety=True
-                        )
-                        for c in trolley_cfgs
-                    ]
+            prox_field = ProxemicsField()
+            goal = g.get_node("N_front_1")
+            prev_gap = math.hypot(follower.x - goal.x, follower.y - goal.y)
+            backtrack_px = 0.0
+            reroute_t = None
+            detect_t = None
+            sim_time = 0.0
 
-                    # Position Cart A (Leader) 40 px above block_node so it encounters blockage at t=1.0s
-                    agents[0].x = block_node.x
-                    agents[0].y = block_node.y - 40.0
-                    agents[0].target_node = "N_front_1"
+            while sim_time < max_time and not all(a.is_docked for a in agents):
+                for h in humans:
+                    h.update(dt, layout.bounds, obstacles)
+                for a in agents:
+                    a.step(dt, humans, prox_field, current_sim_time=sim_time,
+                           shelves=obstacles, peer_agents=agents)
 
-                    cart_b = agents[1]
-                    initial_b_target = cart_b.target_node
-                    reroute_time = None
-                    backtrack_distance_px = 0.0
-                    prev_b_pos = (cart_b.x, cart_b.y)
-                    sim_time = 0.0
+                if reroute_t is None and not follower.is_docked:
+                    if BLOCKED_EDGE not in edges_of(follower.planner.extract_full_path()):
+                        reroute_t = sim_time
 
-                    while sim_time < max_time and not all(a.is_docked for a in agents):
-                        for h in all_humans:
-                            h.update(dt, layout.bounds, shelf_boxes)
+                if detect_t is None:
+                    for h in humans:
+                        if math.hypot(follower.x - h.x,
+                                      follower.y - h.y) <= SENSING_RADIUS_PX:
+                            detect_t = sim_time
+                            break
 
-                        for a in agents:
-                            prev_target = a.target_node
-                            a.step(dt, all_humans, prox_field, current_sim_time=sim_time,
-                                   shelves=shelf_boxes, peer_agents=agents)
+                gap = math.hypot(follower.x - goal.x, follower.y - goal.y)
+                if gap > prev_gap:
+                    backtrack_px += (gap - prev_gap)
+                prev_gap = gap
+                sim_time += dt
 
-                            if a.agent_id == cart_b.agent_id:
-                                # Detect when Cart B changes its planned route target from initial_b_target
-                                if reroute_time is None and a.target_node != initial_b_target:
-                                    reroute_time = sim_time
+            t_detect = detect_t if detect_t is not None else max_time
+            lead = (t_detect - reroute_t) if reroute_t is not None else 0.0
 
-                                # Accumulate backtracking distance (movement away from primary goal vector)
-                                cur_b_pos = (a.x, a.y)
-                                step_d = math.hypot(cur_b_pos[0] - prev_b_pos[0], cur_b_pos[1] - prev_b_pos[1])
-                                # If Cart B is moving backward along Aisle 1 before rerouting
-                                if reroute_time is not None and not mesh_on and a.current_node in ["N_mid_1", "N_front_1"]:
-                                    backtrack_distance_px += step_d
-                                prev_b_pos = cur_b_pos
+            return {
+                "separation_m": round(separation_m, 2),
+                "local_detection_time_s": round(t_detect, 2),
+                "reroute_time_s": round(reroute_t, 2) if reroute_t is not None else "",
+                "anticipation_lead_time_s": round(lead, 3),
+                "backtrack_distance_m": round(backtrack_px * PX_TO_M, 3),
+                "path_length_m": round(follower.total_distance * PX_TO_M, 2),
+                "makespan_s": round(sim_time, 2),
+                "success": 1 if all(a.is_docked for a in agents) else 0,
+            }
 
-                        layout.graph.decay_mesh_penalties(dt, decay_rate=0.1386294)
-                        sim_time += dt
+        rows, trial, attempts = [], 0, 0
+        while trial < num_trials and attempts < num_trials * 20:
+            attempts += 1
+            seed_val = 5000 + attempts
+            off = simulate(False, seed_val)
+            on = simulate(True, seed_val)
+            if off is None or on is None:
+                continue
+            trial += 1
+            for cond, res in (("0", off), ("1", on)):
+                row = {"trial_id": trial, "mesh_enabled": cond}
+                row.update(res)
+                rows.append(row)
 
-                    if not mesh_on:
-                        off_detection_time = reroute_time if reroute_time is not None else sim_time
-                        off_detection_times[trial] = off_detection_time
-                        ant_lead = 0.0
-                    else:
-                        off_detection_time = off_detection_times.get(trial, sim_time)
-                        on_reroute_time = reroute_time if reroute_time is not None else 0.0
-                        ant_lead = max(0.0, off_detection_time - on_reroute_time)
-
-                    writer.writerow({
-                        "trial_id": trial,
-                        "mesh_enabled": int(mesh_on),
-                        "remote_alert_time_s": round(reroute_time if (mesh_on and reroute_time) else 0.0, 3),
-                        "reroute_timestamp_s": round(reroute_time if reroute_time else sim_time, 3),
-                        "anticipation_lead_time_s": round(ant_lead, 3),
-                        "backtrack_distance_m": round(backtrack_distance_px * 0.03, 3),
-                        "makespan_s": round(sim_time, 2),
-                        "success": 1 if all(a.is_docked for a in agents) else 0
-                    })
-                    f.flush()
-
-            f.flush()
-
-        print(f"  -> Exported: {csv_path} ({num_trials * 2} controlled mesh-anticipation trials)")
+        _atomic_write_csv(csv_path, fieldnames, rows)
+        print(f"  -> Exported: {csv_path} ({len(rows)} rows, {trial} paired trials)")
         return csv_path
 
     # --------------------------------------------------------------------------
@@ -904,102 +960,135 @@ class ExperimentRunner:
     #    Lock OFF: opposing carts enter single file simultaneously -> head-on deadlock.
     # --------------------------------------------------------------------------
     def run_corridor_lock_experiment(self, num_trials: int = 50) -> str:
+        r"""
+        Mechanism Experiment B: distributed corridor mutex.
+
+        Two carts approach one explicitly designated single-file corridor from
+        OPPOSITE ends, with randomised arrival offsets. The corridor edge is
+        verified to be single-file before the trial runs.
+
+        Metric definitions (each measured as the quantity its name claims):
+          head_on_events   -- DISCRETE geometric encounters: both carts inside the
+                              corridor, within HEAD_ON_CONFLICT_RADIUS, headings
+                              opposed by more than 90 deg. Counted once on entry,
+                              not once per control tick.
+          corridor_time_s  -- true corridor occupancy: first entry to final exit of
+                              the designated edge, NOT whole-mission makespan.
+          deadlocks        -- genuine routing deadlocks only; orderly yielding at a
+                              reserved corridor is excluded by construction.
+        """
         csv_path = os.path.join(self.output_dir, "corridor_lock_experiment.csv")
         fieldnames = [
-            "trial_id", "lock_enabled", "head_on_conflicts",
-            "timeout", "corridor_traversal_time_s", "makespan_s", "success"
+            "trial_id", "lock_enabled", "arrival_offset_s", "head_on_events",
+            "deadlocks", "lock_wait_s", "corridor_time_s", "timeout",
+            "makespan_s", "success"
         ]
+
         dt = 0.05
-        max_time = 15.0
-        prox_field = ProxemicsField(amplitude=450.0)
+        max_time = T_MAX_MECHANISM
+        prox_field = ProxemicsField()
 
-        print(f"\n[Experiment 7] Running Genuine Corridor Mutex Lock Experiment (N={num_trials} trials)...")
+        print(f"\n[Experiment B] Corridor Mutex Lock "
+              f"(N={num_trials} paired trials, T_max={max_time:.0f}s)...")
 
-        with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
+        CORRIDOR = ("N_back_2", "N_mid_2")   # designated single-file aisle segment
 
-            for trial in range(1, num_trials + 1):
-                seed_val = 6000 + trial
+        def simulate(lock_on, seed_val):
+            # Seed BEFORE sampling any trial parameter, so the offset is reproducible
+            # and identical across the paired lock ON/OFF conditions.
+            random.seed(seed_val)
+            arrival_offset = random.uniform(0.0, 3.0)
 
-                for lock_on in [True, False]:
-                    # Seed FIRST before sampling trial parameters
-                    random.seed(seed_val)
-                    arrival_offset = random.uniform(0.0, 3.0)
+            layout = SupermarketLayout()
+            obstacles = layout.obstacle_bounds
+            g = layout.graph
 
-                    layout = SupermarketLayout()
-                    shelf_boxes = [s.bounds for s in layout.shelves]
+            edge = g.get_edge(*CORRIDOR)
+            if edge is None or not edge.is_single_file:
+                return None   # precondition: must be a genuine single-file corridor
 
-                    # Explicit single-file aisle topology:
-                    # Cart 1: starts at N_back_2 (top of Aisle 2) -> goal N_front_2 (bottom of Aisle 2)
-                    # Cart 2: starts at N_front_2 (bottom of Aisle 2) -> goal N_back_2 (top of Aisle 2)
-                    trolley_cfgs = [
-                        {"id": 1, "start": "N_back_2", "goal": "N_front_2"},
-                        {"id": 2, "start": "N_front_2", "goal": "N_back_2"}
-                    ]
+            mesh = MeshNetwork(comm_radius=350.0, seed=seed_val)
+            # Opposite ends of the SAME corridor, each wanting the other's side.
+            a1 = TrolleyAgent(1, g, "N_back_2", "N_front_2", mesh, enable_lock=lock_on)
+            a2 = TrolleyAgent(2, g, "N_front_2", "N_back_2", mesh, enable_lock=lock_on)
+            agents = [a1, a2]
 
-                    mesh = MeshNetwork(comm_radius=350.0)
-                    agents = [
-                        TrolleyAgent(
-                            c["id"], layout.graph, c["start"], c["goal"], mesh,
-                            enable_mesh=True, enable_lock=lock_on,
-                            enable_prox=True, enable_safety=True
-                        )
-                        for c in trolley_cfgs
-                    ]
+            corridor_nodes = {"N_back_2", "N_mid_2", "N_front_2"}
+            entry_t = None
+            exit_t = None
+            in_conflict = False
+            head_on_events = 0
+            sim_time = 0.0
 
-                    sim_time = 0.0
-                    head_on_conflict_ticks = 0
-                    corridor_entry_time = None
-                    corridor_exit_time = None
+            while sim_time < max_time and not all(a.is_docked for a in agents):
+                for i, a in enumerate(agents):
+                    if i == 1 and sim_time < arrival_offset:
+                        continue          # staggered arrival
+                    a.step(dt, [], prox_field, current_sim_time=sim_time,
+                           shelves=obstacles, peer_agents=agents)
 
-                    cart_b_active_at = arrival_offset
+                # --- discrete head-on encounter detection -------------------- #
+                both_inside = (a1.current_node in corridor_nodes and
+                               a2.current_node in corridor_nodes and
+                               not a1.is_docked and not a2.is_docked)
+                conflict_now = False
+                if both_inside:
+                    gap = math.hypot(a1.x - a2.x, a1.y - a2.y)
+                    if gap < HEAD_ON_CONFLICT_RADIUS_PX:
+                        dtheta = abs((a1.heading - a2.heading + math.pi)
+                                     % (2 * math.pi) - math.pi)
+                        conflict_now = dtheta > math.pi * 0.5
+                if conflict_now and not in_conflict:
+                    head_on_events += 1        # count the ENTRY, not every tick
+                in_conflict = conflict_now
 
-                    while sim_time < max_time and not all(a.is_docked for a in agents):
-                        for i, a in enumerate(agents):
-                            if i == 1 and sim_time < cart_b_active_at:
-                                continue  # Cart B delayed by arrival offset
-                            a.step(dt, [], prox_field, current_sim_time=sim_time,
-                                   shelves=shelf_boxes, peer_agents=agents)
+                # --- true corridor occupancy window -------------------------- #
+                occupied = any(a.current_node in corridor_nodes and not a.is_docked
+                               for a in agents)
+                if occupied and entry_t is None:
+                    entry_t = sim_time
+                if entry_t is not None and not occupied:
+                    exit_t = sim_time
 
-                        # Geometric head-on conflict detection in single-file corridor
-                        a1, a2 = agents[0], agents[1]
-                        if not a1.is_docked and not a2.is_docked:
-                            dist = math.hypot(a1.x - a2.x, a1.y - a2.y)
-                            # Geometric criteria: within 1.5 m (50 px) in single-file corridor facing opposite headings
-                            if dist < 50.0 and (a1.current_node in ["N_back_2", "N_mid_2", "N_front_2"] or
-                                                a2.current_node in ["N_back_2", "N_mid_2", "N_front_2"]):
-                                heading_diff = abs((a1.heading - a2.heading + math.pi) % (2 * math.pi) - math.pi)
-                                if heading_diff > math.pi * 0.5:
-                                    head_on_conflict_ticks += 1
+                layout.graph.decay_mesh_penalties(dt, decay_rate=0.1386294)
+                sim_time += dt
 
-                        # Measure corridor traversal entry & exit
-                        if corridor_entry_time is None and (agents[0].current_node == "N_mid_2" or agents[1].current_node == "N_mid_2"):
-                            corridor_entry_time = sim_time
-                        if corridor_entry_time is not None and corridor_exit_time is None and all(a.is_docked for a in agents):
-                            corridor_exit_time = sim_time
+            if entry_t is not None and exit_t is None:
+                exit_t = sim_time
+            corridor_time = (exit_t - entry_t) if entry_t is not None else 0.0
+            done = all(a.is_docked for a in agents)
 
-                        layout.graph.decay_mesh_penalties(dt, decay_rate=0.1386294)
-                        sim_time += dt
+            return {
+                "arrival_offset_s": round(arrival_offset, 3),
+                "head_on_events": head_on_events,
+                "deadlocks": sum(a.deadlock_count for a in agents),
+                "lock_wait_s": round(sum(a.lock_wait_time for a in agents), 2),
+                "corridor_time_s": round(corridor_time, 2),
+                "timeout": 0 if done else 1,
+                "makespan_s": round(sim_time, 2),
+                "success": 1 if done else 0,
+            }
 
-                    timed_out = 0 if all(a.is_docked for a in agents) else 1
-                    corridor_time = (corridor_exit_time - corridor_entry_time) if (corridor_entry_time and corridor_exit_time) else sim_time
+        rows = []
+        trial = 0
+        attempts = 0
+        while trial < num_trials and attempts < num_trials * 20:
+            attempts += 1
+            seed_val = 6000 + attempts
+            on = simulate(True, seed_val)
+            off = simulate(False, seed_val)
+            if on is None or off is None:
+                continue
+            trial += 1
+            for cond, res in (("1", on), ("0", off)):
+                row = {"trial_id": trial, "lock_enabled": cond}
+                row.update(res)
+                rows.append(row)
 
-                    writer.writerow({
-                        "trial_id": trial,
-                        "lock_enabled": int(lock_on),
-                        "head_on_conflicts": head_on_conflict_ticks,
-                        "timeout": timed_out,
-                        "corridor_traversal_time_s": round(corridor_time, 2),
-                        "makespan_s": round(sim_time, 2),
-                        "success": 1 - timed_out
-                    })
-                    f.flush()
-
-            f.flush()
-
-        print(f"  -> Exported: {csv_path} ({num_trials * 2} controlled lock-mechanism trials)")
+        _atomic_write_csv(csv_path, fieldnames, rows)
+        print(f"  -> Exported: {csv_path} ({len(rows)} rows, {trial} paired trials)")
         return csv_path
+
 
 if __name__ == "__main__":
     out_dir = os.path.join(PROJECT_ROOT, "experiments", "data")

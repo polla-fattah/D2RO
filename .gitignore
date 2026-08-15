@@ -45,6 +45,12 @@ run_exp*.py
 parallel_*.py
 trial_*.log
 exp*.log
+scratch/
+test_exp1.py
+paper/page_*.png
+
+# Atomic-write temporaries (a crashed run must not leave these behind)
+*.csv.tmp
 
 # OS
 .DS_Store

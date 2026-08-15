@@ -12,7 +12,8 @@ from typing import Dict, List, Tuple, Optional, Set
 
 from d2ro.core.units import (
     WEIGHT_DISTANCE_WD, WEIGHT_MESH_WM, WEIGHT_PROXEMIC_WH,
-    WEIGHT_MUTEX_LOCK_WR, WEIGHT_TROLLEY_WS, PX_TO_M
+    WEIGHT_MUTEX_LOCK_WR, WEIGHT_TROLLEY_WS, PX_TO_M,
+    ROBOT_RADIUS_PX, SHELF_CLEARANCE_MARGIN_PX, TROLLEY_CLEARANCE_AMPLITUDE
 )
 
 @dataclass
@@ -46,7 +47,8 @@ class Edge:
     w_mesh: float = 0.0      # Distributed mesh congestion penalty
     h_prox: float = 0.0      # Asymmetric human proxemic discomfort penalty
     r_lock: float = 0.0      # Directional corridor lock penalty (0.0 or math.inf)
-    s_trolley: float = 0.0   # Kinetic vehicle clearance envelope penalty
+    s_trolley: float = 0.0   # Kinetic vehicle clearance envelope penalty (static + dynamic)
+    s_clearance: float = 0.0 # Static geometric component of S_trolley (fixture clearance)
 
     # Weight coefficients
     weight_d: float = WEIGHT_DISTANCE_WD
@@ -105,6 +107,7 @@ class TopologicalGraph:
                 is_single_file=edge.is_single_file,
                 w_mesh=edge.w_mesh, h_prox=edge.h_prox,
                 r_lock=edge.r_lock, s_trolley=edge.s_trolley,
+                s_clearance=edge.s_clearance,
                 weight_d=edge.weight_d, weight_m=edge.weight_m,
                 weight_h=edge.weight_h, weight_r=edge.weight_r,
                 weight_s=edge.weight_s, lock_owner=edge.lock_owner,
@@ -202,9 +205,87 @@ class TopologicalGraph:
                 if new_val < 0.01:
                     new_val = 0.0
                 edge.w_mesh = new_val
-                if math.fabs(old_val - edge.w_mesh) > 0.01:
+                if math.fabs(old_val - edge.w_mesh) > 0.5:
                     changed_edges.append((edge.u, edge.v))
         return changed_edges
+
+    @staticmethod
+    def _clearance_to_rects(px: float, py: float,
+                            rects: List[Tuple[float, float, float, float]]) -> float:
+        """Euclidean distance (px) from point to the nearest rectangular fixture."""
+        best = math.inf
+        for x1, y1, x2, y2 in rects:
+            cx = x1 if px < x1 else (x2 if px > x2 else px)
+            cy = y1 if py < y1 else (y2 if py > y2 else py)
+            d = math.hypot(px - cx, py - cy)
+            if d < best:
+                best = d
+        return best
+
+    def compute_clearance_penalties(self, shelves: List[Tuple[float, float, float, float]],
+                                    num_samples: int = 8,
+                                    amplitude: float = TROLLEY_CLEARANCE_AMPLITUDE) -> None:
+        r"""
+        Computes the STATIC geometric component of the kinetic safety envelope
+        $S_{\text{trolley}}$ for every edge, and seeds ``s_trolley`` with it.
+
+        For each edge the required chassis envelope is
+        $r_{\text{req}} = r_{\text{robot}} + \delta_{\text{shelf}}$. The normalised
+        clearance deficit at a sample point is
+        $\phi(s) = \max\left(0, (r_{\text{req}} - d_{\text{clear}}(s)) / r_{\text{req}}\right)$,
+        and the edge penalty is its trapezoidal line integral over the segment length
+        $L$ (metres):
+        $S^{\text{static}}_{\text{trolley}}(u,v) = A_s \int_0^L \phi(s)\,ds$.
+
+        This makes narrow, fixture-flanked aisles genuinely more expensive to traverse
+        at the graph-optimisation level, rather than being corrected only reactively.
+        """
+        if not shelves:
+            return
+
+        r_req = ROBOT_RADIUS_PX + SHELF_CLEARANCE_MARGIN_PX
+        for edge in self.edges.values():
+            n_u = self.nodes.get(edge.u)
+            n_v = self.nodes.get(edge.v)
+            if n_u is None or n_v is None:
+                continue
+
+            seg_len_m = math.hypot(n_u.x - n_v.x, n_u.y - n_v.y) * PX_TO_M
+            phi_sum = 0.0
+            for i in range(num_samples + 1):
+                t = i / float(num_samples)
+                sx = (1.0 - t) * n_u.x + t * n_v.x
+                sy = (1.0 - t) * n_u.y + t * n_v.y
+                d_clear = self._clearance_to_rects(sx, sy, shelves)
+                phi = max(0.0, (r_req - d_clear) / r_req) if d_clear < r_req else 0.0
+                phi_sum += (0.5 if i in (0, num_samples) else 1.0) * phi
+
+            edge.s_clearance = amplitude * (seg_len_m / float(num_samples)) * phi_sum
+            edge.s_trolley = edge.s_clearance
+
+    def decay_proxemic_penalties(self, dt: float, decay_rate: float = 0.1386294) -> List[Tuple[str, str]]:
+        """
+        Decays remembered proxemic observations exponentially.
+
+        Without this the agent forgets congestion the instant it leaves sensing
+        range, which makes a purely local planner oscillate in and out of a blocked
+        aisle. Giving local observations the SAME memory model as mesh alerts means
+        any measured benefit of V2V telemetry is attributable to its RANGE, not to
+        the no-mesh condition being handicapped by instant amnesia.
+        """
+        changed = []
+        factor = math.exp(-decay_rate * dt)
+        for edge in self.edges.values():
+            if edge.h_prox > 0.0:
+                old = edge.h_prox
+                new = edge.h_prox * factor
+                if new < 0.01:
+                    new = 0.0
+                edge.h_prox = new
+                # Only report changes large enough to matter for routing.
+                if math.fabs(old - new) > 0.5:
+                    changed.append((edge.u, edge.v))
+        return changed
 
     def clean_expired_locks(self, current_time: float) -> List[Tuple[str, str]]:
         """Releases expired corridor locks."""

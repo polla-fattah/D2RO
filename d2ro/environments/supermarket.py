@@ -56,6 +56,14 @@ class SupermarketLayout:
         self.bounds = (0.0, 0.0, self.start_x + (self.num_aisles + 1) * self.aisle_spacing + 80.0, self.y_cart_depot + 90.0)
 
         self._build_realistic_store()
+        # Seed the static geometric component of S_trolley (Eq. 8) so that fixture
+        # clearance participates in graph optimisation, not only reactive correction.
+        self.graph.compute_clearance_penalties(self.obstacle_bounds)
+
+    @property
+    def obstacle_bounds(self) -> List[Tuple[float, float, float, float]]:
+        """Uniform accessor for solid fixtures (shared across all three domains)."""
+        return [s.bounds for s in self.shelves]
 
     @property
     def width(self) -> float:

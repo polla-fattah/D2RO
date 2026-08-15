@@ -11,7 +11,8 @@ import time
 from math import hypot as math_hypot, sqrt as math_sqrt, atan2 as math_atan2, cos as math_cos, sin as math_sin
 from typing import List, Tuple, Optional
 from ..core.human import Human
-from ..core.units import (
+from ..core.metrics import init_social_metrics, update_social_metrics
+from ..core.units import (ARRIVAL_RADIUS_PX, 
     PX_TO_M, M_TO_PX, ROBOT_RADIUS_PX, ROBOT_VMAX_MPS
 )
 
@@ -38,7 +39,8 @@ class ORCAAgent:
         self.total_distance: float = 0.0
         self.travel_time: float = 0.0
         self.deadlock_count: int = 0
-        self.proxemic_violations: int = 0
+        init_social_metrics(self)
+        self.head_on_events: int = 0
         self.is_docked: bool = False
 
     @property
@@ -125,7 +127,7 @@ class ORCAAgent:
         dy_goal = self.goal_y - self.y
         dist_goal = math_hypot(dx_goal, dy_goal)
 
-        if dist_goal < 12.0:
+        if dist_goal < ARRIVAL_RADIUS_PX:
             self.is_docked = True
             self.vx = 0.0
             self.vy = 0.0
@@ -158,11 +160,13 @@ class ORCAAgent:
                     line = self._compute_orca_halfplane(rel_pos, rel_vel, combined_r, self.time_horizon, reciprocity=0.5)
                     orca_lines.append(line)
 
+        # Social compliance measured by the shared helper (identical threshold and
+        # identical per-human semantics as every other planner).
+        update_social_metrics(self, humans, dt)
+
         # 3. Build ORCA Half-Planes from Dynamic Humans (Reciprocity = 1.0, non-reciprocating)
         for human in humans:
             d_h = math_hypot(self.x - human.x, self.y - human.y)
-            if d_h < 26.67:  # < 0.8 meters intimate boundary
-                self.proxemic_violations += 1
 
             if d_h < 70.0:
                 rel_pos = (human.x - self.x, human.y - self.y)
@@ -209,7 +213,7 @@ class ORCAAgent:
         # Failure Mode: Constraint Infeasibility in narrow corridors (v -> 0 stop/oscillation)
         if not feasible or best_speed < 1.0:
             if dist_goal > 30.0:
-                self.deadlock_count += 1
+                self.stalled_ticks += 1
             self.vx = 0.0
             self.vy = 0.0
         else:

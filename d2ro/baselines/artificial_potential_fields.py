@@ -11,7 +11,8 @@ import time
 from math import hypot as math_hypot, exp as math_exp
 from typing import List, Tuple, Optional
 from ..core.human import Human
-from ..core.units import (
+from ..core.metrics import init_social_metrics, update_social_metrics
+from ..core.units import (ARRIVAL_RADIUS_PX, 
     PX_TO_M, M_TO_PX, ROBOT_RADIUS_PX, ROBOT_VMAX_MPS
 )
 
@@ -45,7 +46,8 @@ class ArtificialPotentialFieldAgent:
         self.total_distance: float = 0.0
         self.travel_time: float = 0.0
         self.deadlock_count: int = 0
-        self.proxemic_violations: int = 0
+        init_social_metrics(self)
+        self.head_on_events: int = 0
         self.shelf_corner_scrapes: int = 0
         self.is_docked: bool = False
         self.last_compute_time_ms: float = 0.0
@@ -71,7 +73,7 @@ class ArtificialPotentialFieldAgent:
         dy_goal = self.goal_y - self.y
         dist_goal = math_hypot(dx_goal, dy_goal)
 
-        if dist_goal < 12.0:
+        if dist_goal < ARRIVAL_RADIUS_PX:
             self.is_docked = True
             self.vx = 0.0
             self.vy = 0.0
@@ -97,11 +99,13 @@ class ArtificialPotentialFieldAgent:
                 f_rep_x += ((self.x - cx) / d_obs) * rep_mag
                 f_rep_y += ((self.y - cy) / d_obs) * rep_mag
 
+        # Social compliance measured by the shared helper (identical threshold and
+        # identical per-human semantics as every other planner).
+        update_social_metrics(self, humans, dt)
+
         # 3. Repulsive Force from Dynamic Human Pedestrians
         for human in humans:
             d_h = math_hypot(self.x - human.x, self.y - human.y)
-            if d_h < 26.67:  # < 0.8 meters (Intimate personal space boundary)
-                self.proxemic_violations += 1
 
             if 0.001 < d_h < self.d0_human:
                 rep_mag = self.k_rep_human * (1.0 / d_h - 1.0 / self.d0_human) * (1.0 / (d_h * d_h))
@@ -124,7 +128,7 @@ class ArtificialPotentialFieldAgent:
 
         # Failure Mode: Local Potential Minimum Trap (F_net -> 0 while far from goal)
         if f_mag < 1.5 and dist_goal > 30.0:
-            self.deadlock_count += 1
+            self.stalled_ticks += 1
             # In local minimum trap, velocity decays to near zero
             self.vx = 0.0
             self.vy = 0.0

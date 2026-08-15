@@ -384,6 +384,7 @@ All experiments were conducted using the decoupled 2D kinodynamic simulation fra
 \centering
 \caption{Comparative Performance Benchmark over $N=100$ Randomized Monte Carlo Trials (Mean $\pm$ Std. Dev. [95\% Confidence Interval]).}
 \label{tab:benchmark}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lcccccc}
 \toprule
 \textbf{Navigation Algorithm} & \textbf{Success Rate (\%)} & \textbf{Makespan (s) [95\% CI]} & \textbf{Deadlocks} & \textbf{Intimate Violations} & \textbf{V2V Packets} & \textbf{Avg Replan (ms)} \\
@@ -394,15 +395,16 @@ Reactive ORCA (Velocity Obstacles) & 0.0\% & Timeout (35.0s) & 2094.37 $\pm$ 99.
 Decentralized Local MAPF & 0.0\% & Timeout (35.0s) & 11.00 $\pm$ 0.00 & 102.44 $\pm$ 15.00 & 0.0 $\pm$ 0.0 & 0.350 $\pm$ 0.000 \\
 \textbf{$\text{D}^2\text{RO}$ (SW-DGO Proposed)} & \textbf{97.0\%} & \textbf{21.47 $\pm$ 5.32 [20.42, 22.53]} & \textbf{0.00 $\pm$ 0.00} & \textbf{0.59 $\pm$ 5.90} & \textbf{12.21 $\pm$ 2.76} & \textbf{0.145 $\pm$ 0.017} \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table*}
 
-\begin{figure*}[t]
+\begin{figure}[t]
 \centering
-\includegraphics[width=0.98\linewidth]{fig1_benchmark_comparison.pdf}
+\includegraphics[width=\linewidth]{fig1_benchmark_comparison.pdf}
 \caption{Quantitative comparative evaluation across (a) Mission Success Rate, (b) Fleet Makespan, and (c) Social Proxemic Discomfort Violations, demonstrating $\text{D}^2\text{RO}$ superiority over Static $A^*$, APF, ORCA, and Decentralized Local MAPF.}
 \label{fig:benchmark}
-\end{figure*}
+\end{figure}
 
 \subsection{Physical Insights and Failure Modes Analysis}
 \subsubsection{Failure Modes of Purely Reactive Navigators}
@@ -436,33 +438,37 @@ Table~\ref{tab:ablation} and Fig.~\ref{fig:ablation} validate the mathematical n
     \item Omitting $W_{\text{mesh}}$ or $R_{\text{lock}}$ reduces early topological avoidance, forcing agents to negotiate conflicts in localized proximities.
 \end{enumerate}
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
-\caption{Mathematical Component Ablation Matrix over $N=100$ Trials (Mean $\pm$ Std.\ Dev.). Rows = metrics; columns = configurations.}
+\caption{Mathematical Component Ablation Matrix over $N=100$ Trials (Mean $\pm$ Std.\ Dev.).}
 \label{tab:ablation}
-\begin{tabular}{lp{1.55cm}p{1.55cm}p{1.55cm}p{1.55cm}p{1.55cm}}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
 \toprule
-\textbf{Metric} & \textbf{Full $\text{D}^2\text{RO}$} & \textbf{w/o V2V Mesh ($W_{\text{mesh}}\!=\!0$)} & \textbf{w/o Mutex Lock ($R_{\text{lock}}\!=\!0$)} & \textbf{w/o Proxemics ($H_{\text{prox}}\!=\!0$)} & \textbf{w/o Safety Bubble ($S_{\text{trolley}}\!=\!0$)} \\
+\textbf{Configuration} & \textbf{Success (\%)} & \textbf{Makespan (s)} & \textbf{Discomfort $\mathcal{J}_{\text{prox}}$} & \textbf{Shelf Scrapes} \\
 \midrule
-\textbf{Success (\%)} & \textbf{99.0\%} & 100.0\% & 100.0\% & 17.0\% & 100.0\% \\
-Makespan (s) & \textbf{22.98 $\pm$ 2.21} & 15.24 $\pm$ 1.95 & 15.24 $\pm$ 1.95 & 32.70 $\pm$ 5.67 & 21.26 $\pm$ 2.17 \\
-Discomfort $\mathcal{J}_{\text{prox}}$ & \textbf{0.63 $\pm$ 3.09} & 0.43 $\pm$ 1.99 & 0.43 $\pm$ 1.99 & 71.56 $\pm$ 34.26 & 0.41 $\pm$ 2.07 \\
-Shelf Scrapes & \textbf{0.00 $\pm$ 0.00} & 0.00 $\pm$ 0.00 & 0.00 $\pm$ 0.00 & 0.00 $\pm$ 0.00 & 77.72 $\pm$ 11.94 \\
+Full $\text{D}^2\text{RO}$ (Complete) & \textbf{99.0\%} & \textbf{22.98 $\pm$ 2.21} & \textbf{0.63 $\pm$ 3.09} & \textbf{0.00 $\pm$ 0.00} \\
+w/o V2V Mesh ($W_{\text{mesh}}\!=\!0$) & 100.0\% & 15.24 $\pm$ 1.95 & 0.43 $\pm$ 1.99 & 0.00 $\pm$ 0.00 \\
+w/o Mutex Lock ($R_{\text{lock}}\!=\!0$) & 100.0\% & 15.24 $\pm$ 1.95 & 0.43 $\pm$ 1.99 & 0.00 $\pm$ 0.00 \\
+w/o Proxemics ($H_{\text{prox}}\!=\!0$) & 17.0\% & 32.70 $\pm$ 5.67 & 71.56 $\pm$ 34.26 & 0.00 $\pm$ 0.00 \\
+w/o Safety Bubble ($S_{\text{trolley}}\!=\!0$) & 100.0\% & 21.26 $\pm$ 2.17 & 0.41 $\pm$ 2.07 & 77.72 $\pm$ 11.94 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.98\linewidth]{fig2_ablation_study.pdf}
+\includegraphics[width=\linewidth]{fig2_ablation_study.pdf}
 \caption{Component ablation study evaluating (a) Discomfort Integral and (b) Corridor Deadlocks \& Shelf Corner Scrapes across the 5 cost configurations.}
 \label{fig:ablation}
 \end{figure}
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
 \caption{Cross-Domain Architectural Generalization ($N=100$ Trials per Domain).}
 \label{tab:cross_domain}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Environment} & \textbf{Success (\%)} & \textbf{Makespan (s)} & \textbf{V2V Packets} & \textbf{D* Lite Replans} \\
@@ -471,12 +477,13 @@ Retail Supermarket & 100.0\% & 23.07 $\pm$ 2.47 & 15.2 $\pm$ 2.6 & 341.7 $\pm$ 8
 Clinical Hospital & 92.0\% & 27.68 $\pm$ 11.35 & 2.8 $\pm$ 2.0 & 309.6 $\pm$ 127.1 \\
 Airport Terminal & 80.0\% & 25.29 $\pm$ 13.60 & 6.6 $\pm$ 14.8 & 897.9 $\pm$ 342.9 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.98\linewidth]{fig3_cross_domain_generalization.pdf}
+\includegraphics[width=\linewidth]{fig3_cross_domain_generalization.pdf}
 \caption{Multi-domain fleet performance across Supermarket, Hospital, and Airport environments on (a) Makespan, (b) V2V Mesh Packets, and (c) Incremental Replan Cycles.}
 \label{fig:cross_domain}
 \end{figure}
@@ -491,47 +498,58 @@ As shown in Table~\ref{tab:cross_domain}, $\text{D}^2\text{RO}$ achieves $100.0\
 
 \subsection{Decoupled Scalability Analysis}
 As shown in Fig.~\ref{fig:scalability}, Table~\ref{tab:scalability_crowd}, and Table~\ref{tab:scalability_fleet}, we evaluated parametric scalability across two decoupled dimensions ($N=100$ trials each):
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\linewidth]{fig4_scalability_density.pdf}
+\caption{Decoupled fleet scalability evaluations: (a) Incremental $\text{D}^*$ Lite replanning latency and V2V mesh broadcast packets vs. dynamic crowd density ($N_{\text{humans}} \in [2..30]$, fixed fleet $N=4$); (b) Fleet makespan and single-file corridor mutex queueing wait time vs. autonomous fleet size ($N_{\text{carts}} \in [2..12]$, fixed crowd $N=10$).}
+\label{fig:scalability}
+\end{figure}
+
 \begin{enumerate}
     \item \textbf{Crowd Density Scaling ($N_{\text{humans}} \in [2..30]$, $N_{\text{carts}}=4$):} Replan latency scales smoothly from $0.18\text{ ms}$ at $N_h=2$ to $1.23\text{ ms}$ at $N_h=30$, consistently executing within $<2.5\%$ of the $50\text{ ms}$ control loop.
     \item \textbf{Fleet Size Scaling ($N_{\text{carts}} \in [2..12]$, $N_{\text{humans}}=10$):} Fleet makespan scales gracefully ($25.67\text{ s} \to 41.25\text{ s}$) while V2V mesh broadcast packets scale with fleet size ($5.0 \to 134.9\text{ packets}$).
 \end{enumerate}
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
-\caption{Decoupled Crowd Density Scalability ($N_{\text{carts}}=4$, $N=100$ Trials). Rows = metrics; columns = $N_{\text{humans}}$.}
+\caption{Decoupled Crowd Density Scalability ($N_{\text{carts}}=4$, $N=100$ Trials).}
 \label{tab:scalability_crowd}
-\begin{tabular}{lcccccc}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{cccc}
 \toprule
-\textbf{Metric} & $N_h\!=\!2$ & $N_h\!=\!6$ & $N_h\!=\!12$ & $N_h\!=\!18$ & $N_h\!=\!24$ & $N_h\!=\!30$ \\
+\textbf{Crowd Density ($N_h$)} & \textbf{Success (\%)} & \textbf{Replan Latency (ms)} & \textbf{V2V Packets} \\
 \midrule
-Success (\%) & 100.0 & 99.0 & 92.0 & 91.0 & 94.0 & 93.0 \\
-Replan Latency (ms) & 0.179{\tiny$\pm$0.076} & 0.350{\tiny$\pm$0.150} & 0.612{\tiny$\pm$0.239} & 0.828{\tiny$\pm$0.409} & 1.021{\tiny$\pm$0.383} & 1.228{\tiny$\pm$0.644} \\
-V2V Packets & 20.4{\tiny$\pm$4.2} & 15.9{\tiny$\pm$8.8} & 15.7{\tiny$\pm$16.9} & 20.7{\tiny$\pm$24.0} & 19.3{\tiny$\pm$15.5} & 21.5{\tiny$\pm$23.1} \\
+$N_h = 2$  & 100.0\% & 0.179 $\pm$ 0.076 & 20.4 $\pm$ 4.2 \\
+$N_h = 6$  & 99.0\%  & 0.350 $\pm$ 0.150 & 15.9 $\pm$ 8.8 \\
+$N_h = 12$ & 92.0\%  & 0.612 $\pm$ 0.239 & 15.7 $\pm$ 16.9 \\
+$N_h = 18$ & 91.0\%  & 0.828 $\pm$ 0.409 & 20.7 $\pm$ 24.0 \\
+$N_h = 24$ & 94.0\%  & 1.021 $\pm$ 0.383 & 19.3 $\pm$ 15.5 \\
+$N_h = 30$ & 93.0\%  & 1.228 $\pm$ 0.644 & 21.5 $\pm$ 23.1 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
-\caption{Decoupled Fleet Size Scalability ($N_{\text{humans}}=10$, $N=100$ Trials). Rows = metrics; columns = $N_{\text{carts}}$.}
+\caption{Decoupled Fleet Size Scalability ($N_{\text{humans}}=10$, $N=100$ Trials).}
 \label{tab:scalability_fleet}
-\begin{tabular}{lcccccc}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{cccc}
 \toprule
-\textbf{Metric} & $N_c\!=\!2$ & $N_c\!=\!4$ & $N_c\!=\!6$ & $N_c\!=\!8$ & $N_c\!=\!10$ & $N_c\!=\!12$ \\
+\textbf{Fleet Size ($N_c$)} & \textbf{Success (\%)} & \textbf{Makespan (s)} & \textbf{V2V Packets} \\
 \midrule
-Success (\%) & 97.0 & 93.0 & 80.0 & 83.0 & 80.0 & 78.0 \\
-Makespan (s) & 25.67{\tiny$\pm$11.22} & 32.31{\tiny$\pm$13.46} & 39.69{\tiny$\pm$15.79} & 37.32{\tiny$\pm$15.06} & 39.68{\tiny$\pm$16.29} & 41.25{\tiny$\pm$15.79} \\
-V2V Packets & 5.0{\tiny$\pm$5.0} & 32.3{\tiny$\pm$30.8} & 55.1{\tiny$\pm$42.0} & 74.4{\tiny$\pm$73.6} & 107.7{\tiny$\pm$93.6} & 134.9{\tiny$\pm$111.4} \\
+$N_c = 2$  & 97.0\% & 25.67 $\pm$ 11.22 & 5.0 $\pm$ 5.0 \\
+$N_c = 4$  & 93.0\% & 32.31 $\pm$ 13.46 & 32.3 $\pm$ 30.8 \\
+$N_c = 6$  & 80.0\% & 39.69 $\pm$ 15.79 & 55.1 $\pm$ 42.0 \\
+$N_c = 8$  & 83.0\% & 37.32 $\pm$ 15.06 & 74.4 $\pm$ 73.6 \\
+$N_c = 10$ & 80.0\% & 39.68 $\pm$ 16.29 & 107.7 $\pm$ 93.6 \\
+$N_c = 12$ & 78.0\% & 41.25 $\pm$ 15.79 & 134.9 $\pm$ 111.4 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.98\linewidth]{fig4_scalability_density.pdf}
-\caption{Decoupled fleet scalability evaluations: (a) Incremental $\text{D}^*$ Lite replanning latency and V2V mesh broadcast packets vs. dynamic crowd density ($N_{\text{humans}} \in [2..30]$, fixed fleet $N=4$); (b) Fleet makespan and single-file corridor mutex queueing wait time vs. autonomous fleet size ($N_{\text{carts}} \in [2..12]$, fixed crowd $N=10$).}
-\label{fig:scalability}
-\end{figure}
 
 % ==============================================================================
 % SECTION VI-D: MECHANISM-SPECIFIC VALIDATION
@@ -543,10 +561,11 @@ Because the broad Monte Carlo benchmark does not reliably trigger the specific t
 \subsubsection{Experiment A: V2V Mesh Anticipation ($N=50$ trials)}
 Two carts are positioned such that Cart~A is in front and Cart~B is 10+ m behind (outside Cart~A's sensing range). A pedestrian cluster blocks Cart~A's forward aisle mid-route. An alternative divergence junction exists upstream of Cart~B, where it can reroute \emph{before} committing to the congested path. We compare \textbf{Mesh ON} vs. \textbf{Mesh OFF} using identical seeds, measuring anticipation time $\Delta T_{\text{ant}}$ (how many seconds earlier Cart~B reroutes), backtracking distance, and total makespan.
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
 \caption{Mechanism Experiment A: V2V Mesh Anticipation ($N=50$ controlled trials).}
 \label{tab:mech_mesh}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lccc}
 \toprule
 \textbf{Condition} & \textbf{$\Delta T_{\text{ant}}$ (s)} & \textbf{Backtrack (m)} & \textbf{Makespan (s)} \\
@@ -556,7 +575,8 @@ Mesh OFF & 0.00 $\pm$ 0.00 & 4.21 $\pm$ 1.94 & 24.96 $\pm$ 3.62 \\
 \midrule
 \textit{Reduction} & \textit{+6.82 s earlier} & \textit{$-$4.21 m} & \textit{$-$26.5\%} \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 With mesh enabled, Cart~B reroutes $6.82 \pm 1.43\text{ s}$ earlier on average, completely eliminating backtracking (0.00 m vs. 4.21 m) and reducing makespan by $26.5\%$ ($p < 0.001$, Welch's $t$-test). This confirms that the V2V anticipatory mechanism delivers its claimed benefit under the topological conditions it was designed for.
@@ -564,10 +584,11 @@ With mesh enabled, Cart~B reroutes $6.82 \pm 1.43\text{ s}$ earlier on average, 
 \subsubsection{Experiment B: Corridor Mutex Lock ($N=50$ trials)}
 Two carts approach the same single-file corridor from opposite ends. Arrival timing is randomized ($\pm[0, 3]\text{ s}$ offset). We compare \textbf{Lock ON} vs. \textbf{Lock OFF} and measure head-on conflict rate, timeout rate, and average corridor traversal time.
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
 \caption{Mechanism Experiment B: Corridor Mutex Lock ($N=50$ controlled trials).}
 \label{tab:mech_lock}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lccc}
 \toprule
 \textbf{Condition} & \textbf{Head-on Conflicts} & \textbf{Timeout Rate} & \textbf{Traversal (s)} \\
@@ -575,7 +596,8 @@ Two carts approach the same single-file corridor from opposite ends. Arrival tim
 Lock ON  & 0.00 $\pm$ 0.00 & 0.0\% & 12.47 $\pm$ 2.11 \\
 Lock OFF & 1.82 $\pm$ 0.79 & 22.0\% & 31.83 $\pm$ 9.74 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 With the mutex lock disabled, $22\%$ of trials timeout due to head-on deadlocks and an average of $1.82 \pm 0.79$ head-on conflicts per trial occur. Lock~ON completely eliminates deadlocks ($0.00 \pm 0.00$) and reduces corridor traversal time by $60.8\%$ ($p < 0.001$). This directly validates the $R_{\text{lock}}$ mechanism's core contribution.

@@ -1,0 +1,21 @@
+% GENERATED FILE - do not edit by hand.
+% Source: experiments/data/analysis_results.json
+% Produced by paper/scripts/generate_tables_and_figures.py
+\begin{table*}[t]
+\centering
+\caption{Comparative benchmark in the retail supermarket domain ($N=100$ paired Monte Carlo trials, identical seeds across all planners). Social exposure is reported as median [IQR] because the distribution is zero-inflated and strongly right-skewed. $p$-values are Holm-adjusted within the family of comparisons and each refers to the single outcome on its own row.}
+\label{tab:benchmark}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Algorithm} & \textbf{Success (95\% CI)} & \textbf{Makespan, successful (s)} & \textbf{Deadlocks} & \textbf{Intimate exposure, median [IQR]} & \textbf{$p$ (exposure)} \\
+\midrule
+\textbf{$\text{D}^2\text{RO}$ (proposed)} & 99.0\% [94.6, 99.8] & $47.18 \pm 13.40$ & $0.00 \pm 0.00$ & 0 [0, 0] & -- \\
+Static $A^*$ & 100.0\% [96.3, 100.0] & $18.00 \pm 0.00$ & $0.00 \pm 0.00$ & 128 [123, 131] & $5.1e-16$ \\
+APF & 100.0\% [96.3, 100.0] & $37.40 \pm 0.32$ & $0.00 \pm 0.00$ & 204 [176, 276] & $2.7e-16$ \\
+Reactive ORCA & 0.0\% [0.0, 3.7] & no success & $0.00 \pm 0.00$ & 229 [0, 766] & $2e-13$ \\
+Decentralized Local MAPF & 0.0\% [0.0, 3.7] & no success & $0.00 \pm 0.00$ & 128 [123, 132] & $5.1e-16$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

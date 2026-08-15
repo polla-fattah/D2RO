@@ -12,9 +12,15 @@ from .graph import TopologicalGraph
 from .dstar_lite import DStarLite
 from .mesh_network import MeshNetwork, MessageType, MeshPacket
 from .human import Human, ProxemicsField
+from .metrics import init_social_metrics, update_social_metrics
 from .units import (
     ROBOT_RADIUS_PX, SHELF_CLEARANCE_MARGIN_PX, FOLLOWING_DISTANCE_GAP_PX,
-    V2V_MESH_COMM_RANGE_PX, ROBOT_VMAX_MPS, ROBOT_VMAX_PXPS, ROBOT_WMAX_RADPS, M_TO_PX
+    V2V_MESH_COMM_RANGE_PX, ROBOT_VMAX_MPS, ROBOT_VMAX_PXPS, ROBOT_WMAX_RADPS, M_TO_PX,
+    TROLLEY_PEER_AMPLITUDE, TROLLEY_PEER_SIGMA_PX, INTIMATE_RADIUS_PX,
+    HEAD_ON_CONFLICT_RADIUS_PX, MESH_ALERT_EQUIV_M, MESH_FOLLOW_BLOCK_EQUIV_M,
+    SENSING_RADIUS_PX, V2V_DECAY_RATE_PER_SEC,
+    ARRIVAL_RADIUS_PX,
+    CORRIDOR_LOCK_LEASE_S as LOCK_LEASE_S
 )
 
 class TrolleyAgent:
@@ -27,7 +33,8 @@ class TrolleyAgent:
                  mesh_net: MeshNetwork, max_speed: float = ROBOT_VMAX_PXPS, max_omega: float = ROBOT_WMAX_RADPS,
                  comm_radius: float = V2V_MESH_COMM_RANGE_PX,
                  enable_mesh: bool = True, enable_lock: bool = True,
-                 enable_prox: bool = True, enable_safety: bool = True):
+                 enable_prox: bool = True, enable_safety: bool = True,
+                 lock_priority: float = 1.0):
         self.agent_id = agent_id
         self.graph = graph.clone()
         self.current_node = start_node
@@ -55,6 +62,14 @@ class TrolleyAgent:
         self.shelf_margin: float = SHELF_CLEARANCE_MARGIN_PX if enable_safety else 0.0 # Minimum distance maintained from shelf edges (0.54 m / 18 px)
         self.following_gap: float = FOLLOWING_DISTANCE_GAP_PX if enable_safety else 0.0 # Anti-tailgating gap (1.08 m / 36 px)
 
+        # Ablating S_trolley must remove the term from the graph objective as well as
+        # from reactive motion correction; otherwise the "w/o safety" arm is not a true
+        # ablation of the w_S component of Eq. (3).
+        if not enable_safety:
+            for edge in self.graph.edges.values():
+                edge.s_clearance = 0.0
+                edge.s_trolley = 0.0
+
         # Latency tracking
         self.last_compute_time_ms: float = 0.15
 
@@ -71,15 +86,43 @@ class TrolleyAgent:
         self.state: str = "NAVIGATING"
         self.active_lock_edge: Optional[Tuple[str, str]] = None
         self.wait_timer: float = 0.0
+
+        # ---- Distributed corridor reservation state (Sec. III-D) ----------- #
+        # Claim tuple per Eq. (9): <owner, direction, t_acquire, t_expire, priority>.
+        # Claims are totally ordered by (priority, t_acquire, agent_id); the smallest
+        # claim wins. Ordering by t_acquire gives FIFO service, which is what rules
+        # out starvation; agent_id breaks exactly-simultaneous ties deterministically.
+        self.lock_priority: float = lock_priority
+        self.lock_claims: Dict[Tuple[str, str], Dict[int, Tuple[float, float, int]]] = {}
+        self.pending_corridor: Optional[Tuple[str, str]] = None
+        self.lock_wait_time: float = 0.0
+        self.lock_grants_received: int = 0
+        self.lock_denials_received: int = 0
         self.yield_timer: float = 0.0
         self.peer_block_timer: float = 0.0
 
-        # Performance Metrics
+        # ---- Performance metrics ------------------------------------------ #
+        # Event counters and exposure accumulators are kept strictly separate.
+        # A per-tick counter answers "how long was the robot too close?", while an
+        # event counter answers "how many distinct encounters occurred?". Reporting a
+        # tick count under an event name is what produced figures such as "2094
+        # deadlocks per trial" in the previous revision.
         self.total_distance: float = 0.0
         self.travel_time: float = 0.0
         self.replan_count: int = 0
+
+        # Genuine routing deadlocks: no admissible route exists and it is not
+        # attributable to orderly yielding at a reserved corridor.
         self.deadlock_count: int = 0
-        self.proxemic_violations: int = 0
+        # Discrete head-on encounters in single-file corridors (entry-triggered).
+        self.head_on_events: int = 0
+        # Control cycles spent stalled behind a peer (congestion, not deadlock).
+        self.congestion_events: int = 0
+
+        # Social compliance: distinct encounters vs cumulative exposure time.
+        init_social_metrics(self)
+        self._peers_in_conflict: set = set()
+
         self.shelf_corner_scrapes: int = 0
         self.is_docked: bool = False
         self.last_compute_time_ms: float = 0.0
@@ -103,18 +146,47 @@ class TrolleyAgent:
             elif pkt.msg_type == MessageType.LOCK_REQUEST:
                 edge = self.graph.get_edge(u, v)
                 if edge and edge.is_single_file:
-                    edge.r_lock = math.inf
-                    edge.lock_owner = pkt.sender_id
-                    edge.lock_expiry = pkt.timestamp + 10.0
-                    self.planner.notify_edge_cost_change(u, v)
+                    corridor = self._corridor_key(u, v)
+                    peer_claim = (pkt.priority, pkt.timestamp, pkt.sender_id)
+                    self._register_claim(corridor, peer_claim)
+
+                    # Answer the request explicitly: grant if we do not out-rank the
+                    # peer, deny if our own outstanding claim is stronger.
+                    mine = self.lock_claims.get(corridor, {}).get(self.agent_id)
+                    contested = mine is not None and mine < peer_claim
+                    self.mesh_net.broadcast(
+                        sender_id=self.agent_id,
+                        msg_type=(MessageType.LOCK_DENY if contested
+                                  else MessageType.LOCK_GRANT),
+                        edge=(u, v),
+                        priority=self.lock_priority,
+                        ttl=3,
+                        current_time=pkt.timestamp,
+                        target_id=pkt.sender_id
+                    )
                     cost_changed = True
+
+            elif pkt.msg_type in (MessageType.LOCK_GRANT, MessageType.LOCK_DENY):
+                if pkt.target_id == self.agent_id:
+                    if pkt.msg_type == MessageType.LOCK_GRANT:
+                        self.lock_grants_received += 1
+                    else:
+                        self.lock_denials_received += 1
+                        # Record the denier's stronger standing so the total order
+                        # converges even if we never saw its original request.
+                        self._register_claim(
+                            self._corridor_key(u, v),
+                            (pkt.priority, pkt.timestamp, pkt.sender_id)
+                        )
+                        cost_changed = True
+
             elif pkt.msg_type == MessageType.LOCK_RELEASE:
-                edge = self.graph.get_edge(u, v)
-                if edge and edge.lock_owner == pkt.sender_id:
-                    edge.r_lock = 0.0
-                    edge.lock_owner = None
-                    self.planner.notify_edge_cost_change(u, v)
+                corridor = self._corridor_key(u, v)
+                if self.lock_claims.get(corridor, {}).pop(pkt.sender_id, None) is not None:
                     cost_changed = True
+
+        if self._apply_lock_costs(0.0):
+            cost_changed = True
 
         return cost_changed
 
@@ -134,6 +206,14 @@ class TrolleyAgent:
             human_list = list(humans)
         else:
             human_list = [humans]
+
+        # Onboard perception is line-of-sight bounded: only humans the agent can
+        # actually observe may enter its own cost field. Congestion beyond this
+        # radius is knowable solely through V2V telemetry, which is precisely the
+        # perception horizon the mesh is claimed to extend.
+        human_list = [h for h in human_list
+                      if hasattr(h, "x")
+                      and math.hypot(self.x - h.x, self.y - h.y) <= SENSING_RADIUS_PX]
 
         if not isinstance(self.graph.edges, dict):
             return False
@@ -165,10 +245,61 @@ class TrolleyAgent:
                 else:
                     seg_penalty = 0.0
 
-                if math.fabs(edge.h_prox - seg_penalty) > 5.0:
+                # Observations RAISE the remembered penalty immediately; they never
+                # clear it. Forgetting is handled by decay_proxemic_penalties, so an
+                # agent that merely looks away does not instantly un-learn a blockage.
+                if seg_penalty > edge.h_prox + 0.05:
                     edge.h_prox = seg_penalty
                     self.planner.notify_edge_cost_change(u, v)
                     cost_changed = True
+        return cost_changed
+
+    def update_trolley_safety_costs(self, peer_agents: Optional[List[TrolleyAgent]]) -> bool:
+        r"""
+        Updates the kinetic safety envelope term $S_{\text{trolley}}(v,t)$ on the agent's
+        own graph, so that the safety component genuinely participates in SW-DGO graph
+        optimisation (Eq. 3) rather than acting only as post-planning motion correction.
+
+        $S_{\text{trolley}}(u,v,t) = S^{\text{static}}_{\text{clearance}}(u,v)
+          + A_t \sum_{j \neq i} \exp\!\left(-\frac{\|p_v - p_j(t)\|^2}{2\sigma_t^2}\right)$
+
+        The static term encodes fixture clearance; the dynamic sum encodes peer trolley
+        occupancy of the edge endpoint. Returns True if any edge cost changed.
+        """
+        if not self.enable_safety:
+            return False
+
+        # Throttle: recompute every 3rd tick (matches proxemics cadence)
+        if not hasattr(self, "_safety_update_counter"):
+            self._safety_update_counter = 0
+        self._safety_update_counter += 1
+        if self._safety_update_counter % 3 != 0:
+            return False
+
+        peers = [p for p in (peer_agents or [])
+                 if p.agent_id != self.agent_id and not p.is_docked]
+
+        cost_changed = False
+        two_sigma_sq = 2.0 * (TROLLEY_PEER_SIGMA_PX ** 2)
+        cutoff_sq = (3.0 * TROLLEY_PEER_SIGMA_PX) ** 2
+
+        for (u, v), edge in self.graph.edges.items():
+            n_v = self.graph.nodes.get(v)
+            if n_v is None:
+                continue
+
+            peer_pen = 0.0
+            for p in peers:
+                d_sq = (n_v.x - p.x) ** 2 + (n_v.y - p.y) ** 2
+                if d_sq < cutoff_sq:
+                    peer_pen += TROLLEY_PEER_AMPLITUDE * math.exp(-d_sq / two_sigma_sq)
+
+            new_s = edge.s_clearance + peer_pen
+            if math.fabs(edge.s_trolley - new_s) > 1.0:
+                edge.s_trolley = new_s
+                self.planner.notify_edge_cost_change(u, v)
+                cost_changed = True
+
         return cost_changed
 
     def resolve_shelf_collisions(self, shelves: Optional[List[Tuple[float, float, float, float]]]) -> None:
@@ -243,14 +374,18 @@ class TrolleyAgent:
         if must_slow_down:
             self.state = "FOLLOWING_CART"
             self.peer_block_timer += dt
-            # Modulate speed to match safe following crawl (0.8 m/s ~ 26.67 px/s)
+            # Modulate speed to match a safe following crawl (0.8 m/s)
             self.speed = min(self.speed, 0.8 * M_TO_PX)
 
-            # If blocked behind a stalled cart for > 1.8s, increment deadlock and trigger dynamic D* Lite reroute if mesh enabled
+            self.stalled_ticks += 1
+
+            # Being held up behind a slower cart is congestion, not deadlock: the
+            # route still exists and the agent still progresses.
             if self.peer_block_timer > 1.8 and self.target_node:
-                self.deadlock_count += 1
+                self.congestion_events += 1
                 if self.enable_mesh:
-                    self.graph.update_mesh_penalty(self.current_node, self.target_node, 300.0)
+                    self.graph.update_mesh_penalty(self.current_node, self.target_node,
+                                                   MESH_FOLLOW_BLOCK_EQUIV_M)
                     self.planner.notify_edge_cost_change(self.current_node, self.target_node)
                     self.planner.compute_shortest_path()
                     self.target_node = self.planner.get_next_waypoint()
@@ -274,17 +409,19 @@ class TrolleyAgent:
         else:
             human_list = [humans]
 
+        # Social compliance measured by the shared helper, so D2RO and every baseline
+        # are scored against an identical threshold and identical semantics.
+        update_social_metrics(self, human_list, dt)
+
         yield_required = False
         for human in human_list:
             if not hasattr(human, "x"):
                 continue
             dist = math.hypot(self.x - human.x, self.y - human.y)
-            if dist < 26.0:
-                self.proxemic_violations += 1
-                if dist > 0.1:
-                    push_dist = 26.0 - dist
-                    self.x -= ((human.x - self.x) / dist) * (push_dist * 0.5)
-                    self.y -= ((human.y - self.y) / dist) * (push_dist * 0.5)
+            if dist < INTIMATE_RADIUS_PX and dist > 0.1:
+                push_dist = INTIMATE_RADIUS_PX - dist
+                self.x -= ((human.x - self.x) / dist) * (push_dist * 0.5)
+                self.y -= ((human.y - self.y) / dist) * (push_dist * 0.5)
 
             if dist < 38.0:
                 dx = human.x - self.x
@@ -299,10 +436,16 @@ class TrolleyAgent:
             self.speed = 0.0
 
             if self.yield_timer > 0.8 and self.target_node:
-                self.broadcast_congestion(self.current_node, self.target_node, penalty=500.0,
-                                         current_time=current_sim_time)
-                self.planner.compute_shortest_path()
-                self.target_node = self.planner.get_next_waypoint()
+                # Congestion propagation is the V2V mechanism itself: when W_mesh is
+                # ablated the agent must neither transmit nor apply the penalty to its
+                # own graph, otherwise the "w/o mesh" arm still enjoys mesh-derived
+                # rerouting and the ablation measures nothing.
+                if self.enable_mesh:
+                    self.broadcast_congestion(self.current_node, self.target_node,
+                                              penalty=MESH_ALERT_EQUIV_M,
+                                              current_time=current_sim_time)
+                    self.planner.compute_shortest_path()
+                    self.target_node = self.planner.get_next_waypoint()
                 self.yield_timer = 0.0
             return True
 
@@ -320,23 +463,46 @@ class TrolleyAgent:
         t0 = time.perf_counter()
         self.travel_time += dt
 
-        # 1. Process V2V Mesh & Proxemics
+        # 1. Process V2V Mesh, Proxemics & Kinetic Safety Envelope
         mesh_changed = self.process_inbound_mesh() if self.enable_mesh else False
         prox_changed = self.update_human_proxemics(humans, prox_field) if self.enable_prox else False
+        safety_changed = self.update_trolley_safety_costs(peer_agents) if self.enable_safety else False
+
+        # 1b. Temporal forgetting of remembered congestion.
+        # This MUST operate on the agent's own cloned graph: that is the graph D* Lite
+        # plans on. Decaying the shared layout graph instead would leave the penalties
+        # that actually drive planning undecayed forever.
+        # Applied on a 0.5 s cadence rather than every tick: decay is smooth and slow
+        # (5 s half-life), so per-tick notification would force a full replan 20x a
+        # second, inflating both replan counts and measured latency for no change in
+        # the resulting route.
+        decay_changed = False
+        self._decay_accum = getattr(self, "_decay_accum", 0.0) + dt
+        if self._decay_accum >= 0.5:
+            step = self._decay_accum
+            self._decay_accum = 0.0
+            for (du, dv) in self.graph.decay_mesh_penalties(
+                    step, decay_rate=V2V_DECAY_RATE_PER_SEC):
+                self.planner.notify_edge_cost_change(du, dv)
+                decay_changed = True
+            for (du, dv) in self.graph.decay_proxemic_penalties(
+                    step, decay_rate=V2V_DECAY_RATE_PER_SEC):
+                self.planner.notify_edge_cost_change(du, dv)
+                decay_changed = True
 
         # 2. Incremental Replan
-        if mesh_changed or prox_changed:
+        if mesh_changed or prox_changed or safety_changed or decay_changed:
             self.planner.compute_shortest_path()
             self.replan_count += 1
             self.target_node = self.planner.get_next_waypoint()
 
         # 3. Check Docking Arrival (Multi-cart return bay queue)
         goal_obj = self.graph.get_node(self.goal_node)
-        if self.current_node == self.goal_node or math.hypot(self.x - goal_obj.x, self.y - goal_obj.y) < 28.0:
+        if self.current_node == self.goal_node or math.hypot(self.x - goal_obj.x, self.y - goal_obj.y) < ARRIVAL_RADIUS_PX:
             self.is_docked = True
             self.state = "DOCKED"
             if self.active_lock_edge and self.enable_lock:
-                self._release_lock(current_sim_time)
+                self._release_corridor(current_sim_time)
             self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0
             return
 
@@ -355,20 +521,35 @@ class TrolleyAgent:
             self.planner.compute_shortest_path()
             self.target_node = self.planner.get_next_waypoint()
             if self.target_node is None:
-                self.deadlock_count += 1
+                # No route may simply mean the only corridor onward is reserved by a
+                # stronger peer. That is orderly yielding, not a deadlock, and must not
+                # be counted as one.
+                if self.enable_lock and self._blocked_by_peer_lock():
+                    self.state = "WAITING_LOCK"
+                    self.wait_timer += dt
+                    self.lock_wait_time += dt
+                    self.speed = 0.0
+                else:
+                    self.deadlock_count += 1
                 self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0
                 return
 
         edge = self.graph.get_edge(self.current_node, self.target_node)
         if self.enable_lock and edge and edge.is_single_file:
-            opp_edge = self.graph.get_edge(self.target_node, self.current_node)
-            if opp_edge and opp_edge.lock_owner is not None and opp_edge.lock_owner != self.agent_id:
+            self._purge_expired_claims(current_sim_time)
+            corridor = self._corridor_key(self.current_node, self.target_node)
+
+            # Announce intent, then defer to the total order over observed claims.
+            self._request_corridor(self.current_node, self.target_node, current_sim_time)
+            self._apply_lock_costs(current_sim_time)
+
+            if not self._holds_corridor(corridor):
                 self.state = "WAITING_LOCK"
                 self.wait_timer += dt
+                self.lock_wait_time += dt
                 self.speed = 0.0
                 if self.wait_timer > 1.8:
-                    edge.r_lock = math.inf
-                    self.planner.notify_edge_cost_change(self.current_node, self.target_node)
+                    # Yield persistently blocked: let D* Lite divert around the corridor.
                     self.planner.compute_shortest_path()
                     self.target_node = self.planner.get_next_waypoint()
                     self.wait_timer = 0.0
@@ -376,17 +557,26 @@ class TrolleyAgent:
                 self.last_compute_time_ms = (time.perf_counter() - t0) * 1000.0
                 return
             else:
-                if self.active_lock_edge != (self.current_node, self.target_node):
-                    self._acquire_lock(self.current_node, self.target_node, current_sim_time)
+                # We hold the strongest claim: take ownership of the corridor.
+                self.active_lock_edge = (self.current_node, self.target_node)
+                self.wait_timer = 0.0
         elif not self.enable_lock and edge and edge.is_single_file:
-            # When locks are ablated, opposing agents may both enter single-file aisle
+            # With locks ablated, opposing agents may both commit to the same aisle.
+            # Count each head-on encounter ONCE, on entry, rather than once per tick.
+            conflicting_now = set()
             if peer_agents:
                 for peer in peer_agents:
-                    if peer.agent_id != self.agent_id and not peer.is_docked:
-                        d_peer = math.hypot(self.x - peer.x, self.y - peer.y)
-                        if d_peer < 25.0:  # Head-on conflict in single file
-                            self.deadlock_count += 1
+                    if peer.agent_id == self.agent_id or peer.is_docked:
+                        continue
+                    d_peer = math.hypot(self.x - peer.x, self.y - peer.y)
+                    if d_peer < HEAD_ON_CONFLICT_RADIUS_PX:
+                        heading_delta = abs((self.heading - peer.heading + math.pi)
+                                            % (2 * math.pi) - math.pi)
+                        if heading_delta > math.pi * 0.5:  # genuinely opposed
+                            conflicting_now.add(peer.agent_id)
                             self.speed = 0.0
+            self.head_on_events += len(conflicting_now - self._peers_in_conflict)
+            self._peers_in_conflict = conflicting_now
 
         if self.state != "FOLLOWING_CART":
             self.state = "NAVIGATING"
@@ -408,7 +598,7 @@ class TrolleyAgent:
 
         if dist < 8.0:  # Waypoint arrived
             if self.active_lock_edge and self.active_lock_edge != (self.current_node, self.target_node):
-                self._release_lock(current_sim_time)
+                self._release_corridor(current_sim_time)
 
             self.current_node = self.target_node
             if self.current_node == self.goal_node:
@@ -453,32 +643,121 @@ class TrolleyAgent:
             current_time=current_time
         )
 
-    def _acquire_lock(self, u: str, v: str, current_time: float) -> None:
+    # ---------------------------------------------------------------- #
+    # Distributed corridor reservation protocol
+    # ---------------------------------------------------------------- #
+    @staticmethod
+    def _corridor_key(u: str, v: str) -> Tuple[str, str]:
+        """
+        A single-file corridor is one physical resource regardless of travel
+        direction, so (u,v) and (v,u) must map to the same reservation key.
+        """
+        return (u, v) if u <= v else (v, u)
+
+    def _purge_expired_claims(self, current_time: float) -> None:
+        """Drops claims past their lease, so a failed holder cannot block forever."""
+        for corridor, claims in list(self.lock_claims.items()):
+            for aid, (prio, t_acq, owner) in list(claims.items()):
+                if current_time - t_acq > LOCK_LEASE_S:
+                    del claims[aid]
+            if not claims:
+                del self.lock_claims[corridor]
+
+    def _register_claim(self, corridor: Tuple[str, str], claim: Tuple[float, float, int]) -> None:
+        self.lock_claims.setdefault(corridor, {})[claim[2]] = claim
+
+    def _winner(self, corridor: Tuple[str, str]) -> Optional[Tuple[float, float, int]]:
+        """Returns the strongest outstanding claim under the total order."""
+        claims = self.lock_claims.get(corridor)
+        return min(claims.values()) if claims else None
+
+    def _holds_corridor(self, corridor: Tuple[str, str]) -> bool:
+        w = self._winner(corridor)
+        return w is not None and w[2] == self.agent_id
+
+    def _blocked_by_peer_lock(self) -> bool:
+        """
+        True if every onward single-file corridor from the current node is currently
+        reserved by a stronger peer. Distinguishes orderly lock yielding from a genuine
+        routing deadlock, so the two are never conflated in the metrics.
+        """
+        for nxt in self.graph.successors(self.current_node):
+            edge = self.graph.get_edge(self.current_node, nxt)
+            if edge is None or not edge.is_single_file:
+                continue
+            winner = self._winner(self._corridor_key(self.current_node, nxt))
+            if winner is not None and winner[2] != self.agent_id:
+                return True
+        return False
+
+    def _request_corridor(self, u: str, v: str, current_time: float) -> None:
+        """
+        Issues a reservation request. Ownership is NOT assumed here: the agent may
+        only enter once it is the winner of the total order over all claims it has
+        observed, which is what makes this mutual exclusion rather than a unilateral
+        local assignment.
+        """
+        corridor = self._corridor_key(u, v)
+        if self.agent_id in self.lock_claims.get(corridor, {}):
+            return  # request already outstanding
+
+        claim = (self.lock_priority, current_time, self.agent_id)
+        self._register_claim(corridor, claim)
+        self.pending_corridor = corridor
+        self.mesh_net.broadcast(
+            sender_id=self.agent_id,
+            msg_type=MessageType.LOCK_REQUEST,
+            edge=(u, v),
+            priority=self.lock_priority,
+            ttl=3,
+            current_time=current_time
+        )
+
+    def _release_corridor(self, current_time: float) -> None:
+        if not self.active_lock_edge:
+            return
+        u, v = self.active_lock_edge
+        corridor = self._corridor_key(u, v)
+        self.lock_claims.get(corridor, {}).pop(self.agent_id, None)
+
         edge = self.graph.get_edge(u, v)
         if edge:
-            edge.lock_owner = self.agent_id
-            edge.lock_expiry = current_time + 10.0
-            self.active_lock_edge = (u, v)
-            self.mesh_net.broadcast(
-                sender_id=self.agent_id,
-                msg_type=MessageType.LOCK_REQUEST,
-                edge=(u, v),
-                ttl=2,
-                current_time=current_time
-            )
+            edge.lock_owner = None
+            edge.r_lock = 0.0
+            self.planner.notify_edge_cost_change(u, v)
 
-    def _release_lock(self, current_time: float) -> None:
-        if self.active_lock_edge:
-            u, v = self.active_lock_edge
-            edge = self.graph.get_edge(u, v)
-            if edge and edge.lock_owner == self.agent_id:
-                edge.lock_owner = None
-                edge.r_lock = 0.0
-                self.mesh_net.broadcast(
-                    sender_id=self.agent_id,
-                    msg_type=MessageType.LOCK_RELEASE,
-                    edge=(u, v),
-                    ttl=2,
-                    current_time=current_time
-                )
-            self.active_lock_edge = None
+        self.mesh_net.broadcast(
+            sender_id=self.agent_id,
+            msg_type=MessageType.LOCK_RELEASE,
+            edge=(u, v),
+            ttl=3,
+            current_time=current_time
+        )
+        self.active_lock_edge = None
+        self.pending_corridor = None
+        self.lock_wait_time = 0.0
+
+    def _apply_lock_costs(self, current_time: float) -> bool:
+        """
+        Projects the reservation state onto edge costs: a corridor claimed by a
+        stronger peer becomes infinite-cost for this agent, so D* Lite naturally
+        diverts through a parallel aisle or a turnout alcove.
+        """
+        changed = False
+        for corridor, claims in self.lock_claims.items():
+            if not claims:
+                continue
+            winner = min(claims.values())
+            blocked = (winner[2] != self.agent_id)
+            for (a, b) in ((corridor[0], corridor[1]), (corridor[1], corridor[0])):
+                edge = self.graph.get_edge(a, b)
+                if edge is None or not edge.is_single_file:
+                    continue
+                new_lock = math.inf if blocked else 0.0
+                if edge.r_lock != new_lock:
+                    edge.r_lock = new_lock
+                    edge.lock_owner = winner[2]
+                    edge.lock_expiry = winner[1] + LOCK_LEASE_S
+                    self.planner.notify_edge_cost_change(a, b)
+                    changed = True
+        return changed

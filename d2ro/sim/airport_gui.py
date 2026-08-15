@@ -153,7 +153,7 @@ class AirportSimApp:
         if nearest_node and min_d < 45.0:
             for a in self.agents:
                 for succ in self.layout.graph.successors(nearest_node):
-                    a.broadcast_congestion(nearest_node, succ, penalty=500.0, current_time=self.sim_time)
+                    a.broadcast_congestion(nearest_node, succ, penalty=MESH_ALERT_EQUIV_M, current_time=self.sim_time)
             print(f"[Airport Event] Dynamic Obstacle Placed near {nearest_node}")
 
     def _sim_loop(self) -> None:
