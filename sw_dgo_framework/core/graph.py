@@ -189,7 +189,7 @@ class TopologicalGraph:
         """Decays mesh congestion penalties over time."""
         changed_edges = []
         for (u, v), edge in self.edges.items():
-            if edge.w_mesh > 0.0:
+            if isinstance(edge, Edge) and edge.w_mesh > 0.0:
                 old_val = edge.w_mesh
                 edge.w_mesh = max(0.0, edge.w_mesh - decay_rate * dt)
                 if abs(old_val - edge.w_mesh) > 0.1:
@@ -200,7 +200,7 @@ class TopologicalGraph:
         """Releases expired corridor locks."""
         unlocked_edges = []
         for (u, v), edge in self.edges.items():
-            if edge.lock_owner is not None and current_time >= edge.lock_expiry:
+            if isinstance(edge, Edge) and edge.lock_owner is not None and current_time >= edge.lock_expiry:
                 edge.lock_owner = None
                 edge.r_lock = 0.0
                 unlocked_edges.append((u, v))

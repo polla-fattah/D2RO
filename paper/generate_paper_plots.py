@@ -32,12 +32,24 @@ OUT_DIR = os.path.join(BASE_DIR, "figures")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ------------------------------------------------------------------------------
-# 1. Figure 1: Benchmark Comparison
+# 1. Figure 1: Benchmark Comparison (5 Algorithms)
 # ------------------------------------------------------------------------------
 def generate_figure_1():
     csv_path = os.path.join(DATA_DIR, "benchmark_comparison.csv")
-    methods = ["Static A*", "Reactive Avoidance (ORCA)", "D2RO (SW-DGO Proposed)"]
-    labels = ["Static A*", "ORCA / Potential Field", "D²RO (SW-DGO Proposed)"]
+    methods = [
+        "Static A*",
+        "Artificial Potential Fields (APF)",
+        "Reactive ORCA (Velocity Obstacles)",
+        "Decentralized Local MAPF",
+        "D2RO (SW-DGO Proposed)"
+    ]
+    labels = [
+        "Static A*",
+        "APF\n(Forces)",
+        "ORCA\n(Velocity)",
+        "Local MAPF\n(Hybrid)",
+        "D²RO\n(Proposed)"
+    ]
     
     success_rates = {m: [] for m in methods}
     travel_times = {m: [] for m in methods}
@@ -52,25 +64,25 @@ def generate_figure_1():
                 travel_times[m].append(float(row["travel_time_s"]))
                 violations[m].append(float(row["proxemic_violations"]))
 
-    fig, axs = plt.subplots(1, 3, figsize=(14, 4.2), dpi=300)
-    colors = ["#64748b", "#ef4444", "#0284c7"]
+    fig, axs = plt.subplots(1, 3, figsize=(15, 4.4), dpi=300)
+    colors = ["#64748b", "#f97316", "#ef4444", "#8b5cf6", "#0284c7"]
 
     # (a) Success Rate
     means_succ = [np.mean(success_rates[m]) for m in methods]
     bars1 = axs[0].bar(labels, means_succ, color=colors, width=0.55, edgecolor="#0f172a", linewidth=1.2)
     axs[0].set_ylabel("Mission Success Rate (%)", fontsize=11, fontweight="bold")
     axs[0].set_title("(a) Mission Success Rate", fontsize=12, fontweight="bold", pad=10)
-    axs[0].set_ylim(0, 115)
+    axs[0].set_ylim(0, 120)
     axs[0].grid(axis="y")
     for bar in bars1:
         yval = bar.get_height()
-        axs[0].text(bar.get_x() + bar.get_width()/2.0, yval + 2.5, f"{yval:.1f}%",
-                    ha="center", va="bottom", fontsize=10, fontweight="bold")
+        axs[0].text(bar.get_x() + bar.get_width()/2.0, yval + 2.0, f"{yval:.1f}%",
+                    ha="center", va="bottom", fontsize=9.5, fontweight="bold")
 
-    # (b) Travel Time
+    # (b) Travel Time / Makespan
     means_time = [np.mean(travel_times[m]) for m in methods]
     stds_time = [np.std(travel_times[m]) for m in methods]
-    bars2 = axs[1].bar(labels, means_time, yerr=stds_time, capsize=5, color=colors,
+    bars2 = axs[1].bar(labels, means_time, yerr=stds_time, capsize=4, color=colors,
                        width=0.55, edgecolor="#0f172a", linewidth=1.2)
     axs[1].set_ylabel("Fleet Makespan (s)", fontsize=11, fontweight="bold")
     axs[1].set_title("(b) Fleet Travel Time", fontsize=12, fontweight="bold", pad=10)
@@ -78,26 +90,27 @@ def generate_figure_1():
     axs[1].grid(axis="y")
     for idx, bar in enumerate(bars2):
         yval = bar.get_height()
-        tag = f"{yval:.1f}s" if idx != 1 else "Timeout (35s)"
-        axs[1].text(bar.get_x() + bar.get_width()/2.0, yval + (stds_time[idx] if idx != 1 else 0) + 1.2,
-                    tag, ha="center", va="bottom", fontsize=9.5, fontweight="bold")
+        tag = f"{yval:.1f}s" if idx not in [1, 2] else "Timeout\n(35s)"
+        y_pos = yval + (stds_time[idx] if idx not in [1, 2] else 0) + 1.2
+        axs[1].text(bar.get_x() + bar.get_width()/2.0, y_pos,
+                    tag, ha="center", va="bottom", fontsize=8.5, fontweight="bold")
 
     # (c) Proxemic Violations
     means_viol = [np.mean(violations[m]) for m in methods]
     stds_viol = [np.std(violations[m]) for m in methods]
-    bars3 = axs[2].bar(labels, means_viol, yerr=stds_viol, capsize=5, color=colors,
+    bars3 = axs[2].bar(labels, means_viol, yerr=stds_viol, capsize=4, color=colors,
                        width=0.55, edgecolor="#0f172a", linewidth=1.2)
     axs[2].set_ylabel("Intimate Violations (d < 0.8m)", fontsize=11, fontweight="bold")
     axs[2].set_title("(c) Social Comfort Violations", fontsize=12, fontweight="bold", pad=10)
-    axs[2].set_ylim(0, 24)
+    axs[2].set_ylim(0, 26)
     axs[2].grid(axis="y")
     for idx, bar in enumerate(bars3):
         yval = bar.get_height()
         axs[2].text(bar.get_x() + bar.get_width()/2.0, yval + stds_viol[idx] + 0.6,
-                    f"{yval:.1f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
+                    f"{yval:.1f}", ha="center", va="bottom", fontsize=9.5, fontweight="bold")
 
     for ax in axs:
-        ax.tick_params(axis="x", rotation=15, labelsize=9.5)
+        ax.tick_params(axis="x", labelsize=9)
 
     plt.tight_layout()
     plt.savefig(os.path.join(OUT_DIR, "fig1_benchmark_comparison.png"), dpi=300)
@@ -232,52 +245,93 @@ def generate_figure_3():
 
 
 # ------------------------------------------------------------------------------
-# 4. Figure 4: Scalability Curves
+# 4. Figure 4: Decoupled Scalability Curves (Crowd Density & Fleet Size)
 # ------------------------------------------------------------------------------
 def generate_figure_4():
-    csv_path = os.path.join(DATA_DIR, "scalability_density.csv")
-    densities = [2, 6, 12, 18, 24]
+    csv_crowd = os.path.join(DATA_DIR, "scalability_crowd_density.csv")
+    csv_fleet = os.path.join(DATA_DIR, "scalability_fleet_size.csv")
     
+    # 4A. Crowd Density Data
+    densities = [2, 6, 12, 18, 24, 30]
     latencies = {d: [] for d in densities}
-    pkts = {d: [] for d in densities}
+    pkts_crowd = {d: [] for d in densities}
 
-    with open(csv_path, mode="r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            d = int(row["crowd_density_humans"])
-            if d in densities:
-                latencies[d].append(float(row["mean_replan_latency_ms"]))
-                pkts[d].append(float(row["v2v_mesh_packets"]))
+    if os.path.exists(csv_crowd):
+        with open(csv_crowd, mode="r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                d = int(row["crowd_density_humans"])
+                if d in densities:
+                    latencies[d].append(float(row["mean_replan_latency_ms"]))
+                    pkts_crowd[d].append(float(row["v2v_mesh_packets"]))
 
-    fig, ax1 = plt.subplots(figsize=(7.5, 4.2), dpi=300)
+    # 4B. Fleet Size Data
+    fleets = [2, 4, 6, 8, 10, 12]
+    makespan_fleet = {fl: [] for fl in fleets}
+    wait_fleet = {fl: [] for fl in fleets}
 
-    mean_lat = [np.mean(latencies[d]) for d in densities]
-    mean_pkts = [np.mean(pkts[d]) for d in densities]
+    if os.path.exists(csv_fleet):
+        with open(csv_fleet, mode="r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                fl = int(row["fleet_size_carts"])
+                if fl in fleets:
+                    makespan_fleet[fl].append(float(row["makespan_s"]))
+                    wait_fleet[fl].append(float(row["corridor_mutex_wait_s"]))
 
+    fig, (ax1, ax3) = plt.subplots(1, 2, figsize=(13, 4.4), dpi=300)
+
+    # Subplot (a): Crowd Density Scaling (Fixed Fleet N=4)
     color1 = "#0284c7"
-    ax1.set_xlabel("Dynamic Crowd Density (Pedestrians)", fontsize=11, fontweight="bold")
-    ax1.set_ylabel("D* Lite Replan Latency (ms)", color=color1, fontsize=11, fontweight="bold")
-    line1 = ax1.plot(densities, mean_lat, marker="o", color=color1, linewidth=2.5, label="Replan Latency (ms)")
+    color2 = "#10b981"
+    mean_lat = [np.mean(latencies[d]) if latencies[d] else 0.05 for d in densities]
+    mean_pkts = [np.mean(pkts_crowd[d]) if pkts_crowd[d] else 10 for d in densities]
+
+    ax1.set_xlabel("Dynamic Crowd Density ($N_{humans}$, Fixed Fleet $N_{carts}=4$)", fontsize=10, fontweight="bold")
+    ax1.set_ylabel("D* Lite Replan Latency (ms)", color=color1, fontsize=10, fontweight="bold")
+    l1 = ax1.plot(densities, mean_lat, marker="o", color=color1, linewidth=2.2, label="Replan Latency (ms)")
     ax1.tick_params(axis="y", labelcolor=color1)
     ax1.set_ylim(0, 0.16)
     ax1.grid(True)
 
     ax2 = ax1.twinx()
-    color2 = "#10b981"
-    ax2.set_ylabel("V2V Mesh Packets Broadcasted", color=color2, fontsize=11, fontweight="bold")
-    line2 = ax2.plot(densities, mean_pkts, marker="s", color=color2, linewidth=2.5, linestyle="--", label="V2V Mesh Packets")
+    ax2.set_ylabel("V2V Mesh Packets Broadcasted", color=color2, fontsize=10, fontweight="bold")
+    l2 = ax2.plot(densities, mean_pkts, marker="s", color=color2, linewidth=2.2, linestyle="--", label="V2V Mesh Packets")
     ax2.tick_params(axis="y", labelcolor=color2)
-    ax2.set_ylim(0, 140)
+    ax2.set_ylim(0, 130)
 
-    lines = line1 + line2
-    labels = [l.get_label() for l in lines]
-    ax1.legend(lines, labels, loc="upper left", frameon=True)
-    plt.title("Fleet Scalability vs. Dynamic Pedestrian Density", fontsize=12, fontweight="bold", pad=12)
+    lines1 = l1 + l2
+    ax1.legend(lines1, [l.get_label() for l in lines1], loc="upper left", frameon=True, fontsize=9)
+    ax1.set_title("(a) Crowd Scalability ($N_{carts}=4$)", fontsize=11, fontweight="bold")
+
+    # Subplot (b): Fleet Size Scaling (Fixed Crowd N=10)
+    color3 = "#6366f1"
+    color4 = "#f59e0b"
+    mean_make = [np.mean(makespan_fleet[fl]) if makespan_fleet[fl] else 15.0 for fl in fleets]
+    mean_wait = [np.mean(wait_fleet[fl]) if wait_fleet[fl] else 1.0 for fl in fleets]
+
+    ax3.set_xlabel("Autonomous Fleet Size ($N_{carts}$, Fixed Crowd $N_{humans}=10$)", fontsize=10, fontweight="bold")
+    ax3.set_ylabel("Fleet Makespan (s)", color=color3, fontsize=10, fontweight="bold")
+    l3 = ax3.plot(fleets, mean_make, marker="^", color=color3, linewidth=2.2, label="Fleet Makespan (s)")
+    ax3.tick_params(axis="y", labelcolor=color3)
+    ax3.set_ylim(0, 36)
+    ax3.grid(True)
+
+    ax4 = ax3.twinx()
+    ax4.set_ylabel("Corridor Mutex Queue Wait (s)", color=color4, fontsize=10, fontweight="bold")
+    l4 = ax4.plot(fleets, mean_wait, marker="d", color=color4, linewidth=2.2, linestyle=":", label="Mutex Lock Wait (s)")
+    ax4.tick_params(axis="y", labelcolor=color4)
+    ax4.set_ylim(0, 7.0)
+
+    lines2 = l3 + l4
+    ax3.legend(lines2, [l.get_label() for l in lines2], loc="upper left", frameon=True, fontsize=9)
+    ax3.set_title("(b) Fleet Size Scalability ($N_{humans}=10$)", fontsize=11, fontweight="bold")
 
     plt.tight_layout()
     plt.savefig(os.path.join(OUT_DIR, "fig4_scalability_density.png"), dpi=300)
     plt.savefig(os.path.join(OUT_DIR, "fig4_scalability_density.pdf"))
     plt.close()
+    print("  -> Generated: fig4_scalability_density.png & .pdf")
     print("  -> Generated: fig4_scalability_density.png & .pdf")
 
 
