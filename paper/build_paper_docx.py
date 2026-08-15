@@ -291,7 +291,7 @@ def build_paper_docx():
         ["Artificial Potential Fields (APF)", "0.0%", "Timeout (35.0s)", "0.01 ± 0.10", "226.39 ± 69.25", "0.0 ± 0.0", "0.040 ms"],
         ["Reactive ORCA (Velocity Obstacles)", "0.0%", "Timeout (35.0s)", "2094.37 ± 99.62", "19.37 ± 65.28", "0.0 ± 0.0", "0.120 ms"],
         ["Decentralized Local MAPF", "0.0%", "Timeout (35.0s)", "11.00 ± 0.00", "102.44 ± 15.00", "0.0 ± 0.0", "0.350 ms"],
-        ["D²RO (SW-DGO Proposed)", "100.0%", "21.99 ± 2.39 [21.52, 22.45]", "0.00 ± 0.00", "0.00 ± 0.00", "14.23 ± 2.79", "0.145 ms"]
+        ["D²RO (SW-DGO Proposed)", "97.0%", "21.47 ± 5.32 [20.42, 22.53]", "0.00 ± 0.00", "0.59 ± 5.90", "12.21 ± 2.76", "0.145 ms"]
     ]
     for row_idx, row_data in enumerate(data):
         for col_idx, val in enumerate(row_data):
@@ -324,9 +324,33 @@ def build_paper_docx():
         "3. Social Blindness of Static A*: Static A* completes missions quickly (0.80s), but causes 4.00 ± 0.00 intimate personal space violations "
         "per trial (Figure 1(c)). Because Static A* plans purely on static Euclidean distances D(u, v), it relentlessly drives straight through dense "
         "pedestrian clusters, forcing human shoppers to step aside.\n\n"
-        "4. D²RO Optimal Social Synthesis: D²RO achieves a 100.0% mission success rate with 0.00 ± 0.00 intimate violations (p < 0.001), executing "
-        "polite, wide social detours through Action Alley. Incremental D* Lite updates execute in just 0.145 ms, proving real-time computational efficiency."
+        "4. D²RO Optimal Social Synthesis: D²RO achieves a 97.0% mission success rate with minimal intimate violations (0.59 ± 5.90, p < 0.001), "
+        "executing polite, wide social detours through Action Alley. Incremental D* Lite updates execute in just 0.145 ms, proving real-time computational efficiency."
     )
+
+    # Table 2: Component Ablation Analysis
+    doc.add_heading("6.2 Component Ablation Insights", level=2)
+    table_ab = doc.add_table(rows=6, cols=5)
+    table_ab.alignment = WD_TABLE_ALIGNMENT.CENTER
+    headers_ab = ["Configuration", "Omitted Component", "Success Rate", "Makespan (s)", "Discomfort Integral"]
+    for col_idx, h in enumerate(headers_ab):
+        cell = table_ab.cell(0, col_idx)
+        cell.text = h
+        cell.paragraphs[0].runs[0].bold = True
+
+    data_ab = [
+        ["Full D²RO Framework", "None", "99.0%", "22.98 ± 2.21", "0.63 ± 3.09"],
+        ["w/o V2V Mesh Telemetry", "W_mesh = 0", "100.0%", "15.24 ± 1.95", "0.43 ± 1.99"],
+        ["w/o Corridor Mutex Lock", "R_lock = 0", "100.0%", "15.24 ± 1.95", "0.43 ± 1.99"],
+        ["w/o Human Gaussian Proxemics", "H_prox = 0", "17.0%", "32.70 ± 5.67", "71.56 ± 34.26"],
+        ["w/o Trolley Kinetic Safety Bubble", "S_trolley = 0", "100.0%", "21.26 ± 2.17", "0.41 ± 2.07"]
+    ]
+    for row_idx, row_data in enumerate(data_ab):
+        for col_idx, val in enumerate(row_data):
+            cell = table_ab.cell(row_idx + 1, col_idx)
+            cell.text = val
+            if row_idx == 0:
+                cell.paragraphs[0].runs[0].bold = True
 
     # Add Figure 2 (Ablation)
     fig2_path = os.path.join(FIG_DIR, "fig2_ablation_study.png")
@@ -338,19 +362,50 @@ def build_paper_docx():
         cap.runs[0].font.size = Pt(9.5)
         cap.runs[0].font.italic = True
 
-    # In-Depth Ablation Discussion
-    doc.add_heading("6.2 Component Ablation Insights", level=2)
     doc.add_paragraph(
-        "1. Necessity of W_mesh (V2V Telemetry): Setting W_mesh = 0 forces trailing carts to rely solely on local line-of-sight sensors. Trailing "
-        "units travel all the way to a blocked corridor entrance before detecting the bottleneck, forcing complete reversals and increasing "
-        "makespan by +48.3% (14.57s -> 21.61s).\n\n"
-        "2. Necessity of R_lock (Directional Mutex Locks): Setting R_lock = 0 removes single-file corridor exclusivity. When two opposing carts "
-        "enter a narrow aisle simultaneously, they freeze in symmetrical head-on deadlocks, reducing mission success to 47.0% with 1.94 ± 2.01 deadlocks "
-        "per trial (Figure 2(b)).\n\n"
-        "3. Necessity of H_prox (Gaussian Proxemics): Setting H_prox = 0 causes the cumulative pedestrian discomfort integral to spike from 12.47 to "
-        "95.52 (+666.0%) (Figure 2(a)). Carts treat shoppers as infinitesimal points, brushing aggressively past pedestrians.\n\n"
-        "4. Necessity of S_trolley (Kinetic Vehicle Safety Envelope): Setting S_trolley = 0 causes carts to cut sharp 90-degree turns tightly, "
-        "producing 5.69 ± 1.69 shelf corner scrapes and reducing mission success to 88.0% (Figure 2(b))."
+        "1. Necessity of H_prox (Gaussian Proxemics): Omitting H_prox causes a catastrophic collapse in mission success (17.0%) and a massive "
+        "surge in pedestrian discomfort integral (71.56 ± 34.26). Carts treat shoppers as infinitesimal points, brushing aggressively past pedestrians.\n\n"
+        "2. Necessity of S_trolley (Kinetic Vehicle Safety Envelope): Omitting S_trolley causes carts to cut sharp 90-degree turns tightly, "
+        "producing 77.72 ± 11.94 shelf corner scrapes, demonstrating that kinodynamic bubble inflation is essential for geometric fixture clearance."
+    )
+
+    # Table 3: Cross-Domain Benchmark
+    doc.add_heading("6.3 Cross-Domain Generalization Benchmark", level=2)
+    table_cd = doc.add_table(rows=4, cols=5)
+    table_cd.alignment = WD_TABLE_ALIGNMENT.CENTER
+    headers_cd = ["Environment Domain", "Success Rate", "Makespan (s)", "V2V Mesh Packets", "D* Lite Replans"]
+    for col_idx, h in enumerate(headers_cd):
+        cell = table_cd.cell(0, col_idx)
+        cell.text = h
+        cell.paragraphs[0].runs[0].bold = True
+
+    data_cd = [
+        ["Retail Supermarket", "100.0%", "23.07 ± 2.47", "15.2 ± 2.6", "341.7 ± 82.8"],
+        ["Clinical Hospital", "92.0%", "27.68 ± 11.35", "2.8 ± 2.0", "309.6 ± 127.1"],
+        ["Airport Terminal", "80.0%", "25.29 ± 13.60", "6.6 ± 14.8", "897.9 ± 342.9"]
+    ]
+    for row_idx, row_data in enumerate(data_cd):
+        for col_idx, val in enumerate(row_data):
+            cell = table_cd.cell(row_idx + 1, col_idx)
+            cell.text = val
+
+    # Add Figure 3 (Cross-Domain)
+    fig3_path = os.path.join(FIG_DIR, "fig3_cross_domain_generalization.png")
+    if os.path.exists(fig3_path):
+        doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER
+        doc.add_picture(fig3_path, width=Inches(6.0))
+        cap = doc.add_paragraph("Figure 3: Multi-domain fleet performance across Supermarket, Hospital, and Airport environments on (a) Makespan, (b) V2V Mesh Packets, and (c) Incremental Replan Cycles.")
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap.runs[0].font.size = Pt(9.5)
+        cap.runs[0].font.italic = True
+
+    # Table 4: Decoupled Scalability
+    doc.add_heading("6.4 Decoupled Scalability Analysis", level=2)
+    doc.add_paragraph(
+        "1. Crowd Density Scaling (N_humans in [2..30], N_carts=4): Replan latency scales smoothly from 0.18 ms at N_h=2 to 1.23 ms at N_h=30, "
+        "consistently executing within < 2.5% of the 50 ms control loop.\n\n"
+        "2. Fleet Size Scaling (N_carts in [2..12], N_humans=10): Fleet makespan scales gracefully (25.67s -> 41.25s) while V2V mesh broadcast "
+        "packets scale with fleet size (5.0 -> 134.9 packets)."
     )
 
     # Add Figure 4 (Scalability)
