@@ -9,6 +9,9 @@ import heapq
 from typing import Dict, List, Tuple, Optional
 from ..core.graph import TopologicalGraph
 from ..core.human import Human, ProxemicsField
+from ..core.units import (
+    PX_TO_M, M_TO_PX, ROBOT_RADIUS_PX, ROBOT_VMAX_MPS
+)
 
 class StaticAStarAgent:
     """
@@ -16,7 +19,7 @@ class StaticAStarAgent:
     Lacks mesh communication and human proxemic awareness.
     """
     def __init__(self, agent_id: int, graph: TopologicalGraph, start_node: str, goal_node: str,
-                 max_speed: float = 3.0):
+                 max_speed: float = ROBOT_VMAX_MPS * M_TO_PX):  # ~40 px/s (1.2 m/s)
         self.agent_id = agent_id
         self.graph = graph
         self.current_node = start_node

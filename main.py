@@ -31,8 +31,10 @@ from sw_dgo_framework.environments.airport import AirportLayout, AirportScenario
 from sw_dgo_framework.core.mesh_network import MeshNetwork
 from sw_dgo_framework.core.agent import TrolleyAgent
 from sw_dgo_framework.core.human import Human, ProxemicsField
-from sw_dgo_framework.baselines.static_astar import StaticAStarAgent
-from sw_dgo_framework.baselines.reactive_orca import ReactiveLocalAgent
+from sw_dgo_framework.baselines import (
+    StaticAStarAgent, ArtificialPotentialFieldAgent,
+    ORCAAgent, DecentralizedLocalMAPFAgent
+)
 
 class UnifiedD2ROApp:
     """Master Unified Graphical Simulator for D²RO Autonomous Fleet Multi-Agent Routing."""
@@ -45,7 +47,7 @@ class UnifiedD2ROApp:
 
         # Simulation State
         self.selected_domain = "supermarket"  # "supermarket", "hospital", "airport"
-        self.selected_algorithm = "d2ro"       # "d2ro", "static_astar", "reactive_orca"
+        self.selected_algorithm = "d2ro"       # "d2ro", "static_astar", "apf", "orca", "local_mapf"
         self.selected_scenario = "A"
         self.is_running = True
         self.sim_speed = 1.0
@@ -61,11 +63,13 @@ class UnifiedD2ROApp:
 
         # Simulation Entities
         self.layout: Any = None
-        self.prox_field = ProxemicsField(amplitude=450.0, sigma=38.0)
+        self.prox_field = ProxemicsField(amplitude=450.0)
         self.mesh_net: Optional[MeshNetwork] = None
         self.d2ro_agents: List[TrolleyAgent] = []
         self.astar_agents: List[StaticAStarAgent] = []
-        self.orca_agents: List[ReactiveLocalAgent] = []
+        self.apf_agents: List[ArtificialPotentialFieldAgent] = []
+        self.orca_agents: List[ORCAAgent] = []
+        self.mapf_agents: List[DecentralizedLocalMAPFAgent] = []
         self.humans: List[Human] = []
         self.shelf_boxes: List[Tuple[float, float, float, float]] = []
         self.scenario_desc = ""
@@ -131,8 +135,14 @@ class UnifiedD2ROApp:
 
         tk.Label(alg_box, text="Algorithm:", font=("Segoe UI", 9, "bold"), fg="#94a3b8", bg="#1e293b").pack(side=tk.LEFT, padx=(0, 4))
         self.alg_combo = ttk.Combobox(
-            alg_box, values=["D²RO (SW-DGO Proposed)", "Static A* (Shortest Path)", "Reactive Avoidance (ORCA)"],
-            state="readonly", width=24, font=("Segoe UI", 9)
+            alg_box, values=[
+                "D²RO (SW-DGO Proposed)",
+                "Static A* (Baseline)",
+                "Artificial Potential Fields (APF)",
+                "Optimal Reciprocal Collision Avoidance (ORCA)",
+                "Decentralized Local MAPF (Hybrid)"
+            ],
+            state="readonly", width=28, font=("Segoe UI", 9)
         )
         self.alg_combo.current(0)
         self.alg_combo.bind("<<ComboboxSelected>>", self._on_algorithm_change)
@@ -232,8 +242,12 @@ class UnifiedD2ROApp:
             self.selected_algorithm = "d2ro"
         elif "Static" in val:
             self.selected_algorithm = "static_astar"
-        else:
-            self.selected_algorithm = "reactive_orca"
+        elif "Potential" in val:
+            self.selected_algorithm = "apf"
+        elif "ORCA" in val:
+            self.selected_algorithm = "orca"
+        elif "Local MAPF" in val:
+            self.selected_algorithm = "local_mapf"
         self._restart_current_scenario()
 
     def _update_scenario_tabs(self) -> None:
@@ -304,13 +318,17 @@ class UnifiedD2ROApp:
         self.mesh_net = MeshNetwork(comm_radius=350.0)
         self.d2ro_agents = []
         self.astar_agents = []
+        self.apf_agents = []
         self.orca_agents = []
+        self.mapf_agents = []
 
         for c in trolley_cfgs:
             cid = c["id"]
             start_n = c["start"]
             goal_n = c["goal"]
             self.trajectory_trails[cid] = []
+            s_node = self.layout.graph.get_node(start_n)
+            g_node = self.layout.graph.get_node(goal_n)
 
             # 1. D2RO Agent
             agent = TrolleyAgent(cid, self.layout.graph, start_n, goal_n, self.mesh_net)
@@ -320,11 +338,17 @@ class UnifiedD2ROApp:
             astar_ag = StaticAStarAgent(cid, self.layout.graph, start_n, goal_n)
             self.astar_agents.append(astar_ag)
 
-            # 3. ORCA Reactive Agent
-            s_node = self.layout.graph.get_node(start_n)
-            g_node = self.layout.graph.get_node(goal_n)
-            orca_ag = ReactiveLocalAgent(cid, (s_node.x, s_node.y), (g_node.x, g_node.y))
+            # 3. Artificial Potential Fields Agent
+            apf_ag = ArtificialPotentialFieldAgent(cid, (s_node.x, s_node.y), (g_node.x, g_node.y))
+            self.apf_agents.append(apf_ag)
+
+            # 4. ORCA Agent
+            orca_ag = ORCAAgent(cid, (s_node.x, s_node.y), (g_node.x, g_node.y))
             self.orca_agents.append(orca_ag)
+
+            # 5. Decentralized Local MAPF Agent
+            mapf_ag = DecentralizedLocalMAPFAgent(cid, self.layout.graph, start_n, goal_n)
+            self.mapf_agents.append(mapf_ag)
 
     def _restart_current_scenario(self) -> None:
         self.load_environment(self.selected_domain, self.selected_scenario)
@@ -380,10 +404,26 @@ class UnifiedD2ROApp:
                     if len(self.trajectory_trails[a.agent_id]) > 60:
                         self.trajectory_trails[a.agent_id].pop(0)
 
-            else:  # reactive_orca
+            elif self.selected_algorithm == "apf":
+                peer_pos = [a.current_pos for a in self.apf_agents]
+                for a in self.apf_agents:
+                    a.step(eff_dt, peer_pos, self.humans, self.shelf_boxes)
+                    self.trajectory_trails[a.agent_id].append((a.x, a.y))
+                    if len(self.trajectory_trails[a.agent_id]) > 60:
+                        self.trajectory_trails[a.agent_id].pop(0)
+
+            elif self.selected_algorithm == "orca":
                 peer_pos = [a.current_pos for a in self.orca_agents]
                 for a in self.orca_agents:
                     a.step(eff_dt, peer_pos, self.humans, self.shelf_boxes)
+                    self.trajectory_trails[a.agent_id].append((a.x, a.y))
+                    if len(self.trajectory_trails[a.agent_id]) > 60:
+                        self.trajectory_trails[a.agent_id].pop(0)
+
+            elif self.selected_algorithm == "local_mapf":
+                peer_dict = {a.agent_id: a.current_pos for a in self.mapf_agents}
+                for a in self.mapf_agents:
+                    a.step(eff_dt, peer_dict, self.humans)
                     self.trajectory_trails[a.agent_id].append((a.x, a.y))
                     if len(self.trajectory_trails[a.agent_id]) > 60:
                         self.trajectory_trails[a.agent_id].pop(0)
@@ -539,7 +579,9 @@ class UnifiedD2ROApp:
         agent_list = (
             self.d2ro_agents if self.selected_algorithm == "d2ro" else
             self.astar_agents if self.selected_algorithm == "static_astar" else
-            self.orca_agents
+            self.apf_agents if self.selected_algorithm == "apf" else
+            self.orca_agents if self.selected_algorithm == "orca" else
+            self.mapf_agents
         )
 
         colors = ["#38bdf8", "#fbbf24", "#34d399", "#a78bfa", "#f87171"]
@@ -578,7 +620,9 @@ class UnifiedD2ROApp:
         agent_list = (
             self.d2ro_agents if self.selected_algorithm == "d2ro" else
             self.astar_agents if self.selected_algorithm == "static_astar" else
-            self.orca_agents
+            self.apf_agents if self.selected_algorithm == "apf" else
+            self.orca_agents if self.selected_algorithm == "orca" else
+            self.mapf_agents
         )
 
         docked = sum(1 for a in agent_list if a.is_docked)

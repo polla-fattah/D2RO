@@ -57,6 +57,10 @@ class SupermarketLayout:
 
         self._build_realistic_store()
 
+    @property
+    def shelf_bounds(self) -> List[Tuple[float, float, float, float]]:
+        return [s.bounds for s in self.shelves]
+
     def _build_realistic_store(self) -> None:
         """Constructs authentic retail topological roadmap and solid fixtures."""
         

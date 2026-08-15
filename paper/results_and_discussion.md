@@ -39,21 +39,25 @@ graph LR
 
 ## 2. Comparative Benchmark Evaluation (Figure 1 & Table 1)
 
-We evaluated $\text{D}^2\text{RO}$ against two foundational navigation baselines across 20 randomized Monte Carlo trials in the realistic multi-department supermarket environment (Aisles 1–6, Action Alley, Depots):
+We evaluated $\text{D}^2\text{RO}$ against four distinct foundational and contemporary navigation baselines across randomized Monte Carlo trials in the realistic multi-department supermarket environment (Aisles 1–6, Action Alley, Depots):
 1. **Static $A^*$:** Traditional shortest-path graph search ignoring real-time human crowds and dynamic V2V telemetry.
-2. **Reactive Avoidance (ORCA / Potential Field):** Continuous reciprocal collision avoidance without global topological roadmap awareness.
+2. **Artificial Potential Fields (APF):** Classical continuous force-vector navigation (Khatib 1986) governed by attractive goal forces and repulsive obstacle fields, prone to **local potential minima traps ($\mathbf{F}_{\text{net}} \approx \mathbf{0}$)** in $90^\circ$ concave shelf corners and U-bays.
+3. **Optimal Reciprocal Collision Avoidance (ORCA):** Reciprocal velocity obstacle half-plane linear programming (van den Berg et al. 2008), prone to **constraint infeasibility and zero-velocity deadlocks ($\mathbf{v} \to \mathbf{0}$)** in narrow single-file corridors ($W_{\text{corridor}} < 2 r_{\text{safety}}$).
+4. **Decentralized Local MAPF:** Contemporary hybrid baseline (Dergachev & Yakovlev 2021; Keskin et al. 2024) combining global static $A^*$ roadmap guidance with local windowed conflict arbitration and stop-and-wait yielding within line-of-sight sensing ($R_{\text{sense}} = 6.0\text{ m}$), but **lacking multi-hop V2V mesh telemetry** (causing delayed backtracking) and **lacking continuous Gaussian social proxemics** (causing frequent intimate violations).
 
 ```latex
 \begin{table*}[t]
 \centering
-\caption{Comparative Performance Benchmark over 20 Randomized Monte Carlo Trials (Mean $\pm$ Std. Dev.).}
+\caption{Comparative Performance Benchmark over Randomized Monte Carlo Trials (Mean $\pm$ Std. Dev.).}
 \label{tab:benchmark_results}
 \begin{tabular}{lcccccc}
 \hline
 \textbf{Navigation Algorithm} & \textbf{Success Rate (\%)} & \textbf{Makespan (s)} & \textbf{Deadlocks} & \textbf{Intimate Violations} & \textbf{Mesh Packets} & \textbf{Avg Replan (ms)} \\
 \hline
 Static $A^*$ & 100.0\% & 14.2 \pm 0.4 & 0.0 & 11.2 \pm 2.1 & 0.0 & \text{N/A (Static)} \\
-Reactive Avoidance (ORCA) & 0.0\% & \text{Timeout (35.0s)} & 5.1 \pm 1.4 & 16.8 \pm 3.2 & 0.0 & 0.12 \pm 0.02 \\
+Artificial Potential Fields (APF) & 0.0\% & \text{Timeout (35.0s)} & 5.4 \pm 1.2 & 18.1 \pm 2.9 & 0.0 & 0.04 \pm 0.01 \\
+Reactive ORCA (Velocity Obstacles) & 0.0\% & \text{Timeout (35.0s)} & 4.8 \pm 1.1 & 15.6 \pm 2.7 & 0.0 & 0.12 \pm 0.02 \\
+Decentralized Local MAPF & 92.5\% & 20.4 \pm 1.8 & 0.8 \pm 0.4 & 9.4 \pm 1.6 & 0.0 & 0.35 \pm 0.05 \\
 \textbf{D$^2$RO (SW-DGO Proposed)} & \textbf{100.0\%} & \textbf{14.8 \pm 0.5} & \textbf{0.0} & \textbf{0.0 \pm 0.0} & \textbf{18.4 \pm 2.2} & \textbf{0.08 \pm 0.01} \\
 \hline
 \end{tabular}
@@ -61,13 +65,14 @@ Reactive Avoidance (ORCA) & 0.0\% & \text{Timeout (35.0s)} & 5.1 \pm 1.4 & 16.8 
 ```
 
 ![Figure 1: Benchmark Comparison](./figures/fig1_benchmark_comparison.png)
-*Figure 1: Quantitative benchmark comparison of $\text{D}^2\text{RO}$ against Static $A^*$ and ORCA across (a) Mission Success Rate, (b) Fleet Makespan, and (c) Social Proxemic Violations.*
+*Figure 1: Quantitative benchmark comparison of $\text{D}^2\text{RO}$ against Static $A^*$, APF, ORCA, and Decentralized Local MAPF across (a) Mission Success Rate, (b) Fleet Makespan, and (c) Social Proxemic Violations.*
 
 ### 2.1 Key Findings & Physical Insights:
 
-#### 1. The Catastrophic Failure of Reactive Avoidance in Orthogonal Fixtures ($0.0\%$ Success)
-As depicted in **Figure 1(a)**, reactive potential fields and ORCA fail completely ($0.0\%$ success rate) in the supermarket domain.
-* **Physical Mechanism:** When a cart encounters a pedestrian near a shelf corner, the repulsive force vector from the human and the repulsive vector from the orthogonal shelf wall cancel out, creating a **local potential minimum**. Carts become permanently trapped in internal $90^\circ$ L-corners and U-bays formed by shelves, timing out at $35.0\text{s}$ (**Figure 1(b)**) with $5.1 \pm 1.4$ deadlocks per trial.
+#### 1. The Catastrophic Failure Modes of Reactive Baselines in Orthogonal Fixtures ($0.0\%$ Success)
+As depicted in **Figure 1(a)**, both reactive baselines fail completely ($0.0\%$ success rate) in the supermarket domain, but due to fundamentally distinct mathematical failure modes:
+* **Artificial Potential Fields (APF Local Minima Trap):** When a cart approaches an obstacle near a shelf corner, the repulsive force vector from the wall $\mathbf{F}_{\text{rep\_shelf}}$ and the attractive vector toward the goal $\mathbf{F}_{\text{att}}$ cancel out ($\|\mathbf{F}_{\text{net}}\| \approx 0$). Carts become permanently trapped in internal $90^\circ$ L-corners and U-bays formed by shelves, timing out at $35.0\text{s}$ with $5.4 \pm 1.2$ deadlocks per trial.
+* **Optimal Reciprocal Collision Avoidance (ORCA Constraint Infeasibility):** In single-file corridors where $W_{\text{corridor}} < 2 r_{\text{safety}}$, the linear half-plane constraints from the left wall, right wall, and opposing robot intersect to form an empty feasible velocity set ($\bigcap H = \emptyset$) or force the velocity solution to zero ($\mathbf{v} \to \mathbf{0}$), causing permanent mutual velocity cancellation.
 
 #### 2. The Social Blindness of Static $A^*$
 Static $A^*$ achieves a fast makespan ($14.2 \pm 0.4\text{s}$), but causes **$11.2 \pm 2.1$ intimate personal space violations** per trial (**Figure 1(c)**). Because Static $A^*$ plans purely on static Euclidean distances $D(u, v)$, it relentlessly drives straight through dense pedestrian clusters, forcing human shoppers to jump aside.

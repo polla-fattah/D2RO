@@ -1,0 +1,137 @@
+"""
+Baseline: Classical Artificial Potential Fields (APF).
+Implements Khatib (1986) continuous potential field navigation with attractive goal forces
+and repulsive obstacle forces from static shelf walls, dynamic pedestrians, and peer robots.
+Mathematically models the classical failure mode: Local Potential Minima Traps in concave 90° corners.
+"""
+
+from __future__ import annotations
+import math
+from math import hypot as math_hypot, exp as math_exp
+from typing import List, Tuple, Optional
+from ..core.human import Human
+from ..core.units import (
+    PX_TO_M, M_TO_PX, ROBOT_RADIUS_PX, ROBOT_VMAX_MPS
+)
+
+class ArtificialPotentialFieldAgent:
+    """
+    Classical Artificial Potential Fields (APF) reactive agent.
+    Steers along the negative gradient of the total potential field:
+    U_total(p) = U_att(p) + sum(U_rep_shelves) + sum(U_rep_humans) + sum(U_rep_peers)
+    F_net = -grad(U_total)
+    """
+    def __init__(self, agent_id: int, start_pos: Tuple[float, float], goal_pos: Tuple[float, float],
+                 max_speed: float = ROBOT_VMAX_MPS * M_TO_PX,  # ~40 px/s (1.2 m/s)
+                 k_att: float = 1.0, k_rep_obs: float = 350.0, k_rep_human: float = 450.0,
+                 d0_shelf: float = 30.0, d0_human: float = 40.0):
+        self.agent_id = agent_id
+        self.x, self.y = start_pos
+        self.goal_x, self.goal_y = goal_pos
+        self.vx: float = 0.0
+        self.vy: float = 0.0
+        self.max_speed = max_speed
+        self.heading: float = 0.0
+
+        # Potential field parameters
+        self.k_att = k_att
+        self.k_rep_obs = k_rep_obs
+        self.k_rep_human = k_rep_human
+        self.d0_shelf = d0_shelf   # Influence distance for static shelves (~0.9 m)
+        self.d0_human = d0_human   # Influence distance for humans (~1.2 m)
+
+        # Performance Metrics
+        self.total_distance: float = 0.0
+        self.travel_time: float = 0.0
+        self.deadlock_count: int = 0
+        self.proxemic_violations: int = 0
+        self.is_docked: bool = False
+
+    @property
+    def current_pos(self) -> Tuple[float, float]:
+        return (self.x, self.y)
+
+    def step(self, dt: float, peer_positions: List[Tuple[float, float]],
+             humans: List[Human], shelf_bounds: List[Tuple[float, float, float, float]]) -> None:
+        if self.is_docked:
+            return
+
+        self.travel_time += dt
+
+        # 1. Attractive Force toward Goal: F_att = -k_att * (p - p_goal)
+        dx_goal = self.goal_x - self.x
+        dy_goal = self.goal_y - self.y
+        dist_goal = math_hypot(dx_goal, dy_goal)
+
+        if dist_goal < 12.0:
+            self.is_docked = True
+            self.vx = 0.0
+            self.vy = 0.0
+            return
+
+        # Normalized attractive vector scaled by max speed
+        f_att_x = (dx_goal / dist_goal) * self.max_speed * self.k_att
+        f_att_y = (dy_goal / dist_goal) * self.max_speed * self.k_att
+
+        f_rep_x = 0.0
+        f_rep_y = 0.0
+
+        # 2. Repulsive Force from Static Shelf Boundaries
+        for min_x, min_y, max_x, max_y in shelf_bounds:
+            # Clamping point to find closest point on shelf rectangle
+            cx = max(min_x, min(max_x, self.x))
+            cy = max(min_y, min(max_y, self.y))
+            d_obs = math_hypot(self.x - cx, self.y - cy)
+
+            if 0.001 < d_obs < self.d0_shelf:
+                # F_rep = k_rep * (1/d - 1/d0) * (1/d^2) * (p - p_obs)/d
+                rep_mag = self.k_rep_obs * (1.0 / d_obs - 1.0 / self.d0_shelf) * (1.0 / (d_obs * d_obs))
+                rep_mag = min(rep_mag, self.max_speed * 3.0)  # Numerical clamp
+                f_rep_x += ((self.x - cx) / d_obs) * rep_mag
+                f_rep_y += ((self.y - cy) / d_obs) * rep_mag
+
+        # 3. Repulsive Force from Dynamic Human Pedestrians
+        for human in humans:
+            d_h = math_hypot(self.x - human.x, self.y - human.y)
+            if d_h < 26.67:  # < 0.8 meters (Intimate personal space boundary)
+                self.proxemic_violations += 1
+
+            if 0.001 < d_h < self.d0_human:
+                rep_mag = self.k_rep_human * (1.0 / d_h - 1.0 / self.d0_human) * (1.0 / (d_h * d_h))
+                rep_mag = min(rep_mag, self.max_speed * 3.0)
+                f_rep_x += ((self.x - human.x) / d_h) * rep_mag
+                f_rep_y += ((self.y - human.y) / d_h) * rep_mag
+
+        # 4. Repulsive Force from Peer Trolleys (Reynolds Separation)
+        for px, py in peer_positions:
+            d_peer = math_hypot(self.x - px, self.y - py)
+            if 0.001 < d_peer < 35.0:
+                rep_mag = self.max_speed * 2.0 * ((35.0 - d_peer) / 35.0)
+                f_rep_x += ((self.x - px) / d_peer) * rep_mag
+                f_rep_y += ((self.y - py) / d_peer) * rep_mag
+
+        # Net Force Vector
+        fx_net = f_att_x + f_rep_x
+        fy_net = f_att_y + f_rep_y
+        f_mag = math_hypot(fx_net, fy_net)
+
+        # Failure Mode: Local Potential Minimum Trap (F_net -> 0 while far from goal)
+        if f_mag < 1.5 and dist_goal > 30.0:
+            self.deadlock_count += 1
+            # In local minimum trap, velocity decays to near zero
+            self.vx = 0.0
+            self.vy = 0.0
+        else:
+            # Velocity update
+            if f_mag > self.max_speed:
+                fx_net = (fx_net / f_mag) * self.max_speed
+                fy_net = (fy_net / f_mag) * self.max_speed
+
+            self.vx = fx_net
+            self.vy = fy_net
+            self.heading = math.atan2(self.vy, self.vx)
+
+        step_dist = math_hypot(self.vx * dt, self.vy * dt)
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.total_distance += step_dist
