@@ -37,9 +37,9 @@ class TrolleyAgent:
         self.max_omega = max_omega
 
         # Safety Envelopes (Physical Body Radius vs Kinetic Clearance Bubble)
-        self.radius: float = 12.0          # Physical chassis radius (pixels)
-        self.safety_bubble_radius: float = 26.0  # Kinetic safety clearance envelope (pixels)
-        self.shelf_margin: float = 18.0   # Minimum distance maintained from shelf edges/corners
+        self.radius: float = 12.0               # Physical chassis radius (pixels)
+        self.safety_bubble_radius: float = 26.0 # Kinetic safety clearance envelope (pixels)
+        self.shelf_margin: float = 18.0        # Minimum distance maintained from shelf edges/corners
 
         # High-level planning
         self.planner = DStarLite(self.graph, start_node, goal_node)
@@ -55,6 +55,7 @@ class TrolleyAgent:
         self.active_lock_edge: Optional[Tuple[str, str]] = None
         self.wait_timer: float = 0.0
         self.yield_timer: float = 0.0
+        self.peer_block_timer: float = 0.0
 
         # Performance Metrics
         self.total_distance: float = 0.0
@@ -144,12 +145,11 @@ class TrolleyAgent:
                 else:
                     self.y = expanded_max_y
 
-    def check_inter_trolley_safety(self, peer_agents: Optional[List[TrolleyAgent]]) -> bool:
+    def check_inter_trolley_safety(self, peer_agents: Optional[List[TrolleyAgent]], dt: float) -> bool:
         """
         Inter-trolley safety clearance (S_trolley):
         - Prevents tailgating and inter-agent crowding.
-        - If peer trolley is ahead within following distance, smoothly decelerate.
-        - If peer trolley is inside the kinetic safety bubble (< 28px), apply elastic contact separation.
+        - Maintains smooth kinetic spacing without freezing.
         """
         if not peer_agents:
             return False
@@ -161,25 +161,36 @@ class TrolleyAgent:
 
             dist = math.hypot(self.x - other.x, self.y - other.y)
 
-            # 1. Contact Repulsion (Never overlap)
-            if dist < 24.0 and dist > 0.1:
-                push_dist = 24.0 - dist
-                self.x -= ((other.x - self.x) / dist) * (push_dist * 0.5)
-                self.y -= ((other.y - self.y) / dist) * (push_dist * 0.5)
+            # 1. Elastic Contact Repulsion (Ensure carts never overlap)
+            if dist < 22.0 and dist > 0.1:
+                push_dist = 22.0 - dist
+                self.x -= ((other.x - self.x) / dist) * (push_dist * 0.4)
+                self.y -= ((other.y - self.y) / dist) * (push_dist * 0.4)
 
-            # 2. Forward Following Distance & Kinetic Bubble
-            if dist < 38.0:
+            # 2. Anti-Tailgating Following Distance
+            if dist < 36.0:
                 dx = other.x - self.x
                 dy = other.y - self.y
                 dot = math.cos(self.heading) * dx + math.sin(self.heading) * dy
-                if dot > 0.3:  # Peer cart is directly in front of this cart
+                if dot > 5.0:  # Lead cart is ahead in the forward vision cone
                     must_slow_down = True
 
         if must_slow_down:
             self.state = "FOLLOWING_CART"
-            self.speed = max(0.0, self.speed * 0.3)
-            return True
+            self.peer_block_timer += dt
+            # Modulate speed to match safe following crawl rather than full dead stop
+            self.speed = min(self.speed, 0.8)
 
+            # If blocked behind a stalled cart for > 1.8s, trigger dynamic D* Lite reroute
+            if self.peer_block_timer > 1.8 and self.target_node:
+                self.graph.update_mesh_penalty(self.current_node, self.target_node, 300.0)
+                self.planner.notify_edge_cost_change(self.current_node, self.target_node)
+                self.planner.compute_shortest_path()
+                self.target_node = self.planner.get_next_waypoint()
+                self.peer_block_timer = 0.0
+            return False  # Still allow forward crawl step
+
+        self.peer_block_timer = 0.0
         return False
 
     def check_human_collision_and_yield(self, humans: List[Human], dt: float,
@@ -198,7 +209,7 @@ class TrolleyAgent:
                 dx = human.x - self.x
                 dy = human.y - self.y
                 dot = math.cos(self.heading) * dx + math.sin(self.heading) * dy
-                if dot > -0.2:
+                if dot > 0.0:
                     yield_required = True
 
         if yield_required:
@@ -206,7 +217,7 @@ class TrolleyAgent:
             self.yield_timer += dt
             self.speed = 0.0
 
-            if self.yield_timer > 0.9 and self.target_node:
+            if self.yield_timer > 0.8 and self.target_node:
                 self.broadcast_congestion(self.current_node, self.target_node, penalty=500.0,
                                          current_time=current_sim_time)
                 self.planner.compute_shortest_path()
@@ -237,8 +248,9 @@ class TrolleyAgent:
             self.replan_count += 1
             self.target_node = self.planner.get_next_waypoint()
 
-        # 3. Check Docking
-        if self.current_node == self.goal_node:
+        # 3. Check Docking Arrival (Multi-cart return bay queue)
+        goal_obj = self.graph.get_node(self.goal_node)
+        if self.current_node == self.goal_node or math.hypot(self.x - goal_obj.x, self.y - goal_obj.y) < 28.0:
             self.is_docked = True
             self.state = "DOCKED"
             if self.active_lock_edge:
@@ -251,9 +263,7 @@ class TrolleyAgent:
             return
 
         # 5. Check Inter-Trolley Kinetic Safety Clearance (Anti-Tailgating)
-        if self.check_inter_trolley_safety(peer_agents):
-            self.resolve_shelf_collisions(shelves)
-            return
+        self.check_inter_trolley_safety(peer_agents, dt)
 
         # 6. Waypoint & Corridor Lock Verification
         if self.target_node is None:
@@ -270,7 +280,7 @@ class TrolleyAgent:
                 self.state = "WAITING_LOCK"
                 self.wait_timer += dt
                 self.speed = 0.0
-                if self.wait_timer > 2.0:
+                if self.wait_timer > 1.8:
                     edge.r_lock = math.inf
                     self.planner.notify_edge_cost_change(self.current_node, self.target_node)
                     self.planner.compute_shortest_path()
@@ -282,7 +292,8 @@ class TrolleyAgent:
                 if self.active_lock_edge != (self.current_node, self.target_node):
                     self._acquire_lock(self.current_node, self.target_node, current_sim_time)
 
-        self.state = "NAVIGATING"
+        if self.state != "FOLLOWING_CART":
+            self.state = "NAVIGATING"
         self.wait_timer = 0.0
 
         # 7. Non-Holonomic Kinematics (Bounded Steering Angle & Differential Turning)
@@ -291,11 +302,16 @@ class TrolleyAgent:
         dy = target_obj.y - self.y
         dist = math.hypot(dx, dy)
 
-        if dist < 6.0:  # Waypoint arrived
+        if dist < 8.0:  # Waypoint arrived
             if self.active_lock_edge and self.active_lock_edge != (self.current_node, self.target_node):
                 self._release_lock(current_sim_time)
 
             self.current_node = self.target_node
+            if self.current_node == self.goal_node:
+                self.is_docked = True
+                self.state = "DOCKED"
+                return
+
             self.planner.update_start(self.current_node)
             self.planner.compute_shortest_path()
             self.target_node = self.planner.get_next_waypoint()
@@ -308,8 +324,8 @@ class TrolleyAgent:
             self.heading += turn_step
 
             # Unicycle forward motion with corner deceleration
-            alignment = max(0.2, math.cos(angle_diff))
-            target_speed = self.max_speed * alignment
+            alignment = max(0.25, math.cos(angle_diff))
+            target_speed = (self.speed if self.state == "FOLLOWING_CART" else self.max_speed) * alignment
             self.speed = min(dist / (dt * 30.0), target_speed)
 
             step_dist = self.speed * dt * 30.0

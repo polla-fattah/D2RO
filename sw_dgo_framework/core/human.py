@@ -6,6 +6,7 @@ navigate through aisles/crossways, and possess continuous Gaussian proxemic fiel
 
 from __future__ import annotations
 import math
+from math import exp as math_exp, hypot as math_hypot
 import random
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
@@ -122,7 +123,7 @@ class ProxemicsField:
         for human in humans:
             d_sq = (x - human.x) ** 2 + (y - human.y) ** 2
             if d_sq < (3.5 * self.sigma) ** 2:
-                total_penalty += self.amplitude * math.exp(-d_sq / two_sigma_sq)
+                total_penalty += self.amplitude * math_exp(-d_sq / two_sigma_sq)
 
         return total_penalty
 

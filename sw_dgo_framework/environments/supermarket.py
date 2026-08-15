@@ -136,10 +136,10 @@ class SupermarketLayout:
         self.shelves.append(ShelfObstacle(x_right_deli - 25.0, 180.0, 75.0, 100.0, name="Artisan Bakery", category="deli"))
         self.shelves.append(ShelfObstacle(x_right_deli - 25.0, 350.0, 75.0, 100.0, name="Meat & Seafood", category="deli"))
 
-        # Checkout Register Booths
-        for i in range(self.num_aisles):
-            rx = self.start_x + i * self.aisle_spacing - 15.0
-            self.shelves.append(ShelfObstacle(rx, self.y_checkout_registers - 25.0, 30.0, 45.0, name=f"Register {i+1}", category="checkout"))
+        # Checkout Register Booths (Placed between aisle checkout lanes)
+        for i in range(self.num_aisles - 1):
+            rx = self.start_x + (i + 0.5) * self.aisle_spacing - 14.0
+            self.shelves.append(ShelfObstacle(rx, self.y_checkout_registers - 20.0, 28.0, 40.0, name=f"Register {i+1}", category="checkout"))
 
 
 class ScenarioSuite:
@@ -153,9 +153,9 @@ class ScenarioSuite:
             desc = "Scenario A: Heavy Shopper Congestion in Grocery Aisle 3. Carts detect continuous Gaussian personal-space fields and proactively divert through open parallel aisles to Cart Depot."
             trolleys = [
                 {"id": 1, "start": "N_back_2", "goal": "DOCK_BAY_MAIN"},
-                {"id": 2, "start": "N_back_2", "goal": "DOCK_BAY_MAIN"},
-                {"id": 3, "start": "N_back_1", "goal": "DOCK_BAY_MAIN"},
-                {"id": 4, "start": "N_back_4", "goal": "DOCK_BAY_EXPRESS"},
+                {"id": 2, "start": "N_back_4", "goal": "DOCK_BAY_EXPRESS"},
+                {"id": 3, "start": "N_back_0", "goal": "DOCK_BAY_MAIN"},
+                {"id": 4, "start": "N_back_5", "goal": "DOCK_BAY_EXPRESS"},
             ]
             ax3 = layout.start_x + 2 * layout.aisle_spacing
             humans = [
@@ -170,10 +170,10 @@ class ScenarioSuite:
             return trolleys, humans, desc
 
         elif scenario_id == "B" or scenario_id == "head_on_lock":
-            desc = "Scenario B: Single-File Corridor Mutex Lock. Trolley 1 & Trolley 2 both enter single-file Aisle 2 towards Cart Depot. T1 claims lock, T2 detects active lock and smoothly takes Aisle 1."
+            desc = "Scenario B: Single-File Corridor Mutex Lock. Trolley 1 (top of Aisle 2) & Trolley 2 (bottom of Aisle 2) enter single-file corridor head-on. T1 claims lock, T2 detects active lock and smoothly reroutes."
             trolleys = [
                 {"id": 1, "start": "N_back_1", "goal": "DOCK_BAY_MAIN"},
-                {"id": 2, "start": "N_back_1", "goal": "DOCK_BAY_MAIN"},
+                {"id": 2, "start": "N_front_1", "goal": "N_back_3"},
                 {"id": 3, "start": "N_back_3", "goal": "DOCK_BAY_EXPRESS"},
             ]
             humans = [
