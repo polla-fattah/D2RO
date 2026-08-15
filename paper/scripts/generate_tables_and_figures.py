@@ -54,6 +54,7 @@ GRID = "#d8d8d8"
 # at publication width; the full algorithm names live in the table and caption.
 SHORT = {
     "D2RO (SW-DGO Proposed)": "D²RO",
+    "Static A* (matched controller)": "A* matched",
     "Static A*": "Static A*",
     "Reactive Avoidance (Potential Field)": "APF",
     "Artificial Potential Fields (APF)": "APF",
@@ -62,6 +63,9 @@ SHORT = {
 }
 ORDER = [
     "D2RO (SW-DGO Proposed)",
+    # The matched-controller arm sits immediately beside D2RO: it is the comparison
+    # that isolates SW-DGO, and the reader should meet it before the unmatched one.
+    "Static A* (matched controller)",
     "Static A*",
     "Reactive Avoidance (Potential Field)",
     "Reactive ORCA (Velocity Obstacles)",
@@ -256,7 +260,9 @@ def table_benchmark(bench: Dict[str, Any]) -> bool:
         iqr = ex.get("iqr", [0, 0])
         name = m.replace("D2RO (SW-DGO Proposed)",
                          "\\textbf{$\\text{D}^2\\text{RO}$ (proposed)}")
-        name = name.replace("Static A*", "Static $A^*$")
+        name = name.replace("Static A* (matched controller)",
+                            "Static $A^*$ (matched controller)")
+        name = name.replace("Static A*", "Static $A^*$") if "matched" not in name else name
         name = name.replace("Reactive Avoidance (Potential Field)", "APF")
         name = name.replace("Reactive ORCA (Velocity Obstacles)", "Reactive ORCA")
         pv = adj.get(f"{m}|intimate")
@@ -363,14 +369,16 @@ def table_ablation(res: Dict[str, Any]) -> bool:
         f"Component ablation of the five cost terms in the retail supermarket domain "
         f"($N={n}$ trials per configuration). Each row removes exactly one term from "
         f"Eq.~(1); all other parameters are held fixed.",
-        "tab:ablation", "lccccc",
+        "tab:ablation", "lcccccc",
         "\\textbf{Configuration} & \\textbf{Success (95\\% CI)} & \\textbf{Makespan (s)} & "
-        "\\textbf{Discomfort} & \\textbf{Deadlocks} & \\textbf{Shelf scrapes} \\\\",
+        "\\textbf{Discomfort} & \\textbf{Deadlocks} & \\textbf{Fixture contacts} & "
+        "\\textbf{Contact ticks} \\\\",
         wide=True, resize=True)
     for k in order:
         g = groups[k]
         L.append(f"{ABLATION_LABEL.get(k, k)} & {_pct(g)} & {_f(g['makespan'])} & "
-                 f"{_f(g['discomfort'])} & {_f(g['deadlocks'])} & {_f(g['shelf_scrapes'])} \\\\")
+                 f"{_f(g['discomfort'])} & {_f(g['deadlocks'])} & "
+                 f"{_f(g['shelf_contact_events'])} & {_f(g['shelf_contact_ticks'])} \\\\")
     L += _footer(wide=True, resize=True)
     return _emit("table_ablation", L)
 

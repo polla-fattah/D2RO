@@ -34,7 +34,8 @@ class TrolleyAgent:
                  comm_radius: float = V2V_MESH_COMM_RANGE_PX,
                  enable_mesh: bool = True, enable_lock: bool = True,
                  enable_prox: bool = True, enable_safety: bool = True,
-                 lock_priority: float = 1.0):
+                 lock_priority: float = 1.0, static_route: bool = False,
+                 enable_yield: bool = True):
         self.agent_id = agent_id
         self.graph = graph.clone()
         self.current_node = start_node
@@ -46,6 +47,31 @@ class TrolleyAgent:
         self.enable_lock = enable_lock
         self.enable_prox = enable_prox
         self.enable_safety = enable_safety
+
+        # Freezes the high-level route: the path is solved once against the initial
+        # cost field and never re-solved, no matter how edge costs subsequently move.
+        #
+        # This exists to support a MATCHED-CONTROLLER shortest-path baseline. The
+        # standalone Static A* baseline steers by snapping its heading straight at the
+        # next waypoint, so comparing it against D2RO confounds "the route was chosen
+        # differently" with "the vehicle turns differently". An agent constructed with
+        # static_route=True and the social terms disabled shares D2RO's executor
+        # exactly -- same angular-rate limit, collision geometry, yielding layer and
+        # arrival test -- and differs ONLY in that its route is a fixed shortest path.
+        # The difference between the two therefore isolates SW-DGO itself.
+        self.static_route = static_route
+
+        # Whether the agent stops for pedestrians. Separate from enable_prox, which
+        # governs only the H_prox COST TERM: an agent can route socially without
+        # yielding, or yield without routing socially.
+        #
+        # The matched-controller baseline must set this False. A frozen-route agent
+        # that yields has no recourse when a pedestrian occupies its only path -- it
+        # stops, cannot re-route, and stalls until the clock expires, which measures
+        # the absence of replanning rather than the cost of social routing. Static A*
+        # drives through people; the matched arm must do the same, differing from it
+        # only in the vehicle model. Social exposure is still MEASURED either way.
+        self.enable_yield = enable_yield
 
         # Non-holonomic Kinematics
         node_obj = self.graph.get_node(start_node)
@@ -95,7 +121,12 @@ class TrolleyAgent:
         self.lock_priority: float = lock_priority
         self.lock_claims: Dict[Tuple[str, str], Dict[int, Tuple[float, float, int]]] = {}
         self.pending_corridor: Optional[Tuple[str, str]] = None
+        # lock_wait_time is a PER-EPISODE timer: _release_corridor() resets it once the
+        # corridor is granted, which is correct for the state machine but destroys the
+        # quantity the experiments actually want. total_lock_wait_time accumulates
+        # across the whole mission and is never reset, so end-of-run reads are valid.
         self.lock_wait_time: float = 0.0
+        self.total_lock_wait_time: float = 0.0
         self.lock_grants_received: int = 0
         self.lock_denials_received: int = 0
         self.yield_timer: float = 0.0
@@ -110,6 +141,10 @@ class TrolleyAgent:
         self.total_distance: float = 0.0
         self.travel_time: float = 0.0
         self.replan_count: int = 0
+        # Per-repair D* Lite timings. Kept as a series, not a running mean, so the
+        # analysis can report median/p95/max: a mean alone hides the tail, and the
+        # tail is what determines whether a control deadline is ever missed.
+        self.replan_latencies_ms: List[float] = []
 
         # Genuine routing deadlocks: no admissible route exists and it is not
         # attributable to orderly yielding at a reserved corridor.
@@ -123,7 +158,15 @@ class TrolleyAgent:
         init_social_metrics(self)
         self._peers_in_conflict: set = set()
 
-        self.shelf_corner_scrapes: int = 0
+        # Fixture contact, split the same way human proxemics already is: a tick
+        # counter answers "how long was the chassis inside the clearance envelope?",
+        # an event counter answers "how many distinct contacts occurred?". The single
+        # legacy counter conflated them, so a value of ~193 was reported as 193
+        # "scrapes" when it is 193 control cycles requiring a clearance correction.
+        self.shelf_contact_ticks: int = 0     # exposure (control cycles)
+        self.shelf_contact_events: int = 0    # distinct fixture contacts
+        self.min_shelf_clearance_px: float = math.inf
+        self._shelves_in_contact: set = set()
         self.is_docked: bool = False
         self.last_compute_time_ms: float = 0.0
 
@@ -133,8 +176,32 @@ class TrolleyAgent:
     def current_pos(self) -> Tuple[float, float]:
         return (self.x, self.y)
 
-    def process_inbound_mesh(self) -> bool:
-        packets = self.mesh_net.fetch_inbound(self.agent_id)
+    def _repair(self) -> None:
+        """
+        Executes ONE D* Lite repair and records how long it took.
+
+        Timing lives here, around `compute_shortest_path()` alone, rather than
+        around the whole control step. `last_compute_time_ms` measures the entire
+        `step()` -- mesh handling, proxemic and safety updates, yielding, collision
+        correction and motion -- and is recorded on every tick including ticks where
+        no repair happens. Averaging that quantity and calling it "D* Lite repair
+        latency" measures the wrong thing; the two are reported separately.
+
+        The initial full solve in __init__ is deliberately NOT recorded here: it is a
+        from-scratch solve, not an incremental repair, and averaging it into the
+        repair series would flatter the incremental claim.
+        """
+        t = time.perf_counter()
+        self.planner.compute_shortest_path()
+        self.replan_latencies_ms.append((time.perf_counter() - t) * 1000.0)
+        self.replan_count += 1
+
+    def process_inbound_mesh(self, current_time: float = math.inf) -> bool:
+        # current_time MUST be threaded through: fetch_inbound defaults to +inf, which
+        # delivers every queued packet immediately regardless of its deliver_at stamp.
+        # Omitting it silently disables the mesh's latency model -- the network can
+        # simulate delay, but the agent never experiences any.
+        packets = self.mesh_net.fetch_inbound(self.agent_id, current_time=current_time)
         cost_changed = False
 
         for pkt in packets:
@@ -310,14 +377,23 @@ class TrolleyAgent:
         if not shelves:
             return
 
-        for sx1, sy1, sx2, sy2 in shelves:
+        contact_now = set()
+        for idx, (sx1, sy1, sx2, sy2) in enumerate(shelves):
+            # Clearance to the bare fixture, independent of the margin, so the figure
+            # remains comparable across configurations with different envelopes.
+            cx = max(sx1, min(sx2, self.x))
+            cy = max(sy1, min(sy2, self.y))
+            self.min_shelf_clearance_px = min(self.min_shelf_clearance_px,
+                                              math.hypot(self.x - cx, self.y - cy))
+
             min_x = sx1 - self.shelf_margin
             max_x = sx2 + self.shelf_margin
             min_y = sy1 - self.shelf_margin
             max_y = sy2 + self.shelf_margin
 
             if min_x <= self.x <= max_x and min_y <= self.y <= max_y:
-                self.shelf_corner_scrapes += 1
+                contact_now.add(idx)
+                self.shelf_contact_ticks += 1
                 dx_left = self.x - min_x
                 dx_right = max_x - self.x
                 dy_bottom = self.y - min_y
@@ -332,6 +408,10 @@ class TrolleyAgent:
                     self.y = min_y - 1.0
                 else:
                     self.y = max_y + 1.0
+
+        # A contact is counted once on entry, not once per tick spent inside.
+        self.shelf_contact_events += len(contact_now - self._shelves_in_contact)
+        self._shelves_in_contact = contact_now
 
     def check_inter_trolley_safety(self, peer_agents: Optional[List[TrolleyAgent]], dt: float) -> bool:
         """
@@ -387,7 +467,7 @@ class TrolleyAgent:
                     self.graph.update_mesh_penalty(self.current_node, self.target_node,
                                                    MESH_FOLLOW_BLOCK_EQUIV_M)
                     self.planner.notify_edge_cost_change(self.current_node, self.target_node)
-                    self.planner.compute_shortest_path()
+                    self._repair()
                     self.target_node = self.planner.get_next_waypoint()
                 self.peer_block_timer = 0.0
             return False  # Still allow forward crawl step
@@ -412,6 +492,12 @@ class TrolleyAgent:
         # Social compliance measured by the shared helper, so D2RO and every baseline
         # are scored against an identical threshold and identical semantics.
         update_social_metrics(self, human_list, dt)
+
+        # Socially blind agents are still scored: measurement is unconditional,
+        # only the behavioural response is switched off.
+        if not self.enable_yield:
+            self.yield_timer = 0.0
+            return False
 
         yield_required = False
         for human in human_list:
@@ -444,7 +530,7 @@ class TrolleyAgent:
                     self.broadcast_congestion(self.current_node, self.target_node,
                                               penalty=MESH_ALERT_EQUIV_M,
                                               current_time=current_sim_time)
-                    self.planner.compute_shortest_path()
+                    self._repair()
                     self.target_node = self.planner.get_next_waypoint()
                 self.yield_timer = 0.0
             return True
@@ -464,7 +550,7 @@ class TrolleyAgent:
         self.travel_time += dt
 
         # 1. Process V2V Mesh, Proxemics & Kinetic Safety Envelope
-        mesh_changed = self.process_inbound_mesh() if self.enable_mesh else False
+        mesh_changed = self.process_inbound_mesh(current_sim_time) if self.enable_mesh else False
         prox_changed = self.update_human_proxemics(humans, prox_field) if self.enable_prox else False
         safety_changed = self.update_trolley_safety_costs(peer_agents) if self.enable_safety else False
 
@@ -491,9 +577,10 @@ class TrolleyAgent:
                 decay_changed = True
 
         # 2. Incremental Replan
-        if mesh_changed or prox_changed or safety_changed or decay_changed:
-            self.planner.compute_shortest_path()
-            self.replan_count += 1
+        # A static-route agent never re-solves: its route is frozen at construction.
+        if (mesh_changed or prox_changed or safety_changed or decay_changed) \
+                and not self.static_route:
+            self._repair()
             self.target_node = self.planner.get_next_waypoint()
 
         # 3. Check Docking Arrival (Multi-cart return bay queue)
@@ -518,7 +605,7 @@ class TrolleyAgent:
 
         # 6. Waypoint & Corridor Lock Verification
         if self.target_node is None:
-            self.planner.compute_shortest_path()
+            self._repair()
             self.target_node = self.planner.get_next_waypoint()
             if self.target_node is None:
                 # No route may simply mean the only corridor onward is reserved by a
@@ -528,6 +615,7 @@ class TrolleyAgent:
                     self.state = "WAITING_LOCK"
                     self.wait_timer += dt
                     self.lock_wait_time += dt
+                    self.total_lock_wait_time += dt
                     self.speed = 0.0
                 else:
                     self.deadlock_count += 1
@@ -547,10 +635,11 @@ class TrolleyAgent:
                 self.state = "WAITING_LOCK"
                 self.wait_timer += dt
                 self.lock_wait_time += dt
+                self.total_lock_wait_time += dt
                 self.speed = 0.0
                 if self.wait_timer > 1.8:
                     # Yield persistently blocked: let D* Lite divert around the corridor.
-                    self.planner.compute_shortest_path()
+                    self._repair()
                     self.target_node = self.planner.get_next_waypoint()
                     self.wait_timer = 0.0
                 self.resolve_shelf_collisions(shelves)
@@ -584,11 +673,17 @@ class TrolleyAgent:
 
         # Track shelf scrapes if safety envelopes are ablated
         if not self.enable_safety and shelves:
-            for min_sx, min_sy, max_sx, max_sy in shelves:
+            contact_now = set()
+            for idx, (min_sx, min_sy, max_sx, max_sy) in enumerate(shelves):
                 cx = max(min_sx, min(max_sx, self.x))
                 cy = max(min_sy, min(max_sy, self.y))
-                if math.hypot(self.x - cx, self.y - cy) < 14.0:
-                    self.shelf_corner_scrapes += 1
+                gap = math.hypot(self.x - cx, self.y - cy)
+                self.min_shelf_clearance_px = min(self.min_shelf_clearance_px, gap)
+                if gap < 14.0:
+                    contact_now.add(idx)
+                    self.shelf_contact_ticks += 1
+            self.shelf_contact_events += len(contact_now - self._shelves_in_contact)
+            self._shelves_in_contact = contact_now
 
         # 7. Non-Holonomic Kinematics (Bounded Steering Angle & Differential Turning)
         target_obj = self.graph.get_node(self.target_node)
@@ -607,7 +702,7 @@ class TrolleyAgent:
                 return
 
             self.planner.update_start(self.current_node)
-            self.planner.compute_shortest_path()
+            self._repair()
             self.target_node = self.planner.get_next_waypoint()
         else:
             desired_heading = math.atan2(dy, dx)

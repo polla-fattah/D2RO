@@ -542,7 +542,9 @@ def main() -> None:
         "ablation": analyse_grouped(
             "ablation_study.csv", "configuration",
             {"makespan": "travel_time_s", "discomfort": "discomfort_integral",
-             "deadlocks": "deadlocks", "shelf_scrapes": "shelf_corner_scrapes"}),
+             "deadlocks": "deadlocks",
+             "shelf_contact_ticks": "shelf_contact_ticks",
+             "shelf_contact_events": "shelf_contact_events"}),
         "cross_domain": analyse_grouped(
             "cross_domain_benchmark.csv", "environment",
             {"makespan": "makespan_s", "transit": "mean_transit_time_s",

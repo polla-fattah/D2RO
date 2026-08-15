@@ -42,7 +42,7 @@ MAX_ATTEMPTS = 5
 
 # key -> (human-readable name, runner method, trial count, expected row count)
 EXPERIMENTS = {
-    "1":  ("Benchmark comparison",      "run_baseline_comparison",        100, 500),
+    "1":  ("Benchmark comparison",      "run_baseline_comparison",        100, 600),
     "2":  ("Component ablation",        "run_ablation_study",             100, 500),
     "3":  ("Cross-domain benchmark",    "run_cross_domain_benchmark",     100, 300),
     "4A": ("Crowd-density scalability", "run_crowd_density_scalability",  100, 600),

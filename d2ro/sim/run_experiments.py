@@ -92,6 +92,31 @@ def _code_fingerprint() -> str:
     return h.hexdigest()[:16]
 
 
+def _latency_stats(agents) -> dict:
+    """
+    Summarises D* Lite repair latency across a fleet.
+
+    Reports the distribution, not just a mean. A mean over repairs hides the tail,
+    and for a real-time claim the tail is the whole question: what matters is
+    whether any single repair can overrun the control period, not what the average
+    repair costs.
+    """
+    series = [t for a in agents for t in getattr(a, "replan_latencies_ms", [])]
+    if not series:
+        return {"repair_n": 0, "repair_median_ms": 0.0,
+                "repair_mean_ms": 0.0, "repair_p95_ms": 0.0, "repair_max_ms": 0.0}
+    series.sort()
+    n = len(series)
+    p95 = series[min(n - 1, int(round(0.95 * (n - 1))))]
+    return {
+        "repair_n": n,
+        "repair_median_ms": round(series[n // 2], 4),
+        "repair_mean_ms": round(sum(series) / n, 4),
+        "repair_p95_ms": round(p95, 4),
+        "repair_max_ms": round(series[-1], 4),
+    }
+
+
 def _row_count(path: str) -> int:
     if not os.path.exists(path):
         return 0
@@ -146,7 +171,14 @@ class ExperimentRunner:
         csv_path = os.path.join(self.output_dir, "benchmark_comparison.csv")
         fieldnames = [
             "trial_id", "method", "success", "travel_time_s", "deadlocks",
-            "proxemic_violations", "mesh_packets", "replan_cycles", "avg_replan_latency_ms"
+            "proxemic_violations", "mesh_packets", "replan_cycles",
+            # Whole-control-step compute time: mesh handling, proxemics, safety,
+            # yielding, collision correction and motion, averaged over EVERY tick.
+            "avg_replan_latency_ms",
+            # D* Lite repair latency proper, measured around compute_shortest_path()
+            # alone and recorded only on ticks where a repair actually happened.
+            "repair_n", "repair_median_ms", "repair_mean_ms",
+            "repair_p95_ms", "repair_max_ms"
         ]
 
         prox_field = ProxemicsField()
@@ -199,7 +231,58 @@ class ExperimentRunner:
                     "proxemic_violations": sum(a.proxemic_violations for a in d2ro_agents),
                     "mesh_packets": mesh.total_packets_transmitted,
                     "replan_cycles": sum(a.replan_count for a in d2ro_agents),
-                    "avg_replan_latency_ms": round(sum(replan_times) / max(1, len(replan_times)), 3)
+                    "avg_replan_latency_ms": round(sum(replan_times) / max(1, len(replan_times)), 3),
+                    **_latency_stats(d2ro_agents)
+                })
+
+                # 1.1b Static A* with a MATCHED low-level controller.
+                #
+                # The standalone Static A* arm below steers by snapping its heading
+                # directly at the next waypoint and translating at full speed, so any
+                # timing difference against D2RO confounds two things: the route that
+                # was planned, and the vehicle that executed it. This arm removes that
+                # confound. It is a TrolleyAgent -- identical unicycle model, angular
+                # rate limit, collision geometry, yielding layer and arrival test --
+                # with the social, mesh and mutex cost terms disabled and the route
+                # frozen to a single shortest-path solve. The D2RO-vs-matched
+                # difference therefore isolates SW-DGO; the matched-vs-standalone
+                # difference isolates the controller.
+                random.seed(seed_val)
+                layout = SupermarketLayout()
+                shelf_boxes = [s.bounds for s in layout.shelves]
+                trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
+                mesh_m = MeshNetwork(comm_radius=350.0)
+                matched_agents = [
+                    TrolleyAgent(c["id"], layout.graph, c["start"], c["goal"], mesh_m,
+                                 enable_mesh=False, enable_prox=False, enable_lock=False,
+                                 enable_safety=True, static_route=True,
+                                 enable_yield=False)
+                    for c in trolley_cfgs
+                ]
+
+                sim_time = 0.0
+                replan_times_matched = []
+                while sim_time < max_time and not all(a.is_docked for a in matched_agents):
+                    for h in humans:
+                        h.update(dt, layout.bounds, shelf_boxes)
+                    for a in matched_agents:
+                        a.step(dt, humans, prox_field, current_sim_time=sim_time,
+                               shelves=shelf_boxes, peer_agents=matched_agents)
+                        replan_times_matched.append(a.last_compute_time_ms)
+                    sim_time += dt
+
+                writer.writerow({
+                    "trial_id": trial,
+                    "method": "Static A* (matched controller)",
+                    "success": 1 if all(a.is_docked for a in matched_agents) else 0,
+                    "travel_time_s": round(sim_time, 2),
+                    "deadlocks": sum(a.deadlock_count for a in matched_agents),
+                    "proxemic_violations": sum(a.proxemic_violations for a in matched_agents),
+                    "mesh_packets": mesh_m.total_packets_transmitted,
+                    "replan_cycles": sum(a.replan_count for a in matched_agents),
+                    "avg_replan_latency_ms": round(
+                        sum(replan_times_matched) / max(1, len(replan_times_matched)), 3),
+                    **_latency_stats(matched_agents)
                 })
 
                 # 1.2 Static A*
@@ -230,7 +313,8 @@ class ExperimentRunner:
                     "proxemic_violations": sum(a.proxemic_violations for a in astar_agents),
                     "mesh_packets": 0,
                     "replan_cycles": 0,
-                    "avg_replan_latency_ms": round(sum(replan_times_astar) / max(1, len(replan_times_astar)), 3)
+                    "avg_replan_latency_ms": round(sum(replan_times_astar) / max(1, len(replan_times_astar)), 3),
+                    **_latency_stats(astar_agents)
                 })
 
                 # 1.3 Artificial Potential Fields (APF)
@@ -266,7 +350,8 @@ class ExperimentRunner:
                     "proxemic_violations": sum(a.proxemic_violations for a in apf_agents),
                     "mesh_packets": 0,
                     "replan_cycles": 0,
-                    "avg_replan_latency_ms": round(sum(replan_times_apf) / max(1, len(replan_times_apf)), 3)
+                    "avg_replan_latency_ms": round(sum(replan_times_apf) / max(1, len(replan_times_apf)), 3),
+                    **_latency_stats(apf_agents)
                 })
 
                 # 1.4 Reactive ORCA (Velocity Obstacles)
@@ -301,7 +386,8 @@ class ExperimentRunner:
                     "proxemic_violations": sum(a.proxemic_violations for a in orca_agents),
                     "mesh_packets": 0,
                     "replan_cycles": 0,
-                    "avg_replan_latency_ms": round(sum(replan_times_orca) / max(1, len(replan_times_orca)), 3)
+                    "avg_replan_latency_ms": round(sum(replan_times_orca) / max(1, len(replan_times_orca)), 3),
+                    **_latency_stats(orca_agents)
                 })
 
                 # 1.5 Decentralized Local MAPF
@@ -333,7 +419,8 @@ class ExperimentRunner:
                     "proxemic_violations": sum(a.proxemic_violations for a in mapf_agents),
                     "mesh_packets": 0,
                     "replan_cycles": sum(a.replan_count for a in mapf_agents),
-                    "avg_replan_latency_ms": round(sum(replan_times_mapf) / max(1, len(replan_times_mapf)), 3)
+                    "avg_replan_latency_ms": round(sum(replan_times_mapf) / max(1, len(replan_times_mapf)), 3),
+                    **_latency_stats(mapf_agents)
                 })
                 f.flush()
 
@@ -349,7 +436,8 @@ class ExperimentRunner:
         csv_path = os.path.join(self.output_dir, "ablation_study.csv")
         fieldnames = [
             "trial_id", "configuration", "omitted_component", "success", "travel_time_s",
-            "deadlocks", "discomfort_integral", "shelf_corner_scrapes", "inter_cart_crowding"
+            "deadlocks", "discomfort_integral", "shelf_contact_ticks",
+            "shelf_contact_events", "min_shelf_clearance_m", "inter_cart_crowding"
         ]
 
         configs = [
@@ -423,7 +511,11 @@ class ExperimentRunner:
 
                     success = 1 if all(a.is_docked for a in agents) else 0
                     deadlocks = sum(a.deadlock_count for a in agents)
-                    scrapes = sum(a.shelf_corner_scrapes for a in agents)
+                    contact_ticks = sum(a.shelf_contact_ticks for a in agents)
+                    contact_events = sum(a.shelf_contact_events for a in agents)
+                    clearances = [a.min_shelf_clearance_px for a in agents
+                                  if a.min_shelf_clearance_px != float("inf")]
+                    min_clearance_m = (min(clearances) * PX_TO_M) if clearances else 0.0
 
                     writer.writerow({
                         "trial_id": trial,
@@ -433,7 +525,9 @@ class ExperimentRunner:
                         "travel_time_s": round(sim_time, 2),
                         "deadlocks": deadlocks,
                         "discomfort_integral": round(total_discomfort, 2),
-                        "shelf_corner_scrapes": scrapes,
+                        "shelf_contact_ticks": contact_ticks,
+                        "shelf_contact_events": contact_events,
+                        "min_shelf_clearance_m": round(min_clearance_m, 3),
                         "inter_cart_crowding": inter_crowding
                     })
                 f.flush()
