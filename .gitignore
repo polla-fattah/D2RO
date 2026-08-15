@@ -54,3 +54,9 @@ desktop.ini
 # Antigravity IDE internals
 .agents/
 .gemini/
+
+# Private planners & journal feedback (confidential review correspondence)
+planners/
+docs/Journal_Feedback_*.md
+docs/Response_to_Reviewers.md
+
