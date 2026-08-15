@@ -156,12 +156,14 @@ Each autonomous service cart $i \in \{1, \dots, N_{\text{carts}}\}$ is governed 
 \end{align}
 subject to physical actuator bounds $|v_i(t)| \le v_{\max}$ and $|\omega_i(t)| \le \omega_{\max}$.
 
-\subsection{The 5-Component SW-DGO Traversal Cost Function}
-Each edge $e = (u, v) \in E$ is assigned a dynamic scalar traversal cost $C(u, v, t)$ evaluated as:
+\subsection{The Calibrated 5-Component SW-DGO Traversal Cost Function}
+Each edge $e = (u, v) \in E$ is assigned a dynamic scalar traversal cost $C(u, v, t)$ evaluated as a dimensionally weighted linear combination:
 \begin{multline}
-C(u, v, t) = D(u, v) + W_{\text{mesh}}(u, v, t) + H_{\text{prox}}(v, t) \\
-+ R_{\text{lock}}(u, v, t) + S_{\text{trolley}}(v, t)
+\label{eq:sw_dgo_master}
+C(u, v, t) = w_D \cdot D(u, v) + w_M \cdot W_{\text{mesh}}(u, v, t) + w_H \cdot H_{\text{prox}}(v, t) \\
++ w_R \cdot R_{\text{lock}}(u, v, t) + w_S \cdot S_{\text{trolley}}(v, t)
 \end{multline}
+where the calibrated dimensionless weights are $w_D = 1.0$ (metric traversal), $w_M = 1.5$ (V2V collaborative routing), $w_H = 2.0$ (pedestrian social priority), $w_R = 1.0$ (corridor mutual exclusion), and $w_S = 1.2$ (inter-vehicle clearance).
 
 \subsubsection{1. Kinematic Euclidean Distance \texorpdfstring{$D(u, v)$}{D(u, v)}}
 \begin{equation}
@@ -176,10 +178,18 @@ W_{\text{mesh}}(u, v, t) = \sum_{k \in \mathcal{M}(u, v, t)} \gamma_k \cdot \exp
 \end{equation}
 where $\mathcal{M}(u, v, t)$ is the set of active mesh alerts received for edge $(u, v)$, $\gamma_k$ is the initial penalty amplitude, and $\text{TTL} = 3$ multi-hop forwarding bounds packet propagation.
 
-\subsubsection{3. Continuous 2D Gaussian Human Proxemics \texorpdfstring{$H_{\text{prox}}(v, t)$}{H\_prox(v, t)}}
-Pedestrian personal space discomfort is modeled via an anisotropic 2D Gaussian potential field:
+\subsubsection{3. Continuous 2D Asymmetric Anisotropic Proxemics \texorpdfstring{$H_{\text{prox}}(v, t)$}{H\_prox(v, t)}}
+To model human psychological personal space (Hall's Proxemics / HA-VLN 2.0), we formulate an \textbf{asymmetric directional Gaussian potential field} aligned with pedestrian orientation heading $\theta_h$:
 \begin{equation}
-H_{\text{prox}}(\mathbf{p}, t) = \sum_{j=1}^{N_{\text{humans}}} A \cdot \exp\left( -\frac{\|\mathbf{p} - \mathbf{h}_j(t)\|^2}{2\sigma^2} \right)
+H_{\text{prox}}(\mathbf{p}, \mathbf{h}_j, \theta_h) = A_j \cdot \exp\left( -\frac{1}{2} \left[ \left(\frac{x_{\text{local}}}{\sigma_x}\right)^2 + \left(\frac{y_{\text{local}}}{\sigma_y}\right)^2 \right] \right)
+\end{equation}
+where relative coordinates are transformed into the pedestrian's local body frame:
+\begin{equation}
+\begin{bmatrix} x_{\text{local}} \\ y_{\text{local}} \end{bmatrix} = \begin{bmatrix} \cos\theta_h & \sin\theta_h \\ -\sin\theta_h & \cos\theta_h \end{bmatrix} \begin{bmatrix} x - x_j \\ y - y_j \end{bmatrix}
+\end{equation}
+and the asymmetric longitudinal variance reflects expanded front personal space:
+\begin{equation}
+\sigma_x = \begin{cases} \sigma_{\text{front}} = 1.35\text{ m}, & \text{if } x_{\text{local}} \ge 0 \ (\text{Front}) \\ \sigma_{\text{rear}} = 0.60\text{ m}, & \text{if } x_{\text{local}} < 0 \ (\text{Rear}) \end{cases}, \quad \sigma_y = 0.90\text{ m}
 \end{equation}
 The edge penalty is computed by integrating $H_{\text{prox}}$ along the corridor line segment:
 \begin{equation}
@@ -197,7 +207,34 @@ To prevent corner scrapes and multi-cart tailgating:
 \begin{equation}
 S_{\text{trolley}}(\mathbf{p}, t) = \sum_{j \neq i} A_{\text{trolley}} \cdot \exp\left( -\frac{\|\mathbf{p} - \mathbf{p}_j(t)\|^2}{2\sigma_{\text{trolley}}^2} \right)
 \end{equation}
-enforcing an $18\text{ px}$ ($0.54\text{ m}$) shelf margin buffer and a $36\text{ px}$ forward following distance.
+enforcing an $18\text{ px}$ ($0.54\text{ m}$) shelf margin buffer and a $36\text{ px}$ ($1.08\text{ m}$) forward following distance.
+
+\begin{table}[t]
+\centering
+\caption{System Simulation Parameters \& Physical SI Metric Calibration.}
+\label{tab:parameters}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Parameter Description} & \textbf{Symbol} & \textbf{Physical Value (SI)} \\
+\midrule
+Spatial Resolution Scale & $s_{\text{res}}$ & $1\text{ px} = 0.03\text{ m}$ ($1\text{ m} = 33.33\text{ px}$) \\
+Physics Integration Rate & $\Delta t$ & $0.05\text{ s}$ ($20\text{ Hz}$ control loop) \\
+GUI Rendering Rate & $f_{\text{gui}}$ & $60\text{ FPS}$ ($16.6\text{ ms}$ interpolation) \\
+Chassis Dimensions & $L \times W$ & $0.72\text{ m} \times 0.48\text{ m}$ ($24 \times 16\text{ px}$) \\
+Inscribed Safety Radius & $r_{\text{robot}}$ & $0.40\text{ m}$ ($13.3\text{ px}$) \\
+Maximum Linear Speed & $v_{\max}$ & $1.20\text{ m/s}$ ($40.0\text{ px/s}$) \\
+Maximum Angular Rate & $\omega_{\max}$ & $2.50\text{ rad/s}$ \\
+Shelf Clearance Margin & $d_{\text{shelf}}$ & $0.54\text{ m}$ ($18.0\text{ px}$) \\
+Following Gap Distance & $d_{\text{follow}}$ & $1.08\text{ m}$ ($36.0\text{ px}$) \\
+V2V Comm Range & $R_{\text{mesh}}$ & $10.50\text{ m}$ ($350.0\text{ px}$) \\
+V2V Packet Size & $S_{\text{pkt}}$ & $64\text{ Bytes}$ \\
+Mesh Hop Limit & $\text{TTL}$ & $3\text{ hops}$ \\
+Proxemic Front Space & $\sigma_{\text{front}}$ & $1.35\text{ m}$ ($45.0\text{ px}$) \\
+Proxemic Lateral Space & $\sigma_{\text{side}}$ & $0.90\text{ m}$ ($30.0\text{ px}$) \\
+Proxemic Rear Space & $\sigma_{\text{rear}}$ & $0.60\text{ m}$ ($20.0\text{ px}$) \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{algorithm}[t]
 \caption{Socially-Weighted Distributed Graph Optimization (SW-DGO)}

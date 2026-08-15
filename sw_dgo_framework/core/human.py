@@ -1,30 +1,36 @@
 """
-Human Pedestrian Model and Shelf-Aware Navigation.
+Human Pedestrian Model and Shelf-Aware Navigation with True Anisotropic Gaussian Proxemics.
 Models dynamic shoppers that strictly respect supermarket shelf boundaries,
-navigate through aisles/crossways, and possess continuous Gaussian proxemic fields.
+navigate through aisles/crossways, and possess directional asymmetric Gaussian personal-space fields.
 """
 
 from __future__ import annotations
 import math
-from math import exp as math_exp, hypot as math_hypot
+from math import exp as math_exp, hypot as math_hypot, cos as math_cos, sin as math_sin, atan2 as math_atan2
 import random
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
 
+from sw_dgo_framework.core.units import (
+    PX_TO_M, M_TO_PX, HUMAN_RADIUS_PX,
+    PROXEMIC_SIGMA_FRONT_PX, PROXEMIC_SIGMA_SIDE_PX, PROXEMIC_SIGMA_REAR_PX, PROXEMIC_AMPLITUDE
+)
+
 @dataclass
 class Human:
-    """Represents a human shopper navigating retail aisles."""
+    """Represents a human shopper navigating retail aisles with directional orientation."""
     id: int
     x: float
     y: float
     vx: float = 0.0
     vy: float = 0.0
+    heading: float = 0.0     # Facing orientation in radians
     speed: float = 1.0
     state: str = "browsing"  # "browsing" or "walking"
     state_timer: float = 0.0
     target_x: float = 0.0
     target_y: float = 0.0
-    radius: float = 12.0     # Physical body radius (pixels)
+    radius: float = HUMAN_RADIUS_PX  # Physical body radius in pixels (0.36 m)
 
     @property
     def pos(self) -> Tuple[float, float]:
@@ -35,8 +41,8 @@ class Human:
                aisle_x_coords: Optional[List[float]] = None,
                crossway_y_coords: Optional[List[float]] = None) -> None:
         """
-        Updates pedestrian state and ensures pedestrians strictly navigate within open aisles
-        and never penetrate solid shelves.
+        Updates pedestrian state, kinematics, and facing heading while ensuring pedestrians
+        strictly navigate within open corridors and never penetrate solid shelf fixtures.
         """
         self.state_timer -= dt
         min_x, min_y, max_x, max_y = bounds
@@ -59,21 +65,33 @@ class Human:
                 self.state_timer = random.uniform(2.0, 5.0)
                 self.vx = 0.0
                 self.vy = 0.0
+                # When browsing, turn toward nearest shelf to face products
+                if shelves:
+                    closest_shelf_dx = 0.0
+                    min_dist = float('inf')
+                    for sx1, sy1, sx2, sy2 in shelves:
+                        cx = (sx1 + sx2) / 2.0
+                        cy = (sy1 + sy2) / 2.0
+                        d = math_hypot(self.x - cx, self.y - cy)
+                        if d < min_dist:
+                            min_dist = d
+                            self.heading = math_atan2(cy - self.y, cx - self.x)
 
         if self.state == "walking":
             dx = self.target_x - self.x
             dy = self.target_y - self.y
-            dist = math.hypot(dx, dy)
+            dist = math_hypot(dx, dy)
             if dist > 6.0:
                 self.vx = (dx / dist) * self.speed
                 self.vy = (dy / dist) * self.speed
+                self.heading = math_atan2(self.vy, self.vx)
                 self.x += self.vx * dt * 30.0
                 self.y += self.vy * dt * 30.0
             else:
                 self.state = "browsing"
                 self.state_timer = random.uniform(2.0, 4.0)
 
-        # 1. Hard Shelf Collision Resolution (Pedestrians cannot walk through shelves)
+        # 1. Hard Shelf Collision Resolution (Pedestrians cannot penetrate solid shelves)
         if shelves:
             for min_sx, min_sy, max_sx, max_sy in shelves:
                 expanded_min_x = min_sx - self.radius
@@ -109,26 +127,61 @@ class Human:
 
 class ProxemicsField:
     """
-    Computes 2D Gaussian personal-space discomfort fields based on HA-VLN 2.0 guidelines.
-    Includes continuous line-segment integration along corridor edges.
+    Computes true Asymmetric Anisotropic 2D Gaussian personal-space discomfort fields
+    based on Hall's Proxemics and HA-VLN 2.0 guidelines.
+    
+    Front personal space: sigma_front = 1.35 m (45 px)
+    Lateral personal space: sigma_side = 0.90 m (30 px)
+    Rear personal space: sigma_rear = 0.60 m (20 px)
     """
-    def __init__(self, amplitude: float = 400.0, sigma: float = 40.0):
+    def __init__(self, amplitude: float = PROXEMIC_AMPLITUDE,
+                 sigma_front: float = PROXEMIC_SIGMA_FRONT_PX,
+                 sigma_side: float = PROXEMIC_SIGMA_SIDE_PX,
+                 sigma_rear: float = PROXEMIC_SIGMA_REAR_PX):
         self.amplitude = amplitude
-        self.sigma = sigma
+        self.sigma_front = sigma_front
+        self.sigma_side = sigma_side
+        self.sigma_rear = sigma_rear
 
     def compute_penalty_at_point(self, x: float, y: float, humans: List[Human]) -> float:
+        """
+        Evaluates the asymmetric anisotropic 2D Gaussian discomfort at coordinate (x, y)
+        transformed into each pedestrian's local body orientation frame.
+        """
         total_penalty = 0.0
-        two_sigma_sq = 2.0 * (self.sigma ** 2)
 
         for human in humans:
-            d_sq = (x - human.x) ** 2 + (y - human.y) ** 2
-            if d_sq < (3.5 * self.sigma) ** 2:
-                total_penalty += self.amplitude * math_exp(-d_sq / two_sigma_sq)
+            dx = x - human.x
+            dy = y - human.y
+            raw_dist_sq = dx * dx + dy * dy
+
+            # Bounding box cutoff check at 3.5 * sigma_front (~4.7 meters)
+            max_cutoff = 3.5 * self.sigma_front
+            if raw_dist_sq > max_cutoff * max_cutoff:
+                continue
+
+            # Transform into human's local body frame via 2D rotation matrix R(theta_h)
+            cos_h = math_cos(human.heading)
+            sin_h = math_sin(human.heading)
+            x_local = dx * cos_h + dy * sin_h   # Longitudinal axis (+front / -rear)
+            y_local = -dx * sin_h + dy * cos_h  # Lateral axis (+left / -right)
+
+            # Asymmetric longitudinal variance
+            sigma_x = self.sigma_front if x_local >= 0.0 else self.sigma_rear
+            sigma_y = self.sigma_side
+
+            exponent = -0.5 * ((x_local / sigma_x) ** 2 + (y_local / sigma_y) ** 2)
+            if exponent > -18.0:  # Numerical underflow guard
+                total_penalty += self.amplitude * math_exp(exponent)
 
         return total_penalty
 
     def compute_edge_segment_penalty(self, p1: Tuple[float, float], p2: Tuple[float, float],
-                                    humans: List[Human], num_samples: int = 6) -> float:
+                                     humans: List[Human], num_samples: int = 6) -> float:
+        """
+        Integrates the continuous 2D anisotropic Gaussian discomfort field along corridor segment (p1 -> p2).
+        Returns the peak discomfort sampled along the segment.
+        """
         max_penalty = 0.0
         x1, y1 = p1
         x2, y2 = p2

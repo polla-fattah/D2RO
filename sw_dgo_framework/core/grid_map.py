@@ -9,6 +9,11 @@ import math
 import time
 from typing import List, Tuple, Dict, Optional
 
+from sw_dgo_framework.core.units import (
+    WEIGHT_DISTANCE_WD, WEIGHT_MESH_WM, WEIGHT_PROXEMIC_WH,
+    WEIGHT_MUTEX_LOCK_WR, WEIGHT_TROLLEY_WS
+)
+
 # Node identifier: (x, y) grid coordinates in discrete space (e.g., 1m x 1m cells)
 Node = Tuple[int, int]
 
@@ -17,10 +22,13 @@ class SupermarketGrid:
     Supermarket 2D Grid Representation for SW-DGO Pathfinding.
     
     Evaluates dynamic edge traversal costs:
-    C(u, v, t) = D(u, v) + W_mesh(u, v, t) + H_prox(v, t) + R_lock(u, v, t) + S_trolley(v, t)
+    C(u, v, t) = w_D * D(u, v) + w_M * W_mesh(u, v, t) + w_H * H_prox(v, t) + w_R * R_lock(u, v, t) + w_S * S_trolley(v, t)
     """
 
-    def __init__(self, width: int, height: int, default_obstacle_grid: Optional[List[List[int]]] = None):
+    def __init__(self, width: int, height: int, default_obstacle_grid: Optional[List[List[int]]] = None,
+                 weight_d: float = WEIGHT_DISTANCE_WD, weight_m: float = WEIGHT_MESH_WM,
+                 weight_h: float = WEIGHT_PROXEMIC_WH, weight_r: float = WEIGHT_MUTEX_LOCK_WR,
+                 weight_s: float = WEIGHT_TROLLEY_WS):
         """
         Initialize the grid map.
         :param width: Number of horizontal grid columns.
@@ -29,6 +37,11 @@ class SupermarketGrid:
         """
         self.width = width
         self.height = height
+        self.weight_d = weight_d
+        self.weight_m = weight_m
+        self.weight_h = weight_h
+        self.weight_r = weight_r
+        self.weight_s = weight_s
 
         # 1. Static Geometry (0 = Open Floor, 1 = Shelf Wall)
         if default_obstacle_grid is not None:
@@ -178,8 +191,14 @@ class SupermarketGrid:
             if d_sq < (3.0 * self.sigma_trolley) ** 2:
                 s_trolley += self.A_trolley * math.exp(-d_sq / two_sigma_t_sq)
 
-        # Total Composite SW-DGO Cost
-        return d_base + w_mesh + h_prox + r_lock + s_trolley
+        # Total Composite SW-DGO Cost (Calibrated and Weighted)
+        return (
+            self.weight_d * d_base +
+            self.weight_m * w_mesh +
+            self.weight_h * h_prox +
+            self.weight_r * r_lock +
+            self.weight_s * s_trolley
+        )
 
 
 if __name__ == "__main__":

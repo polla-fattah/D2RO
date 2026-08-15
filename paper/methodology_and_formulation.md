@@ -64,19 +64,21 @@ $$\mathbf{x}_i(t) = \begin{bmatrix} x_i(t) \\ y_i(t) \\ \theta_i(t) \\ v_i(t) \e
 
 subject to linear speed $v_i(t) \in [0, v_{\max}]$, angular steering rate $\omega_i(t) \in [-\omega_{\max}, \omega_{\max}]$, and linear acceleration $a_i(t) \in [-a_{\max}, a_{\max}]$.
 
-### 2.2 The Complete 5-Component SW-DGO Traversal Cost Function
-The traversal cost $C(u, v, t)$ across any directed edge $(u, v) \in E$ at time $t$ is evaluated as:
+### 2.2 The Calibrated 5-Component SW-DGO Traversal Cost Function
+The traversal cost $C(u, v, t)$ across any directed edge $(u, v) \in E$ at time $t$ is evaluated as a dimensionally weighted linear combination:
 
-$$\boxed{C(u, v, t) = D(u, v) + W_{\text{mesh}}(u, v, t) + H_{\text{prox}}(v, t) + R_{\text{lock}}(u, v, t) + S_{\text{trolley}}(v, t)}$$
+$$\boxed{C(u, v, t) = w_D \cdot D(u, v) + w_M \cdot W_{\text{mesh}}(u, v, t) + w_H \cdot H_{\text{prox}}(v, t) + w_R \cdot R_{\text{lock}}(u, v, t) + w_S \cdot S_{\text{trolley}}(v, t)}$$
+
+where the calibrated dimensionless weights are $w_D = 1.0$ (metric traversal), $w_M = 1.5$ (V2V collaborative routing), $w_H = 2.0$ (pedestrian social priority), $w_R = 1.0$ (corridor mutual exclusion), and $w_S = 1.2$ (inter-vehicle clearance).
 
 ```mermaid
 flowchart TD
-    Cost["Composite Traversal Cost: C(u, v, t)"]
-    D["1. Kinematic Metric: D(u, v)"]
-    W["2. V2V Mesh Decay: W_mesh(u, v, t)"]
-    H["3. Gaussian Proxemics: H_prox(v, t)"]
-    R["4. Corridor Mutex Lock: R_lock(u, v, t)"]
-    S["5. Kinetic Safety Bubble: S_trolley(v, t)"]
+    Cost["Weighted Traversal Cost: C(u, v, t)"]
+    D["1. Kinematic Metric: w_D · D(u, v)"]
+    W["2. V2V Mesh Decay: w_M · W_mesh(u, v, t)"]
+    H["3. Asymmetric Proxemics: w_H · H_prox(v, t)"]
+    R["4. Corridor Mutex Lock: w_R · R_lock(u, v, t)"]
+    S["5. Kinetic Safety Bubble: w_S · S_trolley(v, t)"]
 
     Cost --> D & W & H & R & S
 ```
@@ -86,20 +88,51 @@ $$D(u, v) = \|\mathbf{p}_u - \mathbf{p}_v\|_2 + \alpha_{\text{turn}} \cdot |\Del
 Penalizes Euclidean distance and angular steering alignment $\Delta \theta(u, v) = |\text{atan2}(y_v - y_u, x_v - x_u) - \theta_i|$.
 
 #### 2. Spatiotemporal V2V Mesh Congestion Penalty: $W_{\text{mesh}}(u, v, t)$
-$$W_{\text{mesh}}(u, v, t) = \sum_{k \in \mathcal{M}} \gamma^h \cdot W_0 \cdot \exp\left( -\lambda_{\text{decay}} (t - t_k) \right)$$
-Event-driven broadcast of `CONGESTION_ALERT` packets across wireless radius $R_{\text{mesh}} = 350\text{px}$ with hop discount $\gamma \in (0, 1]$ and temporal decay rate $\lambda_{\text{decay}} = 2.0\text{ s}^{-1}$.
+$$W_{\text{mesh}}(u, v, t) = \sum_{k \in \mathcal{M}} \gamma_k \cdot W_0 \cdot \exp\left( -\lambda_{\text{decay}} (t - t_k) \right)$$
+Event-driven broadcast of `CONGESTION_ALERT` packets across wireless range $R_{\text{mesh}} = 10.5\text{ m}$ ($350\text{ px}$) with hop limit $\text{TTL} = 3$ and temporal decay rate $\lambda_{\text{decay}} = 2.0\text{ s}^{-1}$.
 
-#### 3. Continuous 2D Anisotropic Gaussian Proxemics: $H_{\text{prox}}(v, t)$
-$$H_{\text{prox}}(v, t) = \sum_{j=1}^{M(t)} A_j \cdot \exp \left( -\frac{1}{2} (\mathbf{p}_v - \mathbf{p}_j^h)^T \mathbf{R}(\phi_j^h) \mathbf{\Sigma}_j^{-1} \mathbf{R}(\phi_j^h)^T (\mathbf{p}_v - \mathbf{p}_j^h) \right)$$
-Evaluates psychological personal space discomfort ($A_j = 50.0$, $\sigma_{\text{front}} = 1.8\text{m}$, $\sigma_{\text{side}} = 1.2\text{m}$).
+#### 3. Continuous 2D Asymmetric Anisotropic Gaussian Proxemics: $H_{\text{prox}}(v, t)$
+To model human psychological personal space (Hall's Proxemics / HA-VLN 2.0), we formulate an **asymmetric directional Gaussian potential field** aligned with pedestrian orientation heading $\theta_h$:
+
+$$H_{\text{prox}}(\mathbf{p}, \mathbf{h}_j, \theta_h) = A_j \cdot \exp\left( -\frac{1}{2} \left[ \left(\frac{x_{\text{local}}}{\sigma_x}\right)^2 + \left(\frac{y_{\text{local}}}{\sigma_y}\right)^2 \right] \right)$$
+
+where relative position is transformed into the pedestrian's local body frame via rotation matrix $\mathbf{R}(\theta_h)$:
+
+$$\begin{bmatrix} x_{\text{local}} \\ y_{\text{local}} \end{bmatrix} = \begin{bmatrix} \cos\theta_h & \sin\theta_h \\ -\sin\theta_h & \cos\theta_h \end{bmatrix} \begin{bmatrix} x - x_j \\ y - y_j \end{bmatrix}$$
+
+and the asymmetric longitudinal variance reflects expanded front personal space:
+$$\sigma_x = \begin{cases} \sigma_{\text{front}} = 1.35\text{ m} \ (45\text{ px}), & \text{if } x_{\text{local}} \ge 0 \ (\text{Front}) \\ \sigma_{\text{rear}} = 0.60\text{ m} \ (20\text{ px}), & \text{if } x_{\text{local}} < 0 \ (\text{Rear}) \end{cases}$$
+$$\sigma_y = \sigma_{\text{side}} = 0.90\text{ m} \ (30\text{ px}) \quad (\text{Lateral})$$
 
 #### 4. Spatiotemporal Directional Corridor Mutex Lock: $R_{\text{lock}}(u, v, t)$
-$$R_{\text{lock}}(u, v, t) = \begin{cases} \infty, & \text{if opposing edge } (v, u) \text{ is locked by another agent at time } t \\ 0, & \text{otherwise} \end{cases}$$
-Enforces strict single-agent exclusivity in narrow corridors ($w_{\text{aisle}} < 2 r_{\text{trolley}}$) to eliminate head-on live-locks.
+$$R_{\text{lock}}(u, v, t) = \begin{cases} \infty, & \text{if opposing edge } (v, u) \text{ is locked by peer cart } j \neq i \text{ at time } t \\ 0, & \text{otherwise} \end{cases}$$
+Enforces strict single-agent exclusivity in narrow corridors ($W_{\text{corridor}} < 2 r_{\text{safety}}$) to eliminate head-on live-locks.
 
 #### 5. Trolley Kinetic Safety Clearance Envelope: $S_{\text{trolley}}(v, t)$
 $$S_{\text{trolley}}(\mathbf{p}, t) = \sum_{j \neq i} A_{\text{trolley}} \cdot \exp\left( -\frac{\|\mathbf{p} - \mathbf{p}_j(t)\|^2}{2\sigma_{\text{trolley}}^2} \right)$$
-Enforces safe following distances (anti-tailgating) and inflates static fixture boundaries by an $18\text{px}$ margin to prevent corner clipping during non-holonomic turns.
+Enforces an $18\text{ px}$ ($0.54\text{ m}$) shelf corner margin buffer and a $36\text{ px}$ ($1.08\text{ m}$) forward following distance gap.
+
+---
+
+### 2.3 Physical System Parameters & SI Calibration
+
+| System Parameter | Symbol | Metric Value (SI) | Simulation Value |
+| :--- | :---: | :---: | :---: |
+| Spatial Resolution | $s_{\text{res}}$ | $1\text{ px} = 0.03\text{ m}$ | $1\text{ m} = 33.33\text{ px}$ |
+| Physics Integration Tick | $\Delta t$ | $0.05\text{ s}$ ($20\text{ Hz}$) | $0.05\text{ s}$ per cycle |
+| GUI Render Rate | $f_{\text{gui}}$ | $60\text{ FPS}$ ($16.6\text{ ms}$) | Continuous interpolation |
+| Vehicle Chassis Footprint | $L \times W$ | $0.72\text{ m} \times 0.48\text{ m}$ | $24\text{ px} \times 16\text{ px}$ |
+| Vehicle Inscribed Radius | $r_{\text{robot}}$ | $0.40\text{ m}$ | $13.3\text{ px}$ |
+| Maximum Linear Velocity | $v_{\max}$ | $1.20\text{ m/s}$ | $40.0\text{ px/s}$ |
+| Maximum Angular Velocity | $\omega_{\max}$ | $2.50\text{ rad/s}$ | $2.50\text{ rad/s}$ |
+| Shelf Margin Clearance | $d_{\text{shelf}}$ | $0.54\text{ m}$ | $18.0\text{ px}$ |
+| Anti-Tailgating Following Gap | $d_{\text{follow}}$ | $1.08\text{ m}$ | $36.0\text{ px}$ |
+| V2V Mesh Comm Range | $R_{\text{mesh}}$ | $10.50\text{ m}$ | $350.0\text{ px}$ |
+| V2V Packet Payload | $S_{\text{packet}}$ | $64\text{ Bytes}$ | 64 Bytes |
+| V2V Hop Limit | $\text{TTL}$ | 3 hops | 3 hops |
+| Proxemic Front Personal Space | $\sigma_{\text{front}}$ | $1.35\text{ m}$ | $45.0\text{ px}$ |
+| Proxemic Lateral Personal Space | $\sigma_{\text{side}}$ | $0.90\text{ m}$ | $30.0\text{ px}$ |
+| Proxemic Rear Personal Space | $\sigma_{\text{rear}}$ | $0.60\text{ m}$ | $20.0\text{ px}$ |
 
 ---
 

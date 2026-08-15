@@ -11,6 +11,10 @@ from .graph import TopologicalGraph
 from .dstar_lite import DStarLite
 from .mesh_network import MeshNetwork, MessageType, MeshPacket
 from .human import Human, ProxemicsField
+from .units import (
+    ROBOT_RADIUS_PX, SHELF_CLEARANCE_MARGIN_PX, FOLLOWING_DISTANCE_GAP_PX,
+    V2V_MESH_COMM_RANGE_PX, ROBOT_VMAX_MPS, ROBOT_WMAX_RADPS, M_TO_PX
+)
 
 class TrolleyAgent:
     """
@@ -19,8 +23,8 @@ class TrolleyAgent:
     active inter-trolley safety clearance envelopes, shelf-margin safety zones, and social yielding.
     """
     def __init__(self, agent_id: int, graph: TopologicalGraph, start_node: str, goal_node: str,
-                 mesh_net: MeshNetwork, max_speed: float = 2.6, max_omega: float = 4.5,
-                 comm_radius: float = 350.0):
+                 mesh_net: MeshNetwork, max_speed: float = 2.6, max_omega: float = ROBOT_WMAX_RADPS,
+                 comm_radius: float = V2V_MESH_COMM_RANGE_PX):
         self.agent_id = agent_id
         self.graph = graph.clone()
         self.current_node = start_node
@@ -36,10 +40,11 @@ class TrolleyAgent:
         self.max_speed = max_speed
         self.max_omega = max_omega
 
-        # Safety Envelopes (Physical Body Radius vs Kinetic Clearance Bubble)
-        self.radius: float = 12.0               # Physical chassis radius (pixels)
-        self.safety_bubble_radius: float = 26.0 # Kinetic safety clearance envelope (pixels)
-        self.shelf_margin: float = 18.0        # Minimum distance maintained from shelf edges/corners
+        # Safety Envelopes (Physical Body Radius vs Kinetic Clearance Bubble in SI units)
+        self.radius: float = ROBOT_RADIUS_PX                    # Physical chassis radius (0.40 m / 13.3 px)
+        self.safety_bubble_radius: float = 26.0                 # Kinetic safety clearance envelope (0.78 m)
+        self.shelf_margin: float = SHELF_CLEARANCE_MARGIN_PX    # Minimum distance maintained from shelf edges (0.54 m / 18 px)
+        self.following_gap: float = FOLLOWING_DISTANCE_GAP_PX   # Anti-tailgating gap (1.08 m / 36 px)
 
         # High-level planning
         self.planner = DStarLite(self.graph, start_node, goal_node)

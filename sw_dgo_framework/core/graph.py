@@ -1,6 +1,7 @@
 """
 Topological Graph Representation for SW-DGO Framework.
-Models nodes (aisle junctions/waypoints) and directed edges with dynamic composite costs.
+Models nodes (aisle junctions/waypoints) and directed edges with calibrated 5-component weighted costs:
+C(u, v, t) = w_D * D(u, v) + w_M * W_mesh(u, v, t) + w_H * H_prox(v, t) + w_R * R_lock(u, v, t) + w_S * S_trolley(v, t)
 """
 
 from __future__ import annotations
@@ -9,9 +10,14 @@ import copy
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Optional, Set
 
+from sw_dgo_framework.core.units import (
+    WEIGHT_DISTANCE_WD, WEIGHT_MESH_WM, WEIGHT_PROXEMIC_WH,
+    WEIGHT_MUTEX_LOCK_WR, WEIGHT_TROLLEY_WS, PX_TO_M
+)
+
 @dataclass
 class Node:
-    """Represents a waypoint in the retail environment."""
+    """Represents a topological waypoint in the service environment."""
     id: str
     x: float
     y: float
@@ -22,35 +28,55 @@ class Node:
     def pos(self) -> Tuple[float, float]:
         return (self.x, self.y)
 
+    @property
+    def pos_m(self) -> Tuple[float, float]:
+        """Returns coordinate in meters (SI metric)."""
+        return (self.x * PX_TO_M, self.y * PX_TO_M)
+
 @dataclass
 class Edge:
     """
-    Directed edge between two nodes with SW-DGO composite cost components:
-    C(u, v, t) = D(u, v) + W_mesh(u, v, t) + H_prox(v, t) + R_lock(u, v)
+    Directed edge between two nodes with SW-DGO 5-component weighted traversal cost:
+    C(u, v, t) = w_D * D(u, v) + w_M * W_mesh(u, v, t) + w_H * H_prox(v, t) + w_R * R_lock(u, v) + w_S * S_trolley
     """
     u: str
     v: str
-    d: float  # Baseline physical Euclidean distance / traversal time
+    d: float  # Baseline physical Euclidean distance / traversal length
     is_single_file: bool = False  # True if corridor cannot accommodate bidirectional traffic
-    w_mesh: float = 0.0  # Distributed mesh congestion penalty
-    h_prox: float = 0.0  # Human proximity discomfort penalty
-    r_lock: float = 0.0  # Directional corridor lock penalty (0.0 or math.inf)
+    w_mesh: float = 0.0      # Distributed mesh congestion penalty
+    h_prox: float = 0.0      # Asymmetric human proxemic discomfort penalty
+    r_lock: float = 0.0      # Directional corridor lock penalty (0.0 or math.inf)
+    s_trolley: float = 0.0   # Kinetic vehicle clearance envelope penalty
+
+    # Weight coefficients
+    weight_d: float = WEIGHT_DISTANCE_WD
+    weight_m: float = WEIGHT_MESH_WM
+    weight_h: float = WEIGHT_PROXEMIC_WH
+    weight_r: float = WEIGHT_MUTEX_LOCK_WR
+    weight_s: float = WEIGHT_TROLLEY_WS
 
     # Active lock metadata
     lock_owner: Optional[int] = None  # Agent ID holding current lock
-    lock_expiry: float = 0.0          # Simulation time when lock expires
+    lock_expiry: float = 0.0          # Simulation timestamp when lock expires
 
     @property
     def cost(self) -> float:
-        """Returns total composite traversal cost."""
+        """Returns total calibrated composite traversal cost."""
         if self.r_lock == math.inf:
             return math.inf
-        return max(0.001, self.d + self.w_mesh + self.h_prox + self.r_lock)
+        total_cost = (
+            self.weight_d * self.d +
+            self.weight_m * self.w_mesh +
+            self.weight_h * self.h_prox +
+            self.weight_r * self.r_lock +
+            self.weight_s * self.s_trolley
+        )
+        return max(0.001, total_cost)
 
 class TopologicalGraph:
     """
-    Directed graph modeling supermarket topology with dynamic edge costs.
-    Supports predecessor/successor lookups for incremental D* Lite search.
+    Directed graph modeling indoor facility topology with dynamic edge costs.
+    Supports predecessor/successor lookups for incremental D* Lite heuristic search.
     """
     def __init__(self):
         self.nodes: Dict[str, Node] = {}
@@ -75,7 +101,10 @@ class TopologicalGraph:
                 u=edge.u, v=edge.v, d=edge.d,
                 is_single_file=edge.is_single_file,
                 w_mesh=edge.w_mesh, h_prox=edge.h_prox,
-                r_lock=edge.r_lock, lock_owner=edge.lock_owner,
+                r_lock=edge.r_lock, s_trolley=edge.s_trolley,
+                weight_d=edge.weight_d, weight_m=edge.weight_m,
+                weight_h=edge.weight_h, weight_r=edge.weight_r,
+                weight_s=edge.weight_s, lock_owner=edge.lock_owner,
                 lock_expiry=edge.lock_expiry
             )
         return new_g
@@ -157,7 +186,7 @@ class TopologicalGraph:
         return changed_edges
 
     def decay_mesh_penalties(self, dt: float, decay_rate: float = 2.0) -> List[Tuple[str, str]]:
-        """Linearly decays mesh congestion penalties over time."""
+        """Decays mesh congestion penalties over time."""
         changed_edges = []
         for (u, v), edge in self.edges.items():
             if edge.w_mesh > 0.0:
