@@ -302,7 +302,20 @@ def analyse_benchmark() -> Dict[str, Any]:
             "makespan_successful": describe([fnum(r, "travel_time_s") for r in tt_ok]),
             "deadlocks": describe(series(method, "deadlocks")),
             "intimate_exposure": describe(series(method, "proxemic_violations")),
+            # Whole control step: mesh, proxemics, safety, yielding, motion --
+            # averaged over EVERY tick, including ticks with no repair. This is
+            # controller-step compute time, NOT D* Lite repair latency.
+            "step_compute_ms": describe(series(method, "avg_replan_latency_ms")),
+            # Kept under the old key so existing consumers do not silently break.
             "replan_latency_ms": describe(series(method, "avg_replan_latency_ms")),
+            # D* Lite repair latency proper: measured around compute_shortest_path()
+            # and recorded only on ticks where a repair actually occurred. The tail
+            # matters more than the mean for a real-time claim, so p95 and max are
+            # carried through rather than collapsed into an average.
+            "repair_median_ms": describe(series(method, "repair_median_ms")),
+            "repair_p95_ms": describe(series(method, "repair_p95_ms")),
+            "repair_max_ms": describe(series(method, "repair_max_ms")),
+            "repair_count": describe(series(method, "repair_n")),
             "mesh_packets": describe(series(method, "mesh_packets")),
         }
     out["groups"] = groups
