@@ -8,8 +8,9 @@ Department of Computer Science and Engineering, Koya University
 📄 Manuscript under review
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Data: CC BY 4.0](https://img.shields.io/badge/Data-CC%20BY%204.0-lightblue)](https://creativecommons.org/licenses/by/4.0/)
+[![Code: MIT](https://img.shields.io/badge/Code-MIT-green)](LICENSE)
+[![Data: CC BY 4.0](https://img.shields.io/badge/Data-CC%20BY%204.0-lightblue)](LICENSE-DATA)
+[![Paper: All rights reserved](https://img.shields.io/badge/Paper-All%20rights%20reserved-lightgrey)](paper/LICENSE)
 
 ---
 
@@ -47,7 +48,9 @@ per benchmark condition). The headline is a deliberate trade-off, not a clean sw
 | Makespan (s) | 47.18 ± 13.40 | **18.00 ± 0.00** | 34.54 ± 0.16 |
 | Intimate exposure, median [IQR] | **0 [0, 0]** | 128 [123, 131] | 204 [176, 276] |
 | Corridor deadlocks | 0.00 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 |
-| Replan latency | 0.09–0.19 ms | n/a | n/a |
+| Replan latency | 0.14–0.32 ms* | n/a | n/a |
+
+\* Replan latency is wall-clock time and is the one metric here that is *not* deterministic — it varies with machine load. Every other value reproduces bit-identically across reruns.
 
 D²RO pays ~2.6× the makespan of the socially blind shortest path to virtually
 eliminate intrusion into pedestrians' intimate space, and matches rather than beats
@@ -137,9 +140,8 @@ D2RO/
 │   ├── references.bib                  # BibTeX bibliography
 │   ├── figures/                        # 300 DPI publication figures (PDF + PNG)
 │   │   ├── fig1_benchmark_comparison.*
-│   │   ├── fig2_ablation_study.*
-│   │   ├── fig3_cross_domain_generalization.*
-│   │   ├── fig4_scalability_density.*
+│   │   ├── fig_crowd_density.*
+│   │   ├── fig_fleet_size.*
 │   │   ├── fig5_supermarket_topology_trajectories.*
 │   │   ├── fig6_hospital_topology_trajectories.*
 │   │   ├── fig7_airport_topology_trajectories.*
@@ -149,10 +151,10 @@ D2RO/
 │   ├── scripts/                        # Paper build pipeline
 │   │   ├── build_latex.py              # Compiles paper.tex → paper.pdf
 │   │   ├── build_paper_docx.py         # Generates Word manuscript
-│   │   ├── generate_paper_plots.py     # Produces Figs 1–7 from CSV
+│   │   ├── generate_tables_and_figures.py  # DATA-DRIVEN: all tables + Fig 1, scalability
+│   │   ├── generate_topology_figures.py    # Qualitative: Figs 5–7
 │   │   ├── generate_heatmaps_and_trajectories.py  # Produces Figs 8–10
-│   │   ├── sync_data_to_manuscript.py  # CSV → statistics → report
-│   │   └── verify_and_update_statistics.py
+│   │   └── analyze_results.py          # THE statistics pipeline
 │   └── drafts/                         # Section drafts (Markdown)
 │       ├── abstract.md
 │       ├── introduction.md
@@ -194,13 +196,13 @@ Runtime: ~20 minutes.
 
 ### Regenerate all figures (300 DPI)
 ```bash
-python paper/scripts/generate_paper_plots.py
+python paper/scripts/generate_tables_and_figures.py
 python paper/scripts/generate_heatmaps_and_trajectories.py
 ```
 
 ### Compute statistics and verify data
 ```bash
-python paper/scripts/sync_data_to_manuscript.py
+python paper/scripts/analyze_results.py
 ```
 
 ### Compile the LaTeX PDF
@@ -315,10 +317,10 @@ All paper build scripts are in [`paper/scripts/`](paper/scripts/).
 experiments/data/*.csv
         │
         ▼
-paper/scripts/sync_data_to_manuscript.py    → experiments/data/README.md (statistics)
+paper/scripts/analyze_results.py            → analysis_results.json + analysis_report.md
         │
         ▼
-paper/scripts/generate_paper_plots.py       → paper/figures/fig1_*.{pdf,png} … fig7_*
+paper/scripts/generate_tables_and_figures.py → paper/generated/*.tex + Fig 1, scalability figs
 paper/scripts/generate_heatmaps_and_trajectories.py → paper/figures/fig8_* … fig10_*
         │
         ▼
@@ -431,7 +433,25 @@ If you use this code or data in your research, please cite (details to be update
 }
 ```
 
-## License
+## Licensing
 
-Source code: [MIT License](LICENSE)  
-Simulation data (`experiments/data/`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+This repository is deliberately licensed in **three separate scopes**. Please read
+the one that covers what you intend to use.
+
+| Scope | Licence | File |
+|:------|:--------|:-----|
+| **Source code** — `d2ro/`, `scripts/`, `paper/scripts/`, `run_full_suite.py` | MIT | [`LICENSE`](LICENSE) |
+| **Simulation datasets** — `experiments/data/` | CC BY 4.0 | [`LICENSE-DATA`](LICENSE-DATA) |
+| **Manuscript** — everything under `paper/` | **All rights reserved** | [`paper/LICENSE`](paper/LICENSE) |
+
+The code and data are openly licensed precisely so that every number in the paper
+can be independently reproduced and checked.
+
+The **manuscript is not openly licensed**. It is unpublished and under review, and
+open licences such as CC BY are irrevocable once granted — reserving the paper keeps
+the authors free to publish it wherever they choose. You may read, cite and quote it
+under normal academic practice; please do not redistribute or republish it.
+
+> **Note for reusers:** the repository-wide badge previously implied MIT covered
+> everything. It does not, and never was intended to. Use the table above.
+

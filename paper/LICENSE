@@ -1,0 +1,46 @@
+MANUSCRIPT -- ALL RIGHTS RESERVED
+
+Copyright (c) 2026 Polla Fattah and Sanar Fawzi.
+
+SCOPE
+-----
+This notice applies to the entire paper/ directory, including but not limited
+to:
+
+    paper.tex, paper.pdf        the manuscript source and compiled output
+    figures/                    all manuscript figures
+    generated/                  generated LaTeX tables and figure floats
+    drafts/                     section drafts
+    references.bib              the bibliography
+    *.docx                      Word versions of the manuscript
+
+WHY THIS IS NOT OPENLY LICENSED
+-------------------------------
+The source code (MIT, see ../LICENSE) and the simulation datasets
+(CC BY 4.0, see ../LICENSE-DATA) are openly licensed so that the results in this
+work can be independently reproduced. That is deliberate and unaffected by this
+notice.
+
+The manuscript itself is reserved. Open licences such as CC BY are irrevocable
+once granted, and granting one over the manuscript now could conflict with a
+publisher's copyright agreement later. Keeping the paper All Rights Reserved
+preserves the authors' freedom to publish it wherever they choose.
+
+WHAT YOU MAY DO
+---------------
+The manuscript is made available here for reading, review and verification of
+the results against the openly licensed code and data. You may read it, cite it,
+and quote from it as permitted by fair dealing / fair use and normal academic
+citation practice.
+
+You may NOT redistribute, republish, mirror, translate or create derivative
+works from the manuscript without the authors' written permission.
+
+STATUS
+------
+This manuscript is unpublished and under review. It is a preprint: it has not
+completed peer review, and its content may change before publication. Upon
+acceptance, this notice will be replaced by the publisher's required copyright
+statement, and the accepted version will carry the publisher's notice and DOI.
+
+Enquiries: polla.fattah@koyauniversity.org

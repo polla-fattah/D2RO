@@ -28,7 +28,7 @@ pip install -r requirements.txt
 # 1. sanity check - must be 53 passed
 python -m pytest d2ro/tests/ -q
 
-# 2. regenerate all datasets (2-4 h; refuses to report success on short row counts)
+# 2. regenerate all datasets (~20 min; refuses to report success on short row counts)
 PYTHONDONTWRITEBYTECODE=1 python run_full_suite.py
 
 # 3. statistics  -> experiments/data/analysis_results.json + analysis_report.md
@@ -111,7 +111,7 @@ All code changes are complete, reviewed and covered by **53 passing tests**.
 | `S_trolley` as a genuine edge-cost term | Done — was previously never assigned, making the "5-component" cost function a 4-component one |
 | Multi-hop V2V mesh (TTL, relaying, duplicate suppression, latency, packet loss) | Done — 10 dedicated tests |
 | Distributed corridor reservation (grant/deny, FIFO fairness, priority, lease expiry) | Done — 10 dedicated tests |
-| D* Lite optimality | Validated against fresh Dijkstra over 750 randomised trials |
+| D* Lite optimality | Validated against fresh Dijkstra over 150 randomised scenarios comprising 750 successive repairs |
 | Metric semantics (events vs exposure; one shared threshold for all planners) | Done |
 | Cost-term normalisation to equivalent-detour metres | Done |
 | Bounded onboard perception (7.2 m sensing radius) | Done |
@@ -119,7 +119,7 @@ All code changes are complete, reviewed and covered by **53 passing tests**.
 | Time budgets recalibrated from measured mission durations | Done |
 | Resume-and-append trap removed | Done |
 | Dataset completeness verification | Done |
-| Single statistics pipeline | Done |
+| Single statistics pipeline | Done — competing legacy writers now deleted, not merely unused |
 | Table/figure generation from data | Done |
 
 ### Datasets
@@ -155,8 +155,12 @@ PYTHONDONTWRITEBYTECODE=1 python run_full_suite.py
 # 2. recompute all statistics
 python paper/scripts/analyze_results.py
 
-# 3. regenerate all tables and figures
+# 3. regenerate all data-driven tables and figures
 python paper/scripts/generate_tables_and_figures.py
+
+# 4. (only if the layouts changed) regenerate the qualitative illustrations
+python paper/scripts/generate_topology_figures.py
+python paper/scripts/generate_heatmaps_and_trajectories.py
 ```
 
 Individual experiments can be run alone, which is useful on a flaky machine:
@@ -172,7 +176,7 @@ Then remaining work:
    weights by ×{0.5, 0.75, 1.0, 1.25, 1.5} and report success/makespan/social
    trade-offs. This answers the reviewer's "calibrated with no calibration
    procedure" objection, which is still open.
-2. **Rewrite results and discussion** around whatever the reruns produce.
+2. ~~Rewrite results and discussion~~ — **done**; see §4.
 3. **Validate the ORCA baseline against a reference implementation** before any
    ORCA failure claim is made (see §4.5).
 4. **Clean-room reproduction** on a machine that has never seen the project.
@@ -414,7 +418,27 @@ paper can be sent anywhere.
 | `paper/scripts/generate_tables_and_figures.py` | Tables and figures, generated from data only |
 | `experiments/data/analysis_results.json` | Machine-readable single source of truth |
 | `experiments/data/analysis_report.md` | Human-readable statistical report |
-| `paper/generated/*.tex` | Generated LaTeX tables for `\input` |
+| `paper/generated/*.tex` | Generated LaTeX tables and figure floats for `\input` |
+| `paper/scripts/generate_topology_figures.py` | Qualitative Figs. 5-7 (illustrative, not statistical) |
+| `paper/scripts/generate_heatmaps_and_trajectories.py` | Qualitative Figs. 8-10 (illustrative, not statistical) |
+
+### One rule about artefact ownership
+
+There are exactly **two** kinds of figure script, and they must never overlap:
+
+* **Data-driven** (`generate_tables_and_figures.py`) reads only
+  `analysis_results.json`, and refuses to emit an artefact whose dataset is
+  missing or stale. It owns every table, Figure 1 and the two scalability figures.
+* **Qualitative** (`generate_topology_figures.py`,
+  `generate_heatmaps_and_trajectories.py`) run the simulator to draw illustrative
+  floorplans and trajectories. They own Figs. 5-10 and read no CSV.
+
+Three legacy scripts were removed for violating this rule: `generate_paper_plots.py`
+also wrote `fig1_benchmark_comparison.pdf`, so running it silently replaced the
+provenance-checked Figure 1 with one built by non-provenance-aware code;
+`sync_data_to_manuscript.py` and `verify_and_update_statistics.py` both wrote a
+second, competing statistics report. **Do not reintroduce a script that writes an
+artefact the data-driven pipeline owns.**
 
 A baseline snapshot of the pre-rebuild CSVs, `paper.tex`, `references.bib` and
 figures was taken before any overwrite; ask if you need it restored.
