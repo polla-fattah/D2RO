@@ -1,97 +1,111 @@
 # Reference Audit — Phase E
 
-**Tool:** `paper/scripts/audit_references.py` (Crossref, all entries).
-**Result: 0 of 21 verifiable entries passed clean.** The reviewer named five wrong
-references and judged that there were too many to repair by guesswork. That judgement
-was correct, and conservative.
+**Tool:** `paper/scripts/audit_references.py` (Crossref, DOI-first, all entries).
+**Before:** 0 of 21 entries verified clean.
+**After:** 16 of 20 verifiable entries clean; the remaining 4 are documented,
+accepted deviations rather than errors.
 
-> **Read this first.** The tool reports *candidates for review*, not verdicts. It
-> matches on title, so it can retrieve the wrong record and then "find" disagreements
-> that reflect its own bad match rather than a bad entry (see §3). Nothing here has
-> been auto-corrected. Every entry must be fixed by a human against the publisher
-> record.
+The bibliography has been rebuilt from DOI-resolved metadata. Citation keys were
+deliberately left unchanged, so no `.tex` edit was required and no citation could
+silently break; where a key name now disagrees with the work it points at
+(`koenig2002dstar` → a 2005 article), a comment in the `.bib` records why.
 
 ---
 
-## 1. Confirmed wrong — venue or authorship is materially incorrect
+## 1. What was actually wrong
 
-These are real errors. Crossref independently corroborates the reviewer on four of
-them, and the audit found three more the reviewer did not list.
+The reviewer named five bad references and judged there were too many to repair by
+guesswork. That was correct and, if anything, understated.
 
-| Key | Recorded | Actual (Crossref) | DOI |
-|:--|:--|:--|:--|
-| `dergachev2021distributed` | *Robotics and Autonomous Systems* | **IEEE CASE 2021** | `10.1109/case49439.2021.9551564` |
-| `skrynnik2024learn` | *Autonomous Agents and Multi-Agent Systems* | **Proc. AAAI 2024**, 38(16) | `10.1609/aaai.v38i16.29704` |
-| `keskin2024negotiation` | Keskin, Guler, Sen — *IEEE T-IV* | **Keskin, Cantürk, Eran, Aydoğan**, *AAMAS* 38 | `10.1007/s10458-024-09639-8` |
-| `gielis2022codesign` | (title unmatched as recorded) | **Gielis, Shankar, Prorok**, *Current Robotics Reports* 3, 213–225 | `10.1007/s43154-022-00090-9` |
-| `vandenberg2008orca` | *IEEE Transactions on Robotics* | **ICRA 2008** (conference) | `10.1109/robot.2008.4543489` |
-| `ma2017lifelong` | *Autonomous Robots* | **AAMAS** (conference) | — |
-| `chen2020relational` | *IEEE RA-L* | **IROS 2020** (conference) | `10.1109/iros45743.2020.9340705` |
+| Key | Was | Now (DOI-verified) |
+|:--|:--|:--|
+| `dergachev2021distributed` | *Robotics and Autonomous Systems* | IEEE **CASE 2021**, 1489–1494 |
+| `skrynnik2024learn` | *AAMAS*, missing co-author Nesterova | **AAAI 2024** 38(16), full author list |
+| `keskin2024negotiation` | Keskin, Guler, Sen — *IEEE T-IV* | **Keskin, Cantürk, Eran, Aydoğan** — *AAMAS* 38 |
+| `gielis2022codesign` | did not match any real record | **Gielis, Shankar, Prorok** — *Current Robotics Reports* 3 |
+| `vandenberg2008orca` | *IEEE T-RO* 2008 | **ISRR 2011** book chapter (the canonical ORCA paper) |
+| `ma2017lifelong` | *Autonomous Robots* journal | **AAMAS 2017** conference paper |
+| `chen2020relational` | *IEEE RA-L*, authors Liu/Liu/Zeng/Manocha | **IROS 2020**, Chen/Hu/Nikdel/Mori/Savva |
+| `koenig2002dstar` | AAAI-02 | **IEEE T-RO 2005**, the version held in `literature/` |
+| `almutib2012dstar` | 2012 | **2011** |
+| `azlan2024intcart` | 5 authors, 2024 | **7 authors, 2025** |
+| `clark2021team` | Clark, R.; Punnoose; Anand; Trawny | **Clark, L.; Andre; Galante; Krishnamachari; Psounis** |
+| `nugraha2024ips` | Nugraha, A.B.; Priyambodo | **Nugraha, M.H.; Abdul; Bramantyo; Rijanto; Saputra; Mahendra** |
+| `edwige2024swarmslam` | journal article, "Edwige et al." | **Master's thesis**, single author Loems |
+| — | 21 of 22 typed as `@article` | 9 `@inproceedings`, 8 `@article`, 2 `@incollection`, 1 `@mastersthesis`, 2 `@unpublished` |
 
-`skrynnik2024learn` is also missing co-author **Nesterova**.
+**Seven of these were not in the reviewer's list.** They surfaced only because every
+entry was checked rather than the five already known to be wrong.
 
-**The last three were not in the reviewer's list.** They were found only because the
-audit checked all 21 entries rather than the five already known to be wrong — which
-is precisely why the reviewer asked for a full audit.
+## 2. `literature/D2RO.bib` is not a trustworthy source either
 
-## 2. Confirmed wrong — year
+The handover notes previously suggested rebuilding from `literature/D2RO.bib`. That
+turned out to be unsafe. Resolving every DOI in that file:
 
-| Key | bib | Crossref |
-|:--|--:|--:|
-| `stern2019multi` | 2019 | 2021 (also missing author **Barták**) |
-| `wagner2011mstar` | 2011 (IROS) | 2015 (*Artificial Intelligence* journal version) |
-| `azlan2024intcart` | 2024 | 2025 |
+- **18 of 25** resolve to the work claimed;
+- **4 resolve to entirely unrelated papers** — `Dergachev2021Distributed` pointed at
+  *"Step Path Simulation for Quadruped Walking Robot"*, `Ma2021Distributed` at a soft
+  aerial vehicle paper, `Ma2017Delay` at a keyphrase-extraction paper, and
+  `VandenBerg2011Reciprocal` at a dead DOI;
+- **3 carry no DOI at all**.
 
-`wagner2011mstar` needs a decision rather than a correction: the conference (IROS
-2011) and journal (*Artificial Intelligence*, 2015) versions are different works.
-Cite whichever is intended, consistently.
+Three of the corrections in §1 (Clark, Nugraha, Azlan author lists) were wrong *in
+that file too* and were fixed from the DOI record, not from it.
 
-## 3. Unresolved — no reliable Crossref match (manual check required)
+## 3. Two entries resolved from the PDFs rather than from metadata
 
-Eight entries could not be matched by title. This does **not** prove them wrong; it
-means the recorded title does not retrieve the work, which is itself a warning sign,
-and for some it simply reflects poor indexing or a title typo.
+- **`edwige2024swarmslam`** — the PDF in `literature/` is a **Master's thesis**
+  (Université Libre de Bruxelles, supervised by Mauro Birattari, academic year
+  2023–24), single author. It is now `@mastersthesis`, and the manuscript no longer
+  writes "Edwige *et al.*" for a one-author thesis; it cites *Loems*.
+- **`havln2024benchmark`** — the PDF genuinely *is* HA-VLN 2.0, marked
+  *"Under review as a conference paper at ICLR 2026"* with **anonymous authors**
+  (double-blind). See §5: this one still needs a decision.
 
-`koenig2002dstar`, `dergachev2024decentralized`, `almutib2012dstar`,
-`zafari2019survey`, `clark2021team`, `nugraha2024ips`, `kruse2013human`,
-`havln2024benchmark`
+## 4. Accepted deviations (flagged by the tool, correct as recorded)
 
-`havln2024benchmark` is the one the reviewer flagged specifically: the manuscript
-cites "HA-VLN 2.0" but the entry is a different work. Resolve which is intended.
+| Key | Flag | Why it is accepted |
+|:--|:--|:--|
+| `stern2019multi` | Crossref year 2021 | That is the AAAI OJS deposit date; the paper is SoCS **2019** |
+| `vandenberg2008orca` | container = *Springer Tracts in Advanced Robotics* | That is the series; the `booktitle` names the symposium volume, which is more useful to a reader |
+| `ma2017lifelong` | venue wording | "AAMAS" vs Crossref's expanded conference name — same venue |
+| `edwige2024swarmslam` | unverifiable | A Master's thesis is not in Crossref; verified by hand from the PDF |
 
-## 4. Tool artefacts — ignore these, they are my matcher's fault
+## 5. Outstanding — needs an author decision
 
-Recorded so nobody wastes time "fixing" a correct entry:
+**`havln2024benchmark` has no author field**, which BibTeX warns about. The PDF held
+in `literature/` is the **anonymous double-blind ICLR 2026 submission**, so there are
+no authors to record from it. The reviewer stated that the official HA-VLN 2.0 is a
+later benchmark by Dong, Wu, He and collaborators, and that the earlier 2024 HA-VLN
+paper is a different work with different authorship.
 
-- `slyusar2016manet` matched a Meghanathan book chapter — wrong record retrieved.
-- `chen2020relational` author diff lists a completely disjoint author set, i.e. the
-  matcher landed on a different paper; the **venue** finding for it is nonetheless
-  corroborated separately.
-- `vandenberg2008orca` author diff (`Berg` vs `van den Berg`, `Lin` vs `Ming Lin`)
-  is a name-particle formatting artefact, not an error.
-- `azlan2024intcart` author diff is likewise a multi-part-surname formatting issue.
-- "NO DOI in bib" is flagged on nearly every entry. That is a completeness gap, not
-  an error — but DOIs should be added, since they are what makes the next audit cheap.
+Three options, none of which should be chosen without the authors' input:
 
-## 5. Recommended fix procedure
+1. cite the **arXiv/published HA-VLN 2.0** with its real author list;
+2. cite the **earlier HA-VLN (2024)** paper, if that is what the argument actually
+   relies on;
+3. keep citing the anonymous submission, which is defensible but unusual and will
+   read oddly to a reviewer.
 
-1. Do **not** hand-patch the seven confirmed entries and stop. Rebuild the whole
-   bibliography from publisher records, adding a `doi` field to every entry.
-2. Prefer `literature/D2RO.bib` (26 entries) where it already holds verified
-   metadata; it was compiled from the actual PDFs in `literature/`.
-3. Fix entry **types** as well as content: 21 of 22 entries are `@article`, including
-   several conference papers. That uniformity is itself evidence the file was
-   generated without checking.
-4. Re-run `python paper/scripts/audit_references.py` until only §3-style
-   unmatchable-but-verified entries remain, and record why each survivor is accepted.
-5. Wire the audit into CI (Phase F) so a wrong reference cannot reach a submission
-   again.
+No author names have been invented to silence the warning.
 
-## 6. Reproducing
+## 6. Tooling changes made during this audit
+
+The audit tool now **resolves the DOI when an entry has one**, instead of searching
+by title. Title search returns whatever ranks highest and will confidently hand back
+a *different* paper, producing "author mismatch" findings that are the search's fault
+rather than the entry's — which is exactly what it did for `slyusar2016manet` and
+`chen2020relational` on the first pass. Comparison also now normalises LaTeX accents
+(`{\"u}` = `ü`) and `\&` vs `&amp;`, and keeps multi-word surnames intact
+("Mohamad Azlan", "van den Berg") instead of truncating them to the last token.
+
+Without those fixes the tool reported failures on correct entries, which would make
+it useless as the CI gate planned for Phase F.
+
+## 7. Reproducing
 
 ```bash
 python paper/scripts/audit_references.py
-python paper/scripts/audit_references.py --json audit.json    # full findings
 ```
 
-Exit status is non-zero while any entry is flagged, so it can gate a release build.
+Exit status is non-zero while any entry is flagged.

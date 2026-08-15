@@ -25,6 +25,7 @@ import os
 import re
 import sys
 import time
+import unicodedata
 import urllib.parse
 import urllib.request
 
@@ -58,8 +59,28 @@ def crossref(title, rows=3):
         return json.loads(r.read())["message"]["items"]
 
 
+def resolve_doi(doi):
+    """Fetch a work by DOI - unambiguous, unlike a bibliographic title search."""
+    doi = doi.strip().replace("https://doi.org/", "")
+    req = urllib.request.Request(
+        "https://api.crossref.org/works/" + urllib.parse.quote(doi, safe="/.:-_()"),
+        headers={"User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=45) as r:
+        return json.loads(r.read())["message"]
+
+
+# LaTeX accent forms -> the bare letter, so {\"u} compares equal to u-umlaut and a
+# .bib written in portable ASCII does not read as disagreeing with Crossref unicode.
+_ACCENT = re.compile(r"\\['`\"^~=.uvHtcdbk]\s*\{?([A-Za-z])\}?")
+
+
 def norm(s):
-    return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
+    s = _ACCENT.sub(r"\1", s or "")
+    s = re.sub(r"[{}\\]", "", s)
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    s = s.replace("&amp;", "&")
+    return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
 
 
 def title_match(a, b):
@@ -91,19 +112,39 @@ def audit_entry(e):
         rec["issues"].append("no title field; cannot verify")
         return rec
 
-    try:
-        items = crossref(title)
-    except Exception as exc:
-        rec["issues"].append(f"lookup failed: {type(exc).__name__}: {exc}")
-        return rec
-
-    hit = next((it for it in items
-                if title_match(title, (it.get("title") or [""])[0])), None)
-    if hit is None:
-        rec["issues"].append("NO CROSSREF MATCH for this title - verify the entry "
-                             "exists as recorded")
-        rec["candidates"] = [(it.get("title") or [""])[0][:80] for it in items[:2]]
-        return rec
+    # Prefer the DOI when the entry carries one. A DOI identifies the work
+    # unambiguously; a bibliographic title search returns whatever ranks highest and
+    # will happily hand back a different paper with a similar name, which then
+    # produces confident-looking "author mismatch" findings that are the search's
+    # fault rather than the entry's. Only fall back to title search when no DOI is
+    # recorded -- and say so, because an unverifiable entry is its own finding.
+    hit = None
+    if f.get("doi"):
+        try:
+            hit = resolve_doi(f["doi"])
+        except Exception as exc:
+            rec["issues"].append(f"DOI {f['doi']} does not resolve ({type(exc).__name__})")
+            return rec
+        got = (hit.get("title") or [""])[0]
+        if not title_match(title, got):
+            rec["issues"].append(
+                f"DOI POINTS AT A DIFFERENT WORK: bib title '{title[:50]}' vs "
+                f"DOI '{got[:50]}'")
+            return rec
+    else:
+        try:
+            items = crossref(title)
+        except Exception as exc:
+            rec["issues"].append(f"lookup failed: {type(exc).__name__}: {exc}")
+            return rec
+        hit = next((it for it in items
+                    if title_match(title, (it.get("title") or [""])[0])), None)
+        if hit is None:
+            rec["issues"].append("NO DOI and no Crossref title match - this entry "
+                                 "cannot be verified automatically; check by hand")
+            rec["candidates"] = [(it.get("title") or [""])[0][:80] for it in items[:2]]
+            return rec
+        rec["issues"].append("no DOI recorded; verified by title match only")
 
     rec["doi"] = hit.get("DOI")
     rec["crossref_title"] = (hit.get("title") or [""])[0]
@@ -125,14 +166,21 @@ def audit_entry(e):
 
     # --- authors ---
     cr_auth = surnames(hit)
-    bib_auth = [p.strip().split(",")[0].split()[-1]
+    # Keep the entire pre-comma component as the family name: many of these authors
+    # have multi-word surnames ("Mohamad Azlan", "van den Berg"), and taking only the
+    # last token silently mangles them into a mismatch the entry did not commit.
+    bib_auth = [p.strip().strip("{}").split(",")[0].strip()
                 for p in re.split(r"\s+and\s+", f.get("author", "")) if p.strip()]
     rec["crossref_authors"], rec["bib_authors"] = cr_auth, bib_auth
     if cr_auth and bib_auth:
-        missing = [a for a in cr_auth
-                   if not any(norm(a) == norm(b) for b in bib_auth)]
-        extra = [b for b in bib_auth
-                 if not any(norm(a) == norm(b) for a in cr_auth)]
+        def same(x, y):
+            nx, ny = norm(x), norm(y)
+            if not nx or not ny:
+                return False
+            return nx == ny or nx.endswith(ny) or ny.endswith(nx)
+
+        missing = [a for a in cr_auth if not any(same(a, b) for b in bib_auth)]
+        extra = [b for b in bib_auth if not any(same(a, b) for a in cr_auth)]
         if missing or extra:
             rec["issues"].append(
                 f"AUTHORS: bib-only={extra or '-'} crossref-only={missing or '-'}")
@@ -147,11 +195,9 @@ def audit_entry(e):
                 f"TYPE: bib=@{e['type']} crossref={hit.get('type')} "
                 f"(expected @{expect})")
 
-    # --- DOI present in bib? ---
-    if not f.get("doi"):
-        rec["issues"].append(f"NO DOI in bib; crossref has {hit.get('DOI')}")
-    elif hit.get("DOI") and norm(f["doi"]) != norm(hit["DOI"]):
-        rec["issues"].append(f"DOI: bib={f['doi']} crossref={hit.get('DOI')}")
+    # --- DOI completeness (only meaningful when we matched by title) ---
+    if not f.get("doi") and hit.get("DOI"):
+        rec["issues"].append(f"no DOI in bib; Crossref has {hit.get('DOI')}")
 
     return rec
 

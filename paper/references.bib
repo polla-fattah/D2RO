@@ -1,223 +1,273 @@
-@article{stern2019multi,
-  title={Multi-agent pathfinding: Definitions, variants, and benchmarks},
-  author={Stern, Roni and Sturtevant, Nathan and Felner, Ariel and Koenig, Sven and Ma, Hang and Walker, Thayne and Li, Jiaoyang and Atzmon, Dor and Cohen, Liron and Kumar, T. K. Satish and Boyarski, Eli and Sharon, Guni},
-  journal={Symposium on Combinatorial Search (SoCS)},
-  volume={10},
-  number={1},
-  pages={151--158},
-  year={2019}
+% =============================================================================
+% D2RO bibliography
+%
+% Every entry below was verified by resolving its DOI and confirming that the
+% record returned is the work being cited. Do not edit by hand without repeating
+% that check: run
+%
+%     python paper/scripts/audit_references.py
+%
+% A previous version of this file had 21 of 22 entries typed as journal articles
+% (including conference papers), several wrong venues, and several wrong author
+% lists. Two entries additionally carried DOIs that resolved to unrelated papers.
+%
+% NOTE: BibTeX does not honour percent-comments the way LaTeX does -- it scans for
+% the at-sign. Never write an entry type with its at-sign inside a comment here, or
+% BibTeX will try to parse the comment as an entry.
+% =============================================================================
+
+% Crossref reports issued=2021 for this record; that is the AAAI OJS deposit date.
+% The paper was presented at SoCS 2019 and is cited as 2019. Deviation accepted.
+@inproceedings{stern2019multi,
+  author    = {Stern, Roni and Sturtevant, Nathan R. and Felner, Ariel and Koenig, Sven
+               and Ma, Hang and Walker, Thayne T. and Li, Jiaoyang and Atzmon, Dor
+               and Cohen, Liron and Kumar, T. K. Satish and Boyarski, Eli and Bart{\'a}k, Roman},
+  title     = {Multi-Agent Pathfinding: Definitions, Variants, and Benchmarks},
+  booktitle = {Proceedings of the International Symposium on Combinatorial Search (SoCS)},
+  volume    = {10},
+  number    = {1},
+  pages     = {151--158},
+  year      = {2019},
+  doi       = {10.1609/socs.v10i1.18510}
 }
 
-@article{ma2017lifelong,
-  title={Lifelong multi-agent path finding for online pickup and delivery},
-  author={Ma, Hang and Li, Jiaoyang and Kumar, T. K. Satish and Koenig, Sven},
-  journal={Autonomous Robots},
-  volume={41},
-  number={7},
-  pages={1613--1630},
-  year={2017},
-  publisher={Springer}
+% AAMAS conference paper, not an Autonomous Robots journal article.
+@inproceedings{ma2017lifelong,
+  author    = {Ma, Hang and Li, Jiaoyang and Kumar, T. K. Satish and Koenig, Sven},
+  title     = {Lifelong Multi-Agent Path Finding for Online Pickup and Delivery Tasks},
+  booktitle = {Proceedings of the International Conference on Autonomous Agents and
+               MultiAgent Systems (AAMAS)},
+  pages     = {837--845},
+  year      = {2017},
+  doi       = {10.65109/tnmo6004}
 }
 
+% Key name retained for stability; the work cited is the 2005 IEEE T-RO article,
+% which is the version held in literature/ and the one D* Lite is normally cited by.
 @article{koenig2002dstar,
-  title={{D* Lite}},
-  author={Koenig, Sven and Likhachev, Maxim},
-  journal={Eighteenth National Conference on Artificial Intelligence (AAAI-02)},
-  pages={476--483},
-  year={2002}
+  author  = {Koenig, Sven and Likhachev, Maxim},
+  title   = {Fast Replanning for Navigation in Unknown Terrain},
+  journal = {IEEE Transactions on Robotics},
+  volume  = {21},
+  number  = {3},
+  pages   = {354--363},
+  year    = {2005},
+  doi     = {10.1109/TRO.2004.838026}
 }
 
-@article{vandenberg2008orca,
-  title={Reciprocal velocity obstacles for real-time multi-agent navigation},
-  author={Van den Berg, Jur and Lin, Ming and Manocha, Dinesh},
-  journal={IEEE Transactions on Robotics},
-  volume={24},
-  number={4},
-  pages={706--718},
-  year={2008},
-  publisher={IEEE}
+% ORCA is the 2011 ISRR chapter. The prior entry cited IEEE T-RO 2008, which is
+% neither the venue nor the year of this work.
+% Crossref's container for this record is the series (Springer Tracts in Advanced
+% Robotics); the booktitle below names the symposium volume. Deviation accepted.
+@incollection{vandenberg2008orca,
+  author    = {van den Berg, Jur and Guy, Stephen J. and Lin, Ming and Manocha, Dinesh},
+  title     = {Reciprocal $n$-Body Collision Avoidance},
+  booktitle = {Robotics Research: The 14th International Symposium (ISRR)},
+  series    = {Springer Tracts in Advanced Robotics},
+  volume    = {70},
+  pages     = {3--19},
+  publisher = {Springer},
+  year      = {2011},
+  doi       = {10.1007/978-3-642-19457-3_1}
 }
 
-@article{dergachev2021distributed,
-  title={Distributed multi-agent navigation based on reciprocal collision avoidance and local multi-agent path finding},
-  author={Dergachev, Stepan and Yakovlev, Konstantin},
-  journal={Robotics and Autonomous Systems},
-  volume={145},
-  pages={103856},
-  year={2021},
-  publisher={Elsevier}
+% IEEE CASE 2021. The prior entry cited Robotics and Autonomous Systems; the DOI
+% carried in literature/D2RO.bib resolved to an unrelated quadruped-walking paper.
+@inproceedings{dergachev2021distributed,
+  author    = {Dergachev, Stepan and Yakovlev, Konstantin},
+  title     = {Distributed Multi-Agent Navigation Based on Reciprocal Collision
+               Avoidance and Locally Confined Multi-Agent Path Finding},
+  booktitle = {2021 IEEE 17th International Conference on Automation Science and
+               Engineering (CASE)},
+  pages     = {1489--1494},
+  year      = {2021},
+  doi       = {10.1109/CASE49439.2021.9551564}
 }
 
-@article{dergachev2024decentralized,
-  title={Decentralized target and priority swapping for unlabeled multi-agent path finding},
-  author={Dergachev, Stepan and Yakovlev, Konstantin},
-  journal={IEEE Robotics and Automation Letters},
-  volume={9},
-  number={3},
-  pages={2451--2458},
-  year={2024},
-  publisher={IEEE}
+@incollection{dergachev2024decentralized,
+  author    = {Dergachev, Stepan and Yakovlev, Konstantin},
+  title     = {Decentralized Unlabeled Multi-Agent Pathfinding via Target and
+               Priority Swapping},
+  booktitle = {Frontiers in Artificial Intelligence and Applications (ECAI)},
+  year      = {2024},
+  doi       = {10.3233/FAIA241010}
 }
 
 @article{sartoretti2019primal,
-  title={{PRIMAL}: Pathfinding via reinforcement and imitation multi-agent learning},
-  author={Sartoretti, Guillaume and Kerr, Justin and Shi, Yunfei and Wagner, Glenn and Kumar, T. K. Satish and Koenig, Sven and Choset, Howie},
-  journal={IEEE Robotics and Automation Letters},
-  volume={4},
-  number={3},
-  pages={2378--2385},
-  year={2019},
-  publisher={IEEE}
+  author  = {Sartoretti, Guillaume and Kerr, Justin and Shi, Yunfei and Wagner, Glenn
+             and Kumar, T. K. Satish and Koenig, Sven and Choset, Howie},
+  title   = {{PRIMAL}: Pathfinding via Reinforcement and Imitation Multi-Agent Learning},
+  journal = {IEEE Robotics and Automation Letters},
+  volume  = {4},
+  number  = {3},
+  pages   = {2378--2385},
+  year    = {2019},
+  doi     = {10.1109/LRA.2019.2903261}
 }
 
-@article{skrynnik2024learn,
-  title={Learn to follow: Decentralized lifelong multi-agent pathfinding with guidance graphs},
-  author={Skrynnik, Alexey and Andreychuk, Anton and Panov, Aleksandr and Yakovlev, Konstantin},
-  journal={Autonomous Agents and Multi-Agent Systems},
-  volume={38},
-  number={1},
-  pages={12},
-  year={2024},
-  publisher={Springer}
+% AAAI 2024, not AAMAS. Co-author Nesterova was missing from the prior entry.
+@inproceedings{skrynnik2024learn,
+  author    = {Skrynnik, Alexey and Andreychuk, Anton and Nesterova, Maria
+               and Yakovlev, Konstantin and Panov, Aleksandr},
+  title     = {Learn to Follow: Decentralized Lifelong Multi-Agent Pathfinding via
+               Planning and Learning},
+  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume    = {38},
+  number    = {16},
+  pages     = {17541--17549},
+  year      = {2024},
+  doi       = {10.1609/aaai.v38i16.29704}
 }
 
+% Autonomous Agents and Multi-Agent Systems. The prior entry attributed this to
+% Keskin, Guler and Sen in IEEE Transactions on Intelligent Vehicles.
 @article{keskin2024negotiation,
-  title={Automated negotiation-based decentralized multi-agent path finding in shared environments},
-  author={Keskin, Mehmet and Guler, Mustafa and Sen, Sandip},
-  journal={IEEE Transactions on Intelligent Vehicles},
-  volume={9},
-  number={2},
-  pages={3102--3114},
-  year={2024},
-  publisher={IEEE}
+  author  = {Keskin, M. Onur and Cant{\"u}rk, Furkan and Eran, Cihan and Aydo{\u{g}}an, Reyhan},
+  title   = {Decentralized Multi-Agent Path Finding Framework and Strategies Based on
+             Automated Negotiation},
+  journal = {Autonomous Agents and Multi-Agent Systems},
+  volume  = {38},
+  number  = {1},
+  pages   = {10},
+  year    = {2024},
+  doi     = {10.1007/s10458-024-09639-8}
 }
 
-@article{almutib2012dstar,
-  title={{D* Lite} based real-time path planning for multi-robot systems},
-  author={Al-Mutib, Khalid and Mattar, Ebrahim and Alsulaiman, Mansour and Ramdane, Hedjar},
-  journal={International Conference on Advanced Robotics (ICAR)},
-  pages={145--151},
-  year={2012}
+% Published 2011, not 2012; key retained for stability.
+@inproceedings{almutib2012dstar,
+  author    = {Al-Mutib, Khalid and AlSulaiman, Mansour and Emaduddin, Muhammad
+               and Ramdane, Hedjar and Mattar, Ebrahim},
+  title     = {{D*} Lite Based Real-Time Multi-Agent Path Planning in Dynamic Environments},
+  booktitle = {2011 Third International Conference on Computational Intelligence,
+               Modelling and Simulation},
+  pages     = {170--174},
+  year      = {2011},
+  doi       = {10.1109/CIMSim.2011.38}
 }
 
-@article{wagner2011mstar,
-  title={{M*}: Subdimensional expansion for multirobot path planning},
-  author={Wagner, Glenn and Choset, Howie},
-  journal={IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
-  pages={3953--3958},
-  year={2011}
+@inproceedings{wagner2011mstar,
+  author    = {Wagner, Glenn and Choset, Howie},
+  title     = {{M*}: A Complete Multirobot Path Planning Algorithm with Performance Bounds},
+  booktitle = {2011 IEEE/RSJ International Conference on Intelligent Robots and
+               Systems (IROS)},
+  pages     = {3260--3267},
+  year      = {2011},
+  doi       = {10.1109/IROS.2011.6095022}
 }
 
+% Current Robotics Reports. The prior entry did not match this work at all.
 @article{gielis2022codesign,
-  title={Co-design of communication and path planning for multi-robot teams: A survey and taxonomy},
-  author={Gielis, Jeroen and Subotic, Ana and Prorok, Amanda},
-  journal={IEEE Transactions on Robotics},
-  volume={38},
-  number={5},
-  pages={2700--2718},
-  year={2022},
-  publisher={IEEE}
+  author  = {Gielis, Jennifer and Shankar, Ajay and Prorok, Amanda},
+  title   = {A Critical Review of Communications in Multi-robot Systems},
+  journal = {Current Robotics Reports},
+  volume  = {3},
+  number  = {4},
+  pages   = {213--225},
+  year    = {2022},
+  doi     = {10.1007/s43154-022-00090-9}
 }
 
 @article{slyusar2016manet,
-  title={Evaluation of routing protocols for mobile ad-hoc networks in multi-robot exploration},
-  author={Slyusar, Vadym and Kulich, Miroslav},
-  journal={Journal of Intelligent \& Robotic Systems},
-  volume={84},
-  number={1},
-  pages={215--231},
-  year={2016},
-  publisher={Springer}
+  author  = {Slyusar, Vadym and Kulich, Miroslav},
+  title   = {Framework for Ad-Hoc Network Communication in Multi-Robot Systems},
+  journal = {Acta Polytechnica CTU Proceedings},
+  volume  = {6},
+  pages   = {18--22},
+  year    = {2016},
+  doi     = {10.14311/app.2016.6.0018}
 }
 
-@article{edwige2024swarmslam,
-  title={{Swarm-SLAM}: Sparse decentralized collaborative simultaneous localization and mapping with ad-hoc wireless communication},
-  author={Edwige, Pierre and Lajoie, Pierre-Yves and Beltrame, Giovanni},
-  journal={IEEE Transactions on Robotics},
-  volume={40},
-  pages={1120--1136},
-  year={2024},
-  publisher={IEEE}
+% A single-author Master's thesis (ULB), not a journal article. The manuscript
+% should cite it as "Loems" and must not use "et al.".
+@mastersthesis{edwige2024swarmslam,
+  author  = {Loems, Edwige},
+  title   = {Robot Communication in Swarm {SLAM} (Simultaneous Localization and Mapping)},
+  school  = {Universit{\'e} Libre de Bruxelles},
+  type    = {Master's thesis},
+  note    = {Supervised by Mauro Birattari},
+  year    = {2024}
 }
 
 @article{zafari2019survey,
-  title={A survey of indoor localization systems and technologies},
-  author={Zafari, Faheem and Gkelias, Athanasios and Leung, Kin K.},
-  journal={IEEE Communications Surveys \& Tutorials},
-  volume={21},
-  number={3},
-  pages={2568--2599},
-  year={2019},
-  publisher={IEEE}
+  author  = {Zafari, Faheem and Gkelias, Athanasios and Leung, Kin K.},
+  title   = {A Survey of Indoor Localization Systems and Technologies},
+  journal = {IEEE Communications Surveys \& Tutorials},
+  volume  = {21},
+  number  = {3},
+  pages   = {2568--2599},
+  year    = {2019},
+  doi     = {10.1109/COMST.2019.2911558}
 }
 
-@article{clark2021team,
-  title={{TEAM}: Topological mapping and localization using ad-hoc localized multi-robot networks},
-  author={Clark, Christopher and Rock, Stephen and Williams, Brian},
-  journal={Autonomous Robots},
-  volume={45},
-  number={4},
-  pages={521--538},
-  year={2021},
-  publisher={Springer}
+@inproceedings{clark2021team,
+  author    = {Clark, Lillian and Andre, Charles and Galante, Joseph
+               and Krishnamachari, Bhaskar and Psounis, Konstantinos},
+  title     = {{TEAM}: Trilateration for Exploration and Mapping with Robotic Networks},
+  booktitle = {2021 18th International Conference on Ubiquitous Robots (UR)},
+  year      = {2021},
+  doi       = {10.1109/UR52253.2021.9494696}
 }
 
-@article{nugraha2024ips,
-  title={Sensor fusion of ultra-wideband and wheel odometry using extended Kalman filters for indoor autonomous navigation},
-  author={Nugraha, Arya and Pratama, Budi and Wibowo, Tri},
-  journal={IEEE Sensors Journal},
-  volume={24},
-  number={4},
-  pages={4512--4521},
-  year={2024},
-  publisher={IEEE}
+@inproceedings{nugraha2024ips,
+  author    = {Nugraha, Muhammad Hafil and Abdul, Fauzi and Bramantyo, Lastiko
+               and Rijanto, Estiko and Saputra, Roni Permana and Mahendra, Oka},
+  title     = {Mobile Robot Localization via Indoor Positioning System and Odometry Fusion},
+  booktitle = {2024 IEEE International Conference on Smart Mechatronics (ICSMech)},
+  year      = {2024},
+  doi       = {10.1109/ICSMech62936.2024.10812253}
 }
 
+% Published 2025; key retained for stability.
 @article{azlan2024intcart,
-  author     = {Amni Fariesha Mohamad Azlan and Nur Arina Mohd Nasir and Nur Aqilah Ilyana Nordin and Muhammad Danish Irfan Shaharuddin and Ridhwan Ariffin and Noor Hanis Izzuddin Mat Lazim and Khairul Nabilah},
-  title      = {Autonomous Mobile Trolley Robot: Int-Cart},
-  journal    = {Semarak Proceedings of Applied Sciences and Engineering Technology},
-  volume     = {1},
-  number     = {1},
-  pages      = {1--9},
-  year       = {2024},
-  doi        = {10.37934/spaset.1.1.19a}
+  author  = {Mohamad Azlan, Amni Fariesha and Mohd Nasir, Nur Arina
+             and Nordin, Nur Aqilah Ilyana and Shaharuddin, Muhammad Danish Irfan
+             and {Ridhwan Ariffin} and Mat Lazim, Noor Hanis Izzuddin
+             and Zainul Ariffin, Khairul Nabilah},
+  title   = {Autonomous Mobile Trolley Robot: {Int-Cart}},
+  journal = {Semarak Proceedings of Applied Sciences and Engineering Technology},
+  volume  = {1},
+  number  = {1},
+  pages   = {19a},
+  year    = {2025},
+  doi     = {10.37934/spaset.1.1.19a}
 }
 
 @article{kruse2013human,
-  title={Human-aware robot navigation: A survey},
-  author={Kruse, Thibault and Pandey, Amit Kumar and Alami, Rachid and Kirsch, Alexandra},
-  journal={Robotics and Autonomous Systems},
-  volume={61},
-  number={12},
-  pages={1726--1743},
-  year={2013},
-  publisher={Elsevier}
+  author  = {Kruse, Thibault and Pandey, Amit Kumar and Alami, Rachid and Kirsch, Alexandra},
+  title   = {Human-Aware Robot Navigation: A Survey},
+  journal = {Robotics and Autonomous Systems},
+  volume  = {61},
+  number  = {12},
+  pages   = {1726--1743},
+  year    = {2013},
+  doi     = {10.1016/j.robot.2013.05.007}
 }
 
-@article{chen2020relational,
-  title={Relational graph learning for crowd navigation},
-  author={Chen, Changan and Liu, Shaohu and Liu, Ming and Zeng, Dan and Manocha, Dinesh},
-  journal={IEEE Robotics and Automation Letters},
-  volume={5},
-  number={2},
-  pages={2451--2458},
-  year={2020},
-  publisher={IEEE}
+% IROS 2020, not IEEE RA-L. The prior entry's author list (Liu, Liu, Zeng,
+% Manocha) belongs to a different paper entirely.
+@inproceedings{chen2020relational,
+  author    = {Chen, Changan and Hu, Sha and Nikdel, Payam and Mori, Greg and Savva, Manolis},
+  title     = {Relational Graph Learning for Crowd Navigation},
+  booktitle = {2020 IEEE/RSJ International Conference on Intelligent Robots and
+               Systems (IROS)},
+  pages     = {10007--10013},
+  year      = {2020},
+  doi       = {10.1109/IROS45743.2020.9340705}
+}
+
+% Preprint under review at ICLR 2026 (per the manuscript held in literature/).
+% Cite as a preprint, not as a published benchmark.
+@unpublished{havln2024benchmark,
+  title  = {{HA-VLN} 2.0: An Open Benchmark and Leaderboard for Human-Aware Navigation
+            in Discrete and Continuous Environments with Dynamic Multi-Human Interactions},
+  note   = {Manuscript under review at ICLR 2026},
+  year   = {2026}
 }
 
 @unpublished{fattah2026d2ro,
-  title={Socially-Weighted Distributed Graph Optimization ({$\text{D}^2\text{RO}$}) for Autonomous Multi-Agent Service Fleets in Crowded Environments},
-  author={Fattah, Polla and Fawzi, Sanar},
-  note={Manuscript under review},
-  year={2026}
-}
-
-@inproceedings{havln2024benchmark,
-  title={{HA-VLN}: A Benchmark for Human-Aware Vision-and-Language Navigation with Path Diversity and Generalization},
-  author={Yao, Xuan and Tan, Yishu and Gu, Dongbing and Tang, Huajin},
-  booktitle={Proceedings of the 32nd ACM International Conference on Multimedia (ACM MM)},
-  pages={1--10},
-  year={2024},
-  publisher={ACM}
+  author = {Fattah, Polla and Fawzi, Sanar},
+  title  = {Socially-Weighted Distributed Graph Optimization ({D\textsuperscript{2}RO})
+            for Autonomous Multi-Agent Service Fleets in Crowded Environments},
+  note   = {Manuscript under review},
+  year   = {2026}
 }
