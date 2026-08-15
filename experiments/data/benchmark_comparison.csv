@@ -1,501 +1,601 @@
-trial_id,method,success,travel_time_s,deadlocks,proxemic_violations,mesh_packets,replan_cycles,avg_replan_latency_ms
-1,D2RO (SW-DGO Proposed),1,42.2,0,0,74,351,0.096
-1,Static A*,1,18.0,0,133,0,0,0.002
-1,Reactive Avoidance (Potential Field),1,34.55,0,175,0,0,0.007
-1,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-1,Decentralized Local MAPF,0,180.0,0,133,0,107,0.002
-2,D2RO (SW-DGO Proposed),1,42.8,0,0,72,446,0.089
-2,Static A*,1,18.0,0,123,0,0,0.002
-2,Reactive Avoidance (Potential Field),1,34.55,0,164,0,0,0.007
-2,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-2,Decentralized Local MAPF,0,180.0,0,272,0,107,0.002
-3,D2RO (SW-DGO Proposed),1,41.4,0,0,75,534,0.183
-3,Static A*,1,18.0,0,122,0,0,0.002
-3,Reactive Avoidance (Potential Field),1,34.35,0,157,0,0,0.007
-3,Reactive ORCA (Velocity Obstacles),0,180.0,0,160,0,0,0.009
-3,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002
-4,D2RO (SW-DGO Proposed),1,59.95,0,0,72,496,0.096
-4,Static A*,1,18.0,0,123,0,0,0.002
-4,Reactive Avoidance (Potential Field),1,34.7,0,303,0,0,0.007
-4,Reactive ORCA (Velocity Obstacles),0,180.0,0,46,0,0,0.009
-4,Decentralized Local MAPF,0,180.0,0,123,0,107,0.002
-5,D2RO (SW-DGO Proposed),1,44.35,0,0,72,447,0.179
-5,Static A*,1,18.0,0,131,0,0,0.002
-5,Reactive Avoidance (Potential Field),1,34.8,0,190,0,0,0.007
-5,Reactive ORCA (Velocity Obstacles),0,180.0,0,719,0,0,0.009
-5,Decentralized Local MAPF,0,180.0,0,129,0,107,0.002
-6,D2RO (SW-DGO Proposed),1,48.6,0,0,72,398,0.142
-6,Static A*,1,18.0,0,118,0,0,0.002
-6,Reactive Avoidance (Potential Field),1,34.45,0,203,0,0,0.007
-6,Reactive ORCA (Velocity Obstacles),0,180.0,0,480,0,0,0.009
-6,Decentralized Local MAPF,0,180.0,0,119,0,107,0.002
-7,D2RO (SW-DGO Proposed),1,60.05,0,0,73,593,0.095
-7,Static A*,1,18.0,0,130,0,0,0.002
-7,Reactive Avoidance (Potential Field),1,34.6,0,231,0,0,0.007
-7,Reactive ORCA (Velocity Obstacles),0,180.0,0,539,0,0,0.009
-7,Decentralized Local MAPF,0,180.0,0,159,0,107,0.002
-8,D2RO (SW-DGO Proposed),1,43.35,0,0,72,387,0.081
-8,Static A*,1,18.0,0,121,0,0,0.002
-8,Reactive Avoidance (Potential Field),1,34.55,0,275,0,0,0.007
-8,Reactive ORCA (Velocity Obstacles),0,180.0,0,659,0,0,0.009
-8,Decentralized Local MAPF,0,180.0,0,120,0,107,0.002
-9,D2RO (SW-DGO Proposed),1,40.05,0,0,73,485,0.1
-9,Static A*,1,18.0,0,121,0,0,0.002
-9,Reactive Avoidance (Potential Field),1,34.6,0,254,0,0,0.007
-9,Reactive ORCA (Velocity Obstacles),0,180.0,0,232,0,0,0.009
-9,Decentralized Local MAPF,0,180.0,0,118,0,107,0.001
-10,D2RO (SW-DGO Proposed),1,40.9,0,0,73,498,0.101
-10,Static A*,1,18.0,0,116,0,0,0.002
-10,Reactive Avoidance (Potential Field),1,34.55,0,335,0,0,0.008
-10,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-10,Decentralized Local MAPF,0,180.0,0,120,0,107,0.002
-11,D2RO (SW-DGO Proposed),1,42.65,0,0,73,524,0.094
-11,Static A*,1,18.0,0,124,0,0,0.002
-11,Reactive Avoidance (Potential Field),1,34.65,0,216,0,0,0.008
-11,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-11,Decentralized Local MAPF,0,180.0,0,123,0,107,0.002
-12,D2RO (SW-DGO Proposed),1,60.85,0,0,75,590,0.165
-12,Static A*,1,18.0,0,124,0,0,0.002
-12,Reactive Avoidance (Potential Field),1,34.5,0,227,0,0,0.008
-12,Reactive ORCA (Velocity Obstacles),0,180.0,0,274,0,0,0.01
-12,Decentralized Local MAPF,0,180.0,0,125,0,107,0.002
-13,D2RO (SW-DGO Proposed),1,52.65,0,0,70,437,0.139
-13,Static A*,1,18.0,0,131,0,0,0.002
-13,Reactive Avoidance (Potential Field),1,34.45,0,315,0,0,0.007
-13,Reactive ORCA (Velocity Obstacles),0,180.0,0,1565,0,0,0.01
-13,Decentralized Local MAPF,0,180.0,0,131,0,107,0.002
-14,D2RO (SW-DGO Proposed),1,42.2,0,0,74,398,0.13
-14,Static A*,1,18.0,0,120,0,0,0.002
-14,Reactive Avoidance (Potential Field),1,34.4,0,306,0,0,0.007
-14,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-14,Decentralized Local MAPF,0,180.0,0,122,0,107,0.001
-15,D2RO (SW-DGO Proposed),1,63.0,0,0,64,499,0.132
-15,Static A*,1,18.0,0,141,0,0,0.002
-15,Reactive Avoidance (Potential Field),1,34.65,0,366,0,0,0.008
-15,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-15,Decentralized Local MAPF,0,180.0,0,137,0,107,0.002
-16,D2RO (SW-DGO Proposed),1,42.2,0,0,72,325,0.078
-16,Static A*,1,18.0,0,133,0,0,0.002
-16,Reactive Avoidance (Potential Field),1,34.5,0,239,0,0,0.007
-16,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-16,Decentralized Local MAPF,0,180.0,0,131,0,107,0.002
-17,D2RO (SW-DGO Proposed),1,57.55,0,0,72,465,0.14
-17,Static A*,1,18.0,0,117,0,0,0.002
-17,Reactive Avoidance (Potential Field),1,34.55,0,157,0,0,0.007
-17,Reactive ORCA (Velocity Obstacles),0,180.0,0,334,0,0,0.009
-17,Decentralized Local MAPF,0,180.0,0,212,0,107,0.002
-18,D2RO (SW-DGO Proposed),1,24.8,0,0,85,438,0.128
-18,Static A*,1,18.0,0,130,0,0,0.002
-18,Reactive Avoidance (Potential Field),1,35.2,0,390,0,0,0.008
-18,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-18,Decentralized Local MAPF,0,180.0,0,129,0,107,0.002
-19,D2RO (SW-DGO Proposed),1,33.65,0,0,86,573,0.139
-19,Static A*,1,18.0,0,127,0,0,0.002
-19,Reactive Avoidance (Potential Field),1,34.5,0,164,0,0,0.007
-19,Reactive ORCA (Velocity Obstacles),0,180.0,0,1455,0,0,0.009
-19,Decentralized Local MAPF,0,180.0,0,125,0,107,0.002
-20,D2RO (SW-DGO Proposed),1,41.95,0,0,73,469,0.104
-20,Static A*,1,18.0,0,123,0,0,0.002
-20,Reactive Avoidance (Potential Field),1,34.85,0,344,0,0,0.007
-20,Reactive ORCA (Velocity Obstacles),0,180.0,0,241,0,0,0.009
-20,Decentralized Local MAPF,0,180.0,0,119,0,107,0.002
-21,D2RO (SW-DGO Proposed),1,44.35,0,0,72,401,0.099
-21,Static A*,1,18.0,0,134,0,0,0.002
-21,Reactive Avoidance (Potential Field),1,34.15,0,313,0,0,0.007
-21,Reactive ORCA (Velocity Obstacles),0,180.0,0,183,0,0,0.01
-21,Decentralized Local MAPF,0,180.0,0,132,0,107,0.002
-22,D2RO (SW-DGO Proposed),1,42.6,0,0,74,325,0.118
-22,Static A*,1,18.0,0,131,0,0,0.002
-22,Reactive Avoidance (Potential Field),1,34.7,0,177,0,0,0.007
-22,Reactive ORCA (Velocity Obstacles),0,180.0,0,203,0,0,0.009
-22,Decentralized Local MAPF,0,180.0,0,132,0,107,0.002
-23,D2RO (SW-DGO Proposed),1,49.85,0,0,72,438,0.099
-23,Static A*,1,18.0,0,134,0,0,0.002
-23,Reactive Avoidance (Potential Field),1,34.5,0,187,0,0,0.007
-23,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-23,Decentralized Local MAPF,0,180.0,0,134,0,107,0.002
-24,D2RO (SW-DGO Proposed),1,42.8,0,0,75,398,0.113
-24,Static A*,1,18.0,0,133,0,0,0.002
-24,Reactive Avoidance (Potential Field),1,34.3,0,227,0,0,0.007
-24,Reactive ORCA (Velocity Obstacles),0,180.0,0,1138,0,0,0.01
-24,Decentralized Local MAPF,0,180.0,0,129,0,107,0.002
-25,D2RO (SW-DGO Proposed),1,42.8,0,0,74,392,0.137
-25,Static A*,1,18.0,0,122,0,0,0.002
-25,Reactive Avoidance (Potential Field),1,34.55,0,146,0,0,0.007
-25,Reactive ORCA (Velocity Obstacles),0,180.0,0,437,0,0,0.009
-25,Decentralized Local MAPF,0,180.0,0,123,0,107,0.002
-26,D2RO (SW-DGO Proposed),1,54.9,0,0,70,498,0.086
-26,Static A*,1,18.0,0,123,0,0,0.002
-26,Reactive Avoidance (Potential Field),1,34.5,0,175,0,0,0.007
-26,Reactive ORCA (Velocity Obstacles),0,180.0,0,909,0,0,0.01
-26,Decentralized Local MAPF,0,180.0,0,117,0,107,0.002
-27,D2RO (SW-DGO Proposed),1,44.35,0,0,72,364,0.126
-27,Static A*,1,18.0,0,122,0,0,0.002
-27,Reactive Avoidance (Potential Field),1,34.55,0,137,0,0,0.008
-27,Reactive ORCA (Velocity Obstacles),0,180.0,0,343,0,0,0.009
-27,Decentralized Local MAPF,0,180.0,0,120,0,107,0.002
-28,D2RO (SW-DGO Proposed),1,42.2,0,0,74,384,0.139
-28,Static A*,1,18.0,0,130,0,0,0.002
-28,Reactive Avoidance (Potential Field),1,34.7,0,171,0,0,0.007
-28,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-28,Decentralized Local MAPF,0,180.0,0,129,0,107,0.001
-29,D2RO (SW-DGO Proposed),1,42.4,0,0,74,349,0.134
-29,Static A*,1,18.0,0,129,0,0,0.002
-29,Reactive Avoidance (Potential Field),1,34.4,0,213,0,0,0.007
-29,Reactive ORCA (Velocity Obstacles),0,180.0,0,1692,0,0,0.01
-29,Decentralized Local MAPF,0,180.0,0,125,0,107,0.001
-30,D2RO (SW-DGO Proposed),1,62.7,0,0,70,434,0.082
-30,Static A*,1,18.0,0,141,0,0,0.002
-30,Reactive Avoidance (Potential Field),1,34.5,0,186,0,0,0.007
-30,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-30,Decentralized Local MAPF,0,180.0,0,139,0,107,0.002
-31,D2RO (SW-DGO Proposed),1,51.15,0,0,70,415,0.083
-31,Static A*,1,18.0,0,133,0,0,0.002
-31,Reactive Avoidance (Potential Field),1,34.5,0,183,0,0,0.007
-31,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-31,Decentralized Local MAPF,0,180.0,0,131,0,107,0.002
-32,D2RO (SW-DGO Proposed),1,44.35,0,0,72,331,0.093
-32,Static A*,1,18.0,0,129,0,0,0.002
-32,Reactive Avoidance (Potential Field),1,34.6,0,316,0,0,0.007
-32,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-32,Decentralized Local MAPF,0,180.0,0,127,0,107,0.002
-33,D2RO (SW-DGO Proposed),1,95.35,0,124,100,846,0.105
-33,Static A*,1,18.0,0,123,0,0,0.002
-33,Reactive Avoidance (Potential Field),1,34.55,0,146,0,0,0.007
-33,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-33,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002
-34,D2RO (SW-DGO Proposed),1,42.2,0,0,72,482,0.146
-34,Static A*,1,18.0,0,127,0,0,0.002
-34,Reactive Avoidance (Potential Field),1,34.5,0,215,0,0,0.008
-34,Reactive ORCA (Velocity Obstacles),0,180.0,0,44,0,0,0.009
-34,Decentralized Local MAPF,0,180.0,0,126,0,107,0.002
-35,D2RO (SW-DGO Proposed),1,27.0,0,0,86,363,0.133
-35,Static A*,1,18.0,0,123,0,0,0.002
-35,Reactive Avoidance (Potential Field),1,34.55,0,182,0,0,0.008
-35,Reactive ORCA (Velocity Obstacles),0,180.0,0,711,0,0,0.01
-35,Decentralized Local MAPF,0,180.0,0,123,0,107,0.001
-36,D2RO (SW-DGO Proposed),1,44.35,0,0,72,367,0.15
-36,Static A*,1,18.0,0,135,0,0,0.002
-36,Reactive Avoidance (Potential Field),1,34.55,0,189,0,0,0.007
-36,Reactive ORCA (Velocity Obstacles),0,180.0,0,1094,0,0,0.011
-36,Decentralized Local MAPF,0,180.0,0,135,0,107,0.002
-37,D2RO (SW-DGO Proposed),1,63.25,0,0,73,613,0.094
-37,Static A*,1,18.0,0,128,0,0,0.002
-37,Reactive Avoidance (Potential Field),1,34.45,0,166,0,0,0.007
-37,Reactive ORCA (Velocity Obstacles),0,180.0,0,1076,0,0,0.01
-37,Decentralized Local MAPF,0,180.0,0,127,0,107,0.002
-38,D2RO (SW-DGO Proposed),1,36.35,0,0,89,462,0.111
-38,Static A*,1,18.0,0,131,0,0,0.002
-38,Reactive Avoidance (Potential Field),1,34.15,0,375,0,0,0.007
-38,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-38,Decentralized Local MAPF,0,180.0,0,128,0,107,0.002
-39,D2RO (SW-DGO Proposed),1,42.6,0,0,74,353,0.099
-39,Static A*,1,18.0,0,131,0,0,0.002
-39,Reactive Avoidance (Potential Field),1,34.45,0,161,0,0,0.007
-39,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-39,Decentralized Local MAPF,0,180.0,0,131,0,107,0.001
-40,D2RO (SW-DGO Proposed),1,82.75,0,0,70,653,0.093
-40,Static A*,1,18.0,0,124,0,0,0.002
-40,Reactive Avoidance (Potential Field),1,34.65,0,223,0,0,0.007
-40,Reactive ORCA (Velocity Obstacles),0,180.0,0,1207,0,0,0.01
-40,Decentralized Local MAPF,0,180.0,0,124,0,107,0.002
-41,D2RO (SW-DGO Proposed),1,28.4,0,0,95,583,0.149
-41,Static A*,1,18.0,0,171,0,0,0.002
-41,Reactive Avoidance (Potential Field),1,34.45,0,213,0,0,0.007
-41,Reactive ORCA (Velocity Obstacles),0,180.0,0,226,0,0,0.009
-41,Decentralized Local MAPF,0,180.0,0,227,0,107,0.001
-42,D2RO (SW-DGO Proposed),1,21.15,0,0,86,393,0.14
-42,Static A*,1,18.0,0,145,0,0,0.002
-42,Reactive Avoidance (Potential Field),1,34.3,0,225,0,0,0.007
-42,Reactive ORCA (Velocity Obstacles),0,180.0,0,186,0,0,0.009
-42,Decentralized Local MAPF,0,180.0,0,382,0,107,0.002
-43,D2RO (SW-DGO Proposed),1,34.35,0,0,75,436,0.16
-43,Static A*,1,18.0,0,140,0,0,0.002
-43,Reactive Avoidance (Potential Field),1,34.45,0,193,0,0,0.007
-43,Reactive ORCA (Velocity Obstacles),0,180.0,0,2455,0,0,0.009
-43,Decentralized Local MAPF,0,180.0,0,138,0,107,0.002
-44,D2RO (SW-DGO Proposed),1,44.35,0,0,70,348,0.082
-44,Static A*,1,18.0,0,139,0,0,0.002
-44,Reactive Avoidance (Potential Field),1,34.5,0,334,0,0,0.008
-44,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-44,Decentralized Local MAPF,0,180.0,0,135,0,107,0.002
-45,D2RO (SW-DGO Proposed),1,62.55,0,0,76,528,0.065
-45,Static A*,1,18.0,0,133,0,0,0.002
-45,Reactive Avoidance (Potential Field),1,34.55,0,173,0,0,0.007
-45,Reactive ORCA (Velocity Obstacles),0,180.0,0,72,0,0,0.009
-45,Decentralized Local MAPF,0,180.0,0,133,0,107,0.002
-46,D2RO (SW-DGO Proposed),1,38.05,0,0,88,424,0.125
-46,Static A*,1,18.0,0,127,0,0,0.002
-46,Reactive Avoidance (Potential Field),1,34.4,0,214,0,0,0.007
-46,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-46,Decentralized Local MAPF,0,180.0,0,122,0,107,0.002
-47,D2RO (SW-DGO Proposed),1,43.35,0,0,74,383,0.133
-47,Static A*,1,18.0,0,134,0,0,0.002
-47,Reactive Avoidance (Potential Field),1,35.2,0,241,0,0,0.007
-47,Reactive ORCA (Velocity Obstacles),0,180.0,0,174,0,0,0.009
-47,Decentralized Local MAPF,0,180.0,0,132,0,107,0.002
-48,D2RO (SW-DGO Proposed),1,53.8,0,0,70,443,0.081
-48,Static A*,1,18.0,0,133,0,0,0.002
-48,Reactive Avoidance (Potential Field),1,34.35,0,187,0,0,0.007
-48,Reactive ORCA (Velocity Obstacles),0,180.0,0,2064,0,0,0.01
-48,Decentralized Local MAPF,0,180.0,0,133,0,107,0.002
-49,D2RO (SW-DGO Proposed),1,47.5,0,0,75,512,0.109
-49,Static A*,1,18.0,0,127,0,0,0.002
-49,Reactive Avoidance (Potential Field),1,35.05,0,325,0,0,0.008
-49,Reactive ORCA (Velocity Obstacles),0,180.0,0,704,0,0,0.01
-49,Decentralized Local MAPF,0,180.0,0,128,0,107,0.002
-50,D2RO (SW-DGO Proposed),1,31.4,0,0,86,417,0.197
-50,Static A*,1,18.0,0,129,0,0,0.002
-50,Reactive Avoidance (Potential Field),1,34.55,0,250,0,0,0.007
-50,Reactive ORCA (Velocity Obstacles),0,180.0,0,1284,0,0,0.01
-50,Decentralized Local MAPF,0,180.0,0,149,0,107,0.002
-51,D2RO (SW-DGO Proposed),1,38.65,0,0,64,379,0.13
-51,Static A*,1,18.0,0,129,0,0,0.002
-51,Reactive Avoidance (Potential Field),1,34.55,0,208,0,0,0.008
-51,Reactive ORCA (Velocity Obstacles),0,180.0,0,185,0,0,0.01
-51,Decentralized Local MAPF,0,180.0,0,131,0,107,0.002
-52,D2RO (SW-DGO Proposed),1,36.4,0,0,86,411,0.094
-52,Static A*,1,18.0,0,122,0,0,0.002
-52,Reactive Avoidance (Potential Field),1,34.55,0,273,0,0,0.008
-52,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-52,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002
-53,D2RO (SW-DGO Proposed),1,69.3,0,0,76,645,0.092
-53,Static A*,1,18.0,0,125,0,0,0.002
-53,Reactive Avoidance (Potential Field),1,34.45,0,224,0,0,0.008
-53,Reactive ORCA (Velocity Obstacles),0,180.0,0,1160,0,0,0.009
-53,Decentralized Local MAPF,0,180.0,0,125,0,107,0.002
-54,D2RO (SW-DGO Proposed),1,45.75,0,0,72,339,0.093
-54,Static A*,1,18.0,0,124,0,0,0.002
-54,Reactive Avoidance (Potential Field),1,34.6,0,155,0,0,0.007
-54,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-54,Decentralized Local MAPF,0,180.0,0,126,0,107,0.002
-55,D2RO (SW-DGO Proposed),1,44.35,0,0,72,372,0.131
-55,Static A*,1,18.0,0,127,0,0,0.002
-55,Reactive Avoidance (Potential Field),1,34.5,0,269,0,0,0.008
-55,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-55,Decentralized Local MAPF,0,180.0,0,123,0,107,0.002
-56,D2RO (SW-DGO Proposed),0,180.0,0,182,84,1407,0.155
-56,Static A*,1,18.0,0,143,0,0,0.002
-56,Reactive Avoidance (Potential Field),1,34.4,0,204,0,0,0.007
-56,Reactive ORCA (Velocity Obstacles),0,180.0,0,1169,0,0,0.01
-56,Decentralized Local MAPF,0,180.0,0,140,0,107,0.002
-57,D2RO (SW-DGO Proposed),1,49.8,0,0,74,478,0.11
-57,Static A*,1,18.0,0,123,0,0,0.002
-57,Reactive Avoidance (Potential Field),1,34.45,0,431,0,0,0.007
-57,Reactive ORCA (Velocity Obstacles),0,180.0,0,135,0,0,0.009
-57,Decentralized Local MAPF,0,180.0,0,122,0,107,0.002
-58,D2RO (SW-DGO Proposed),1,40.75,0,0,73,464,0.103
-58,Static A*,1,18.0,0,125,0,0,0.002
-58,Reactive Avoidance (Potential Field),1,34.55,0,153,0,0,0.008
-58,Reactive ORCA (Velocity Obstacles),0,180.0,0,278,0,0,0.009
-58,Decentralized Local MAPF,0,180.0,0,125,0,107,0.002
-59,D2RO (SW-DGO Proposed),1,57.2,0,0,73,585,0.129
-59,Static A*,1,18.0,0,128,0,0,0.002
-59,Reactive Avoidance (Potential Field),1,34.55,0,168,0,0,0.007
-59,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-59,Decentralized Local MAPF,0,180.0,0,129,0,107,0.002
-60,D2RO (SW-DGO Proposed),1,44.35,0,0,72,396,0.091
-60,Static A*,1,18.0,0,124,0,0,0.002
-60,Reactive Avoidance (Potential Field),1,34.5,0,175,0,0,0.008
-60,Reactive ORCA (Velocity Obstacles),0,180.0,0,33,0,0,0.009
-60,Decentralized Local MAPF,0,180.0,0,123,0,107,0.002
-61,D2RO (SW-DGO Proposed),1,38.5,0,0,88,401,0.098
-61,Static A*,1,18.0,0,133,0,0,0.002
-61,Reactive Avoidance (Potential Field),1,34.35,0,220,0,0,0.007
-61,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-61,Decentralized Local MAPF,0,180.0,0,132,0,107,0.002
-62,D2RO (SW-DGO Proposed),1,76.95,0,0,70,526,0.083
-62,Static A*,1,18.0,0,132,0,0,0.002
-62,Reactive Avoidance (Potential Field),1,34.4,0,186,0,0,0.007
-62,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-62,Decentralized Local MAPF,0,180.0,0,132,0,107,0.002
-63,D2RO (SW-DGO Proposed),1,53.0,0,0,72,448,0.11
-63,Static A*,1,18.0,0,129,0,0,0.002
-63,Reactive Avoidance (Potential Field),1,34.5,0,334,0,0,0.007
-63,Reactive ORCA (Velocity Obstacles),0,180.0,0,101,0,0,0.009
-63,Decentralized Local MAPF,0,180.0,0,131,0,107,0.002
-64,D2RO (SW-DGO Proposed),1,41.6,0,0,88,673,0.14
-64,Static A*,1,18.0,0,147,0,0,0.002
-64,Reactive Avoidance (Potential Field),1,34.5,0,200,0,0,0.007
-64,Reactive ORCA (Velocity Obstacles),0,180.0,0,2354,0,0,0.01
-64,Decentralized Local MAPF,0,180.0,0,142,0,107,0.002
-65,D2RO (SW-DGO Proposed),1,43.0,0,0,74,359,0.127
-65,Static A*,1,18.0,0,131,0,0,0.002
-65,Reactive Avoidance (Potential Field),1,34.6,0,306,0,0,0.008
-65,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-65,Decentralized Local MAPF,0,180.0,0,131,0,107,0.002
-66,D2RO (SW-DGO Proposed),1,54.9,0,0,64,389,0.145
-66,Static A*,1,18.0,0,136,0,0,0.002
-66,Reactive Avoidance (Potential Field),1,34.55,0,283,0,0,0.007
-66,Reactive ORCA (Velocity Obstacles),0,180.0,0,1258,0,0,0.01
-66,Decentralized Local MAPF,0,180.0,0,134,0,107,0.002
-67,D2RO (SW-DGO Proposed),1,50.0,0,0,94,630,0.093
-67,Static A*,1,18.0,0,131,0,0,0.002
-67,Reactive Avoidance (Potential Field),1,34.45,0,170,0,0,0.007
-67,Reactive ORCA (Velocity Obstacles),0,180.0,0,36,0,0,0.009
-67,Decentralized Local MAPF,0,180.0,0,128,0,107,0.002
-68,D2RO (SW-DGO Proposed),1,75.45,0,455,126,732,0.128
-68,Static A*,1,18.0,0,131,0,0,0.002
-68,Reactive Avoidance (Potential Field),1,34.5,0,180,0,0,0.007
-68,Reactive ORCA (Velocity Obstacles),0,180.0,0,164,0,0,0.009
-68,Decentralized Local MAPF,0,180.0,0,128,0,107,0.002
-69,D2RO (SW-DGO Proposed),1,74.25,0,180,128,721,0.104
-69,Static A*,1,18.0,0,123,0,0,0.002
-69,Reactive Avoidance (Potential Field),1,34.55,0,137,0,0,0.008
-69,Reactive ORCA (Velocity Obstacles),0,180.0,0,1110,0,0,0.01
-69,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002
-70,D2RO (SW-DGO Proposed),1,34.45,0,0,74,488,0.116
-70,Static A*,1,18.0,0,116,0,0,0.002
-70,Reactive Avoidance (Potential Field),1,34.55,0,184,0,0,0.008
-70,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-70,Decentralized Local MAPF,0,180.0,0,237,0,107,0.002
-71,D2RO (SW-DGO Proposed),1,43.0,0,0,72,345,0.077
-71,Static A*,1,18.0,0,123,0,0,0.002
-71,Reactive Avoidance (Potential Field),1,34.6,0,231,0,0,0.007
-71,Reactive ORCA (Velocity Obstacles),0,180.0,0,1003,0,0,0.01
-71,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002
-72,D2RO (SW-DGO Proposed),1,35.4,0,0,73,473,0.131
-72,Static A*,1,18.0,0,122,0,0,0.002
-72,Reactive Avoidance (Potential Field),1,34.6,0,123,0,0,0.01
-72,Reactive ORCA (Velocity Obstacles),0,180.0,0,2221,0,0,0.01
-72,Decentralized Local MAPF,0,180.0,0,120,0,107,0.002
-73,D2RO (SW-DGO Proposed),1,42.2,0,0,72,339,0.085
-73,Static A*,1,18.0,0,138,0,0,0.002
-73,Reactive Avoidance (Potential Field),1,34.55,0,280,0,0,0.008
-73,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-73,Decentralized Local MAPF,0,180.0,0,133,0,107,0.002
-74,D2RO (SW-DGO Proposed),1,35.0,0,0,75,447,0.121
-74,Static A*,1,18.0,0,121,0,0,0.002
-74,Reactive Avoidance (Potential Field),1,34.45,0,183,0,0,0.007
-74,Reactive ORCA (Velocity Obstacles),0,180.0,0,494,0,0,0.01
-74,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002
-75,D2RO (SW-DGO Proposed),1,55.9,0,0,72,388,0.111
-75,Static A*,1,18.0,0,131,0,0,0.002
-75,Reactive Avoidance (Potential Field),1,34.5,0,195,0,0,0.008
-75,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-75,Decentralized Local MAPF,0,180.0,0,128,0,107,0.002
-76,D2RO (SW-DGO Proposed),1,38.05,0,0,88,369,0.133
-76,Static A*,1,18.0,0,137,0,0,0.002
-76,Reactive Avoidance (Potential Field),1,34.6,0,456,0,0,0.007
-76,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-76,Decentralized Local MAPF,0,180.0,0,136,0,107,0.002
-77,D2RO (SW-DGO Proposed),1,33.8,0,0,65,441,0.103
-77,Static A*,1,18.0,0,125,0,0,0.002
-77,Reactive Avoidance (Potential Field),1,34.55,0,184,0,0,0.007
-77,Reactive ORCA (Velocity Obstacles),0,180.0,0,139,0,0,0.009
-77,Decentralized Local MAPF,0,180.0,0,123,0,107,0.001
-78,D2RO (SW-DGO Proposed),1,47.15,0,0,70,413,0.085
-78,Static A*,1,18.0,0,125,0,0,0.003
-78,Reactive Avoidance (Potential Field),1,34.55,0,247,0,0,0.008
-78,Reactive ORCA (Velocity Obstacles),0,180.0,0,1511,0,0,0.009
-78,Decentralized Local MAPF,0,180.0,0,122,0,107,0.002
-79,D2RO (SW-DGO Proposed),1,37.35,0,0,75,426,0.148
-79,Static A*,1,18.0,0,130,0,0,0.003
-79,Reactive Avoidance (Potential Field),1,34.4,0,304,0,0,0.007
-79,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-79,Decentralized Local MAPF,0,180.0,0,130,0,107,0.002
-80,D2RO (SW-DGO Proposed),1,71.45,0,0,73,656,0.093
-80,Static A*,1,18.0,0,121,0,0,0.002
-80,Reactive Avoidance (Potential Field),1,34.5,0,203,0,0,0.007
-80,Reactive ORCA (Velocity Obstacles),0,180.0,0,2426,0,0,0.01
-80,Decentralized Local MAPF,0,180.0,0,120,0,107,0.002
-81,D2RO (SW-DGO Proposed),1,59.8,0,0,70,419,0.078
-81,Static A*,1,18.0,0,131,0,0,0.002
-81,Reactive Avoidance (Potential Field),1,34.4,0,198,0,0,0.008
-81,Reactive ORCA (Velocity Obstacles),0,180.0,0,255,0,0,0.009
-81,Decentralized Local MAPF,0,180.0,0,129,0,107,0.002
-82,D2RO (SW-DGO Proposed),1,27.4,0,0,83,434,0.121
-82,Static A*,1,18.0,0,124,0,0,0.002
-82,Reactive Avoidance (Potential Field),1,34.55,0,172,0,0,0.007
-82,Reactive ORCA (Velocity Obstacles),0,180.0,0,386,0,0,0.009
-82,Decentralized Local MAPF,0,180.0,0,125,0,107,0.002
-83,D2RO (SW-DGO Proposed),1,44.35,0,0,70,355,0.096
-83,Static A*,1,18.0,0,127,0,0,0.002
-83,Reactive Avoidance (Potential Field),1,34.5,0,203,0,0,0.007
-83,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-83,Decentralized Local MAPF,0,180.0,0,124,0,107,0.002
-84,D2RO (SW-DGO Proposed),1,32.65,0,0,89,488,0.107
-84,Static A*,1,18.0,0,126,0,0,0.002
-84,Reactive Avoidance (Potential Field),1,34.55,0,208,0,0,0.007
-84,Reactive ORCA (Velocity Obstacles),0,180.0,0,225,0,0,0.009
-84,Decentralized Local MAPF,0,180.0,0,126,0,107,0.002
-85,D2RO (SW-DGO Proposed),1,28.65,0,0,86,398,0.12
-85,Static A*,1,18.0,0,130,0,0,0.002
-85,Reactive Avoidance (Potential Field),1,34.55,0,198,0,0,0.008
-85,Reactive ORCA (Velocity Obstacles),0,180.0,0,290,0,0,0.01
-85,Decentralized Local MAPF,0,180.0,0,131,0,107,0.002
-86,D2RO (SW-DGO Proposed),1,36.6,0,0,65,444,0.103
-86,Static A*,1,18.0,0,129,0,0,0.002
-86,Reactive Avoidance (Potential Field),1,34.55,0,315,0,0,0.008
-86,Reactive ORCA (Velocity Obstacles),0,180.0,0,365,0,0,0.01
-86,Decentralized Local MAPF,0,180.0,0,127,0,107,0.001
-87,D2RO (SW-DGO Proposed),1,50.6,0,0,72,442,0.167
-87,Static A*,1,18.0,0,127,0,0,0.002
-87,Reactive Avoidance (Potential Field),1,34.4,0,374,0,0,0.007
-87,Reactive ORCA (Velocity Obstacles),0,180.0,0,320,0,0,0.009
-87,Decentralized Local MAPF,0,180.0,0,124,0,107,0.002
-88,D2RO (SW-DGO Proposed),1,50.8,0,0,72,444,0.122
-88,Static A*,1,18.0,0,120,0,0,0.002
-88,Reactive Avoidance (Potential Field),1,34.5,0,178,0,0,0.008
-88,Reactive ORCA (Velocity Obstacles),0,180.0,0,1135,0,0,0.01
-88,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002
-89,D2RO (SW-DGO Proposed),1,48.95,0,0,70,416,0.114
-89,Static A*,1,18.0,0,126,0,0,0.002
-89,Reactive Avoidance (Potential Field),1,34.65,0,393,0,0,0.007
-89,Reactive ORCA (Velocity Obstacles),0,180.0,0,306,0,0,0.009
-89,Decentralized Local MAPF,0,180.0,0,123,0,107,0.001
-90,D2RO (SW-DGO Proposed),1,48.75,0,0,72,459,0.105
-90,Static A*,1,18.0,0,130,0,0,0.002
-90,Reactive Avoidance (Potential Field),1,34.55,0,171,0,0,0.008
-90,Reactive ORCA (Velocity Obstacles),0,180.0,0,416,0,0,0.009
-90,Decentralized Local MAPF,0,180.0,0,132,0,107,0.002
-91,D2RO (SW-DGO Proposed),1,54.85,0,0,72,438,0.118
-91,Static A*,1,18.0,0,124,0,0,0.002
-91,Reactive Avoidance (Potential Field),1,34.55,0,156,0,0,0.008
-91,Reactive ORCA (Velocity Obstacles),0,180.0,0,266,0,0,0.009
-91,Decentralized Local MAPF,0,180.0,0,124,0,107,0.002
-92,D2RO (SW-DGO Proposed),1,42.6,0,0,74,328,0.087
-92,Static A*,1,18.0,0,124,0,0,0.002
-92,Reactive Avoidance (Potential Field),1,34.55,0,130,0,0,0.007
-92,Reactive ORCA (Velocity Obstacles),0,180.0,0,376,0,0,0.009
-92,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002
-93,D2RO (SW-DGO Proposed),1,42.8,0,0,72,343,0.079
-93,Static A*,1,18.0,0,130,0,0,0.002
-93,Reactive Avoidance (Potential Field),1,34.8,0,184,0,0,0.007
-93,Reactive ORCA (Velocity Obstacles),0,180.0,0,205,0,0,0.009
-93,Decentralized Local MAPF,0,180.0,0,127,0,107,0.002
-94,D2RO (SW-DGO Proposed),1,71.85,0,0,75,641,0.137
-94,Static A*,1,18.0,0,125,0,0,0.002
-94,Reactive Avoidance (Potential Field),1,34.35,0,323,0,0,0.007
-94,Reactive ORCA (Velocity Obstacles),0,180.0,0,2306,0,0,0.01
-94,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002
-95,D2RO (SW-DGO Proposed),1,44.35,0,0,72,333,0.091
-95,Static A*,1,18.0,0,129,0,0,0.002
-95,Reactive Avoidance (Potential Field),1,34.6,0,307,0,0,0.008
-95,Reactive ORCA (Velocity Obstacles),0,180.0,0,993,0,0,0.009
-95,Decentralized Local MAPF,0,180.0,0,129,0,107,0.002
-96,D2RO (SW-DGO Proposed),1,49.6,0,0,72,488,0.127
-96,Static A*,1,18.0,0,120,0,0,0.002
-96,Reactive Avoidance (Potential Field),1,34.45,0,222,0,0,0.008
-96,Reactive ORCA (Velocity Obstacles),0,180.0,0,513,0,0,0.01
-96,Decentralized Local MAPF,0,180.0,0,212,0,107,0.002
-97,D2RO (SW-DGO Proposed),1,31.8,0,0,101,438,0.191
-97,Static A*,1,18.0,0,138,0,0,0.002
-97,Reactive Avoidance (Potential Field),1,34.7,0,187,0,0,0.007
-97,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009
-97,Decentralized Local MAPF,0,180.0,0,135,0,107,0.002
-98,D2RO (SW-DGO Proposed),1,88.0,0,0,72,645,0.097
-98,Static A*,1,18.0,0,128,0,0,0.002
-98,Reactive Avoidance (Potential Field),1,34.5,0,199,0,0,0.008
-98,Reactive ORCA (Velocity Obstacles),0,180.0,0,926,0,0,0.01
-98,Decentralized Local MAPF,0,180.0,0,129,0,107,0.002
-99,D2RO (SW-DGO Proposed),1,44.35,0,0,70,402,0.112
-99,Static A*,1,18.0,0,129,0,0,0.002
-99,Reactive Avoidance (Potential Field),1,34.55,0,413,0,0,0.008
-99,Reactive ORCA (Velocity Obstacles),0,180.0,0,555,0,0,0.009
-99,Decentralized Local MAPF,0,180.0,0,128,0,107,0.002
-100,D2RO (SW-DGO Proposed),1,35.9,0,0,85,553,0.152
-100,Static A*,1,18.0,0,119,0,0,0.002
-100,Reactive Avoidance (Potential Field),1,34.55,0,161,0,0,0.007
-100,Reactive ORCA (Velocity Obstacles),0,180.0,0,1156,0,0,0.01
-100,Decentralized Local MAPF,0,180.0,0,118,0,107,0.002
+trial_id,method,success,travel_time_s,deadlocks,proxemic_violations,mesh_packets,replan_cycles,avg_replan_latency_ms,repair_n,repair_median_ms,repair_mean_ms,repair_p95_ms,repair_max_ms
+1,D2RO (SW-DGO Proposed),1,42.2,0,0,74,365,0.099,365,0.0021,0.0156,0.0706,0.4419
+1,Static A* (matched controller),1,19.2,0,134,0,8,0.037,8,0.007,0.022,0.0931,0.0931
+1,Static A*,1,18.0,0,133,0,0,0.002,0,0.0,0.0,0.0,0.0
+1,Reactive Avoidance (Potential Field),1,34.55,0,175,0,0,0.007,0,0.0,0.0,0.0,0.0
+1,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009,0,0.0,0.0,0.0,0.0
+1,Decentralized Local MAPF,0,180.0,0,133,0,107,0.002,0,0.0,0.0,0.0,0.0
+2,D2RO (SW-DGO Proposed),1,42.8,0,0,72,462,0.091,462,0.0023,0.0173,0.0789,0.3165
+2,Static A* (matched controller),1,19.2,0,123,0,8,0.037,8,0.0065,0.022,0.092,0.092
+2,Static A*,1,18.0,0,123,0,0,0.002,0,0.0,0.0,0.0,0.0
+2,Reactive Avoidance (Potential Field),1,34.55,0,164,0,0,0.007,0,0.0,0.0,0.0,0.0
+2,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009,0,0.0,0.0,0.0,0.0
+2,Decentralized Local MAPF,0,180.0,0,272,0,107,0.002,0,0.0,0.0,0.0,0.0
+3,D2RO (SW-DGO Proposed),1,41.4,0,0,75,546,0.185,546,0.0024,0.0248,0.0999,1.0792
+3,Static A* (matched controller),1,19.2,0,122,0,8,0.038,8,0.0069,0.0241,0.0984,0.0984
+3,Static A*,1,18.0,0,122,0,0,0.002,0,0.0,0.0,0.0,0.0
+3,Reactive Avoidance (Potential Field),1,34.35,0,157,0,0,0.007,0,0.0,0.0,0.0,0.0
+3,Reactive ORCA (Velocity Obstacles),0,180.0,0,160,0,0,0.009,0,0.0,0.0,0.0,0.0
+3,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002,0,0.0,0.0,0.0,0.0
+4,D2RO (SW-DGO Proposed),1,59.95,0,0,72,510,0.098,510,0.0022,0.0206,0.0689,0.6726
+4,Static A* (matched controller),1,19.2,0,123,0,8,0.038,8,0.0067,0.0267,0.1128,0.1128
+4,Static A*,1,18.0,0,123,0,0,0.002,0,0.0,0.0,0.0,0.0
+4,Reactive Avoidance (Potential Field),1,34.7,0,303,0,0,0.007,0,0.0,0.0,0.0,0.0
+4,Reactive ORCA (Velocity Obstacles),0,180.0,0,46,0,0,0.009,0,0.0,0.0,0.0,0.0
+4,Decentralized Local MAPF,0,180.0,0,123,0,107,0.002,0,0.0,0.0,0.0,0.0
+5,D2RO (SW-DGO Proposed),1,44.35,0,0,72,461,0.188,461,0.0021,0.0162,0.0681,0.4748
+5,Static A* (matched controller),1,19.2,0,131,0,8,0.037,8,0.0086,0.0255,0.1074,0.1074
+5,Static A*,1,18.0,0,131,0,0,0.002,0,0.0,0.0,0.0,0.0
+5,Reactive Avoidance (Potential Field),1,34.8,0,190,0,0,0.007,0,0.0,0.0,0.0,0.0
+5,Reactive ORCA (Velocity Obstacles),0,180.0,0,719,0,0,0.009,0,0.0,0.0,0.0,0.0
+5,Decentralized Local MAPF,0,180.0,0,129,0,107,0.002,0,0.0,0.0,0.0,0.0
+6,D2RO (SW-DGO Proposed),1,48.6,0,0,72,412,0.157,412,0.0022,0.0145,0.0565,0.6004
+6,Static A* (matched controller),1,19.2,0,118,0,8,0.038,8,0.007,0.0227,0.0945,0.0945
+6,Static A*,1,18.0,0,118,0,0,0.002,0,0.0,0.0,0.0,0.0
+6,Reactive Avoidance (Potential Field),1,34.45,0,203,0,0,0.007,0,0.0,0.0,0.0,0.0
+6,Reactive ORCA (Velocity Obstacles),0,180.0,0,480,0,0,0.01,0,0.0,0.0,0.0,0.0
+6,Decentralized Local MAPF,0,180.0,0,119,0,107,0.002,0,0.0,0.0,0.0,0.0
+7,D2RO (SW-DGO Proposed),1,60.05,0,0,73,610,0.1,610,0.0024,0.0267,0.0839,0.7398
+7,Static A* (matched controller),1,19.2,0,130,0,8,0.037,8,0.0091,0.0245,0.1026,0.1026
+7,Static A*,1,18.0,0,130,0,0,0.002,0,0.0,0.0,0.0,0.0
+7,Reactive Avoidance (Potential Field),1,34.6,0,231,0,0,0.007,0,0.0,0.0,0.0,0.0
+7,Reactive ORCA (Velocity Obstacles),0,180.0,0,539,0,0,0.01,0,0.0,0.0,0.0,0.0
+7,Decentralized Local MAPF,0,180.0,0,159,0,107,0.002,0,0.0,0.0,0.0,0.0
+8,D2RO (SW-DGO Proposed),1,43.35,0,0,72,403,0.085,403,0.0022,0.0149,0.069,0.3865
+8,Static A* (matched controller),1,19.2,0,121,0,8,0.04,8,0.0082,0.0237,0.0959,0.0959
+8,Static A*,1,18.0,0,121,0,0,0.002,0,0.0,0.0,0.0,0.0
+8,Reactive Avoidance (Potential Field),1,34.55,0,275,0,0,0.007,0,0.0,0.0,0.0,0.0
+8,Reactive ORCA (Velocity Obstacles),0,180.0,0,659,0,0,0.009,0,0.0,0.0,0.0,0.0
+8,Decentralized Local MAPF,0,180.0,0,120,0,107,0.002,0,0.0,0.0,0.0,0.0
+9,D2RO (SW-DGO Proposed),1,40.05,0,0,73,499,0.107,499,0.0024,0.0274,0.0907,0.5191
+9,Static A* (matched controller),1,19.2,0,121,0,8,0.038,8,0.0069,0.0217,0.0903,0.0903
+9,Static A*,1,18.0,0,121,0,0,0.002,0,0.0,0.0,0.0,0.0
+9,Reactive Avoidance (Potential Field),1,34.6,0,254,0,0,0.007,0,0.0,0.0,0.0,0.0
+9,Reactive ORCA (Velocity Obstacles),0,180.0,0,232,0,0,0.009,0,0.0,0.0,0.0,0.0
+9,Decentralized Local MAPF,0,180.0,0,118,0,107,0.002,0,0.0,0.0,0.0,0.0
+10,D2RO (SW-DGO Proposed),1,40.9,0,0,73,512,0.107,512,0.0024,0.0232,0.0864,0.5249
+10,Static A* (matched controller),1,19.2,0,116,0,8,0.037,8,0.008,0.0236,0.0905,0.0905
+10,Static A*,1,18.0,0,116,0,0,0.002,0,0.0,0.0,0.0,0.0
+10,Reactive Avoidance (Potential Field),1,34.55,0,335,0,0,0.008,0,0.0,0.0,0.0,0.0
+10,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009,0,0.0,0.0,0.0,0.0
+10,Decentralized Local MAPF,0,180.0,0,120,0,107,0.002,0,0.0,0.0,0.0,0.0
+11,D2RO (SW-DGO Proposed),1,42.65,0,0,73,537,0.1,537,0.0023,0.0249,0.0932,0.582
+11,Static A* (matched controller),1,19.2,0,124,0,8,0.036,8,0.0075,0.0232,0.0945,0.0945
+11,Static A*,1,18.0,0,124,0,0,0.002,0,0.0,0.0,0.0,0.0
+11,Reactive Avoidance (Potential Field),1,34.65,0,216,0,0,0.007,0,0.0,0.0,0.0,0.0
+11,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009,0,0.0,0.0,0.0,0.0
+11,Decentralized Local MAPF,0,180.0,0,123,0,107,0.002,0,0.0,0.0,0.0,0.0
+12,D2RO (SW-DGO Proposed),1,60.85,0,0,75,600,0.155,600,0.0023,0.0198,0.0813,0.5857
+12,Static A* (matched controller),1,19.2,0,124,0,8,0.038,8,0.0112,0.025,0.0984,0.0984
+12,Static A*,1,18.0,0,124,0,0,0.002,0,0.0,0.0,0.0,0.0
+12,Reactive Avoidance (Potential Field),1,34.5,0,227,0,0,0.007,0,0.0,0.0,0.0,0.0
+12,Reactive ORCA (Velocity Obstacles),0,180.0,0,274,0,0,0.01,0,0.0,0.0,0.0,0.0
+12,Decentralized Local MAPF,0,180.0,0,125,0,107,0.001,0,0.0,0.0,0.0,0.0
+13,D2RO (SW-DGO Proposed),1,52.65,0,0,70,454,0.123,454,0.0022,0.0208,0.0882,0.6767
+13,Static A* (matched controller),1,19.2,0,131,0,8,0.037,8,0.0071,0.0226,0.0927,0.0927
+13,Static A*,1,18.0,0,131,0,0,0.002,0,0.0,0.0,0.0,0.0
+13,Reactive Avoidance (Potential Field),1,34.45,0,315,0,0,0.007,0,0.0,0.0,0.0,0.0
+13,Reactive ORCA (Velocity Obstacles),0,180.0,0,1565,0,0,0.01,0,0.0,0.0,0.0,0.0
+13,Decentralized Local MAPF,0,180.0,0,131,0,107,0.005,0,0.0,0.0,0.0,0.0
+14,D2RO (SW-DGO Proposed),1,42.2,0,0,74,412,0.337,412,0.0066,0.0432,0.1713,1.0667
+14,Static A* (matched controller),1,19.2,0,120,0,8,0.096,8,0.0186,0.0553,0.2295,0.2295
+14,Static A*,1,18.0,0,120,0,0,0.006,0,0.0,0.0,0.0,0.0
+14,Reactive Avoidance (Potential Field),1,34.4,0,306,0,0,0.022,0,0.0,0.0,0.0,0.0
+14,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.029,0,0.0,0.0,0.0,0.0
+14,Decentralized Local MAPF,0,180.0,0,122,0,107,0.006,0,0.0,0.0,0.0,0.0
+15,D2RO (SW-DGO Proposed),1,63.0,0,0,64,513,0.213,513,0.0047,0.0279,0.12,0.8972
+15,Static A* (matched controller),1,19.2,0,141,0,8,0.051,8,0.0109,0.0294,0.1229,0.1229
+15,Static A*,1,18.0,0,141,0,0,0.003,0,0.0,0.0,0.0,0.0
+15,Reactive Avoidance (Potential Field),1,34.65,0,366,0,0,0.011,0,0.0,0.0,0.0,0.0
+15,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.015,0,0.0,0.0,0.0,0.0
+15,Decentralized Local MAPF,0,180.0,0,137,0,107,0.002,0,0.0,0.0,0.0,0.0
+16,D2RO (SW-DGO Proposed),1,42.2,0,0,72,341,0.108,341,0.0027,0.0179,0.0889,0.5169
+16,Static A* (matched controller),1,19.2,0,133,0,8,0.053,8,0.0163,0.0335,0.1325,0.1325
+16,Static A*,1,18.0,0,133,0,0,0.003,0,0.0,0.0,0.0,0.0
+16,Reactive Avoidance (Potential Field),1,34.5,0,239,0,0,0.011,0,0.0,0.0,0.0,0.0
+16,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.015,0,0.0,0.0,0.0,0.0
+16,Decentralized Local MAPF,0,180.0,0,131,0,107,0.002,0,0.0,0.0,0.0,0.0
+17,D2RO (SW-DGO Proposed),1,57.55,0,0,72,479,0.133,479,0.003,0.0252,0.1011,0.7422
+17,Static A* (matched controller),1,19.2,0,117,0,8,0.05,8,0.0095,0.0298,0.1265,0.1265
+17,Static A*,1,18.0,0,117,0,0,0.003,0,0.0,0.0,0.0,0.0
+17,Reactive Avoidance (Potential Field),1,34.55,0,157,0,0,0.011,0,0.0,0.0,0.0,0.0
+17,Reactive ORCA (Velocity Obstacles),0,180.0,0,334,0,0,0.015,0,0.0,0.0,0.0,0.0
+17,Decentralized Local MAPF,0,180.0,0,212,0,107,0.003,0,0.0,0.0,0.0,0.0
+18,D2RO (SW-DGO Proposed),1,24.8,0,0,85,448,0.179,448,0.0036,0.0358,0.1485,0.652
+18,Static A* (matched controller),1,19.2,0,130,0,8,0.096,8,0.0185,0.0553,0.2304,0.2304
+18,Static A*,1,18.0,0,130,0,0,0.009,0,0.0,0.0,0.0,0.0
+18,Reactive Avoidance (Potential Field),1,35.2,0,390,0,0,0.02,0,0.0,0.0,0.0,0.0
+18,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.031,0,0.0,0.0,0.0,0.0
+18,Decentralized Local MAPF,0,180.0,0,129,0,107,0.005,0,0.0,0.0,0.0,0.0
+19,D2RO (SW-DGO Proposed),1,33.65,0,0,86,585,0.396,585,0.0084,0.0827,0.3362,1.045
+19,Static A* (matched controller),1,19.2,0,127,0,8,0.105,8,0.02,0.0682,0.3131,0.3131
+19,Static A*,1,18.0,0,127,0,0,0.006,0,0.0,0.0,0.0,0.0
+19,Reactive Avoidance (Potential Field),1,34.5,0,164,0,0,0.022,0,0.0,0.0,0.0,0.0
+19,Reactive ORCA (Velocity Obstacles),0,180.0,0,1455,0,0,0.028,0,0.0,0.0,0.0,0.0
+19,Decentralized Local MAPF,0,180.0,0,125,0,107,0.004,0,0.0,0.0,0.0,0.0
+20,D2RO (SW-DGO Proposed),1,41.95,0,0,73,483,0.24,483,0.0058,0.0629,0.237,1.7664
+20,Static A* (matched controller),1,19.2,0,123,0,8,0.093,8,0.0219,0.0584,0.231,0.231
+20,Static A*,1,18.0,0,123,0,0,0.006,0,0.0,0.0,0.0,0.0
+20,Reactive Avoidance (Potential Field),1,34.85,0,344,0,0,0.019,0,0.0,0.0,0.0,0.0
+20,Reactive ORCA (Velocity Obstacles),0,180.0,0,241,0,0,0.03,0,0.0,0.0,0.0,0.0
+20,Decentralized Local MAPF,0,180.0,0,119,0,107,0.005,0,0.0,0.0,0.0,0.0
+21,D2RO (SW-DGO Proposed),1,44.35,0,0,72,415,0.318,415,0.0062,0.0368,0.1573,1.1198
+21,Static A* (matched controller),1,19.2,0,134,0,8,0.125,8,0.0294,0.0802,0.2234,0.2234
+21,Static A*,1,18.0,0,134,0,0,0.006,0,0.0,0.0,0.0,0.0
+21,Reactive Avoidance (Potential Field),1,34.15,0,313,0,0,0.027,0,0.0,0.0,0.0,0.0
+21,Reactive ORCA (Velocity Obstacles),0,180.0,0,183,0,0,0.034,0,0.0,0.0,0.0,0.0
+21,Decentralized Local MAPF,0,180.0,0,132,0,107,0.006,0,0.0,0.0,0.0,0.0
+22,D2RO (SW-DGO Proposed),1,42.6,0,0,74,339,0.413,339,0.0078,0.0671,0.282,1.3431
+22,Static A* (matched controller),1,19.2,0,132,0,8,0.138,8,0.0199,0.0646,0.2719,0.2719
+22,Static A*,1,18.0,0,131,0,0,0.008,0,0.0,0.0,0.0,0.0
+22,Reactive Avoidance (Potential Field),1,34.7,0,177,0,0,0.029,0,0.0,0.0,0.0,0.0
+22,Reactive ORCA (Velocity Obstacles),0,180.0,0,203,0,0,0.035,0,0.0,0.0,0.0,0.0
+22,Decentralized Local MAPF,0,180.0,0,132,0,107,0.006,0,0.0,0.0,0.0,0.0
+23,D2RO (SW-DGO Proposed),1,49.85,0,0,72,453,0.279,453,0.007,0.0528,0.2324,1.3625
+23,Static A* (matched controller),1,19.2,0,135,0,8,0.104,8,0.0218,0.1007,0.5234,0.5234
+23,Static A*,1,18.0,0,134,0,0,0.007,0,0.0,0.0,0.0,0.0
+23,Reactive Avoidance (Potential Field),1,34.5,0,187,0,0,0.025,0,0.0,0.0,0.0,0.0
+23,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.031,0,0.0,0.0,0.0,0.0
+23,Decentralized Local MAPF,0,180.0,0,134,0,107,0.006,0,0.0,0.0,0.0,0.0
+24,D2RO (SW-DGO Proposed),1,42.8,0,0,75,412,0.326,412,0.0068,0.0549,0.2795,1.1289
+24,Static A* (matched controller),1,19.2,0,133,0,8,0.099,8,0.0313,0.0718,0.3005,0.3005
+24,Static A*,1,18.0,0,133,0,0,0.007,0,0.0,0.0,0.0,0.0
+24,Reactive Avoidance (Potential Field),1,34.3,0,227,0,0,0.023,0,0.0,0.0,0.0,0.0
+24,Reactive ORCA (Velocity Obstacles),0,180.0,0,1138,0,0,0.031,0,0.0,0.0,0.0,0.0
+24,Decentralized Local MAPF,0,180.0,0,129,0,107,0.006,0,0.0,0.0,0.0,0.0
+25,D2RO (SW-DGO Proposed),1,42.8,0,0,74,406,0.994,406,0.0061,0.0407,0.1774,1.3141
+25,Static A* (matched controller),1,19.2,0,122,0,8,0.121,8,0.0186,0.0549,0.2152,0.2152
+25,Static A*,1,18.0,0,122,0,0,0.008,0,0.0,0.0,0.0,0.0
+25,Reactive Avoidance (Potential Field),1,34.55,0,146,0,0,0.021,0,0.0,0.0,0.0,0.0
+25,Reactive ORCA (Velocity Obstacles),0,180.0,0,437,0,0,0.032,0,0.0,0.0,0.0,0.0
+25,Decentralized Local MAPF,0,180.0,0,123,0,107,0.005,0,0.0,0.0,0.0,0.0
+26,D2RO (SW-DGO Proposed),1,54.9,0,0,70,515,0.281,515,0.007,0.0571,0.2474,2.0407
+26,Static A* (matched controller),1,19.2,0,123,0,8,0.107,8,0.0329,0.0772,0.3309,0.3309
+26,Static A*,1,18.0,0,123,0,0,0.007,0,0.0,0.0,0.0,0.0
+26,Reactive Avoidance (Potential Field),1,34.5,0,175,0,0,0.02,0,0.0,0.0,0.0,0.0
+26,Reactive ORCA (Velocity Obstacles),0,180.0,0,909,0,0,0.035,0,0.0,0.0,0.0,0.0
+26,Decentralized Local MAPF,0,180.0,0,117,0,107,0.005,0,0.0,0.0,0.0,0.0
+27,D2RO (SW-DGO Proposed),1,44.35,0,0,72,378,0.365,378,0.0067,0.0524,0.2143,2.6583
+27,Static A* (matched controller),1,19.2,0,122,0,8,0.104,8,0.0298,0.0868,0.3523,0.3523
+27,Static A*,1,18.0,0,122,0,0,0.007,0,0.0,0.0,0.0,0.0
+27,Reactive Avoidance (Potential Field),1,34.55,0,137,0,0,0.02,0,0.0,0.0,0.0,0.0
+27,Reactive ORCA (Velocity Obstacles),0,180.0,0,343,0,0,0.031,0,0.0,0.0,0.0,0.0
+27,Decentralized Local MAPF,0,180.0,0,120,0,107,0.005,0,0.0,0.0,0.0,0.0
+28,D2RO (SW-DGO Proposed),1,42.2,0,0,74,398,0.352,398,0.0062,0.0438,0.1734,0.9496
+28,Static A* (matched controller),1,19.2,0,130,0,8,0.1,8,0.0182,0.0531,0.2218,0.2218
+28,Static A*,1,18.0,0,130,0,0,0.005,0,0.0,0.0,0.0,0.0
+28,Reactive Avoidance (Potential Field),1,34.7,0,171,0,0,0.019,0,0.0,0.0,0.0,0.0
+28,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.029,0,0.0,0.0,0.0,0.0
+28,Decentralized Local MAPF,0,180.0,0,129,0,107,0.005,0,0.0,0.0,0.0,0.0
+29,D2RO (SW-DGO Proposed),1,42.4,0,0,74,363,0.403,363,0.0059,0.0442,0.1795,0.9421
+29,Static A* (matched controller),1,19.2,0,129,0,8,0.119,8,0.0206,0.0666,0.2818,0.2818
+29,Static A*,1,18.0,0,129,0,0,0.007,0,0.0,0.0,0.0,0.0
+29,Reactive Avoidance (Potential Field),1,34.4,0,213,0,0,0.022,0,0.0,0.0,0.0,0.0
+29,Reactive ORCA (Velocity Obstacles),0,180.0,0,1692,0,0,0.036,0,0.0,0.0,0.0,0.0
+29,Decentralized Local MAPF,0,180.0,0,125,0,107,0.006,0,0.0,0.0,0.0,0.0
+30,D2RO (SW-DGO Proposed),1,62.7,0,0,70,450,0.417,450,0.0064,0.0535,0.2307,1.7865
+30,Static A* (matched controller),1,19.2,0,141,0,8,0.109,8,0.0176,0.0824,0.3648,0.3648
+30,Static A*,1,18.0,0,141,0,0,0.008,0,0.0,0.0,0.0,0.0
+30,Reactive Avoidance (Potential Field),1,34.5,0,186,0,0,0.02,0,0.0,0.0,0.0,0.0
+30,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.031,0,0.0,0.0,0.0,0.0
+30,Decentralized Local MAPF,0,180.0,0,139,0,107,0.006,0,0.0,0.0,0.0,0.0
+31,D2RO (SW-DGO Proposed),1,51.15,0,0,70,431,0.257,431,0.0074,0.0755,0.2414,2.2142
+31,Static A* (matched controller),1,19.2,0,133,0,8,0.119,8,0.0245,0.0702,0.295,0.295
+31,Static A*,1,18.0,0,133,0,0,0.009,0,0.0,0.0,0.0,0.0
+31,Reactive Avoidance (Potential Field),1,34.5,0,183,0,0,0.022,0,0.0,0.0,0.0,0.0
+31,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.031,0,0.0,0.0,0.0,0.0
+31,Decentralized Local MAPF,0,180.0,0,131,0,107,0.004,0,0.0,0.0,0.0,0.0
+32,D2RO (SW-DGO Proposed),1,44.35,0,0,72,345,0.248,345,0.0068,0.0531,0.2286,1.5448
+32,Static A* (matched controller),1,19.2,0,130,0,8,0.099,8,0.0181,0.0701,0.3512,0.3512
+32,Static A*,1,18.0,0,129,0,0,0.006,0,0.0,0.0,0.0,0.0
+32,Reactive Avoidance (Potential Field),1,34.6,0,316,0,0,0.025,0,0.0,0.0,0.0,0.0
+32,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.034,0,0.0,0.0,0.0,0.0
+32,Decentralized Local MAPF,0,180.0,0,127,0,107,0.004,0,0.0,0.0,0.0,0.0
+33,D2RO (SW-DGO Proposed),1,95.35,0,124,100,875,0.321,875,0.015,0.2359,1.099,4.1948
+33,Static A* (matched controller),1,19.2,0,123,0,8,0.11,8,0.0188,0.0526,0.2181,0.2181
+33,Static A*,1,18.0,0,123,0,0,0.006,0,0.0,0.0,0.0,0.0
+33,Reactive Avoidance (Potential Field),1,34.55,0,146,0,0,0.022,0,0.0,0.0,0.0,0.0
+33,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.031,0,0.0,0.0,0.0,0.0
+33,Decentralized Local MAPF,0,180.0,0,121,0,107,0.006,0,0.0,0.0,0.0,0.0
+34,D2RO (SW-DGO Proposed),1,42.2,0,0,72,497,0.45,497,0.0067,0.0523,0.2,2.2691
+34,Static A* (matched controller),1,19.2,0,127,0,8,0.112,8,0.0239,0.0707,0.2921,0.2921
+34,Static A*,1,18.0,0,127,0,0,0.008,0,0.0,0.0,0.0,0.0
+34,Reactive Avoidance (Potential Field),1,34.5,0,215,0,0,0.025,0,0.0,0.0,0.0,0.0
+34,Reactive ORCA (Velocity Obstacles),0,180.0,0,44,0,0,0.033,0,0.0,0.0,0.0,0.0
+34,Decentralized Local MAPF,0,180.0,0,126,0,107,0.006,0,0.0,0.0,0.0,0.0
+35,D2RO (SW-DGO Proposed),1,27.0,0,0,86,374,0.361,374,0.0075,0.0647,0.254,1.533
+35,Static A* (matched controller),1,19.2,0,123,0,8,0.119,8,0.0211,0.0893,0.3386,0.3386
+35,Static A*,1,18.0,0,123,0,0,0.011,0,0.0,0.0,0.0,0.0
+35,Reactive Avoidance (Potential Field),1,34.55,0,182,0,0,0.019,0,0.0,0.0,0.0,0.0
+35,Reactive ORCA (Velocity Obstacles),0,180.0,0,711,0,0,0.035,0,0.0,0.0,0.0,0.0
+35,Decentralized Local MAPF,0,180.0,0,123,0,107,0.006,0,0.0,0.0,0.0,0.0
+36,D2RO (SW-DGO Proposed),1,44.35,0,0,72,381,0.509,381,0.0065,0.0609,0.185,7.7802
+36,Static A* (matched controller),1,19.2,0,135,0,8,0.123,8,0.0261,0.0667,0.2746,0.2746
+36,Static A*,1,18.0,0,135,0,0,0.008,0,0.0,0.0,0.0,0.0
+36,Reactive Avoidance (Potential Field),1,34.55,0,189,0,0,0.026,0,0.0,0.0,0.0,0.0
+36,Reactive ORCA (Velocity Obstacles),0,180.0,0,1094,0,0,0.032,0,0.0,0.0,0.0,0.0
+36,Decentralized Local MAPF,0,180.0,0,135,0,107,0.006,0,0.0,0.0,0.0,0.0
+37,D2RO (SW-DGO Proposed),1,63.25,0,0,73,628,0.368,628,0.009,0.104,0.476,2.0598
+37,Static A* (matched controller),1,19.2,0,128,0,8,0.114,8,0.0199,0.0552,0.2272,0.2272
+37,Static A*,1,18.0,0,128,0,0,0.008,0,0.0,0.0,0.0,0.0
+37,Reactive Avoidance (Potential Field),1,34.45,0,166,0,0,0.027,0,0.0,0.0,0.0,0.0
+37,Reactive ORCA (Velocity Obstacles),0,180.0,0,1076,0,0,0.038,0,0.0,0.0,0.0,0.0
+37,Decentralized Local MAPF,0,180.0,0,127,0,107,0.006,0,0.0,0.0,0.0,0.0
+38,D2RO (SW-DGO Proposed),1,36.35,0,0,89,474,0.334,474,0.0094,0.0941,0.3744,2.8253
+38,Static A* (matched controller),1,19.2,0,131,0,8,0.109,8,0.0154,0.0461,0.1836,0.1836
+38,Static A*,1,18.0,0,131,0,0,0.009,0,0.0,0.0,0.0,0.0
+38,Reactive Avoidance (Potential Field),1,34.15,0,375,0,0,0.023,0,0.0,0.0,0.0,0.0
+38,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.032,0,0.0,0.0,0.0,0.0
+38,Decentralized Local MAPF,0,180.0,0,128,0,107,0.006,0,0.0,0.0,0.0,0.0
+39,D2RO (SW-DGO Proposed),1,42.6,0,0,74,367,0.257,367,0.0064,0.0457,0.2387,0.9893
+39,Static A* (matched controller),1,19.2,0,131,0,8,0.1,8,0.0157,0.0512,0.2172,0.2172
+39,Static A*,1,18.0,0,131,0,0,0.007,0,0.0,0.0,0.0,0.0
+39,Reactive Avoidance (Potential Field),1,34.45,0,161,0,0,0.02,0,0.0,0.0,0.0,0.0
+39,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.027,0,0.0,0.0,0.0,0.0
+39,Decentralized Local MAPF,0,180.0,0,131,0,107,0.005,0,0.0,0.0,0.0,0.0
+40,D2RO (SW-DGO Proposed),1,82.75,0,0,70,672,0.241,672,0.0074,0.1266,0.6311,2.5083
+40,Static A* (matched controller),1,19.2,0,124,0,8,0.119,8,0.0234,0.0715,0.3038,0.3038
+40,Static A*,1,18.0,0,124,0,0,0.007,0,0.0,0.0,0.0,0.0
+40,Reactive Avoidance (Potential Field),1,34.65,0,223,0,0,0.025,0,0.0,0.0,0.0,0.0
+40,Reactive ORCA (Velocity Obstacles),0,180.0,0,1207,0,0,0.036,0,0.0,0.0,0.0,0.0
+40,Decentralized Local MAPF,0,180.0,0,124,0,107,0.006,0,0.0,0.0,0.0,0.0
+41,D2RO (SW-DGO Proposed),1,28.4,0,0,95,595,0.466,595,0.0308,0.1709,0.8857,2.0288
+41,Static A* (matched controller),1,19.2,0,178,0,8,0.105,8,0.0163,0.0516,0.2188,0.2188
+41,Static A*,1,18.0,0,171,0,0,0.007,0,0.0,0.0,0.0,0.0
+41,Reactive Avoidance (Potential Field),1,34.45,0,213,0,0,0.024,0,0.0,0.0,0.0,0.0
+41,Reactive ORCA (Velocity Obstacles),0,180.0,0,226,0,0,0.032,0,0.0,0.0,0.0,0.0
+41,Decentralized Local MAPF,0,180.0,0,227,0,107,0.006,0,0.0,0.0,0.0,0.0
+42,D2RO (SW-DGO Proposed),1,21.15,0,0,86,403,0.473,403,0.0072,0.0749,0.3109,1.1799
+42,Static A* (matched controller),1,19.2,0,145,0,8,0.108,8,0.0181,0.0534,0.2179,0.2179
+42,Static A*,1,18.0,0,145,0,0,0.007,0,0.0,0.0,0.0,0.0
+42,Reactive Avoidance (Potential Field),1,34.3,0,225,0,0,0.024,0,0.0,0.0,0.0,0.0
+42,Reactive ORCA (Velocity Obstacles),0,180.0,0,186,0,0,0.035,0,0.0,0.0,0.0,0.0
+42,Decentralized Local MAPF,0,180.0,0,382,0,107,0.006,0,0.0,0.0,0.0,0.0
+43,D2RO (SW-DGO Proposed),1,34.35,0,0,75,446,0.506,446,0.0081,0.0835,0.3286,2.7585
+43,Static A* (matched controller),1,19.2,0,140,0,8,0.11,8,0.0187,0.0545,0.2243,0.2243
+43,Static A*,1,18.0,0,140,0,0,0.007,0,0.0,0.0,0.0,0.0
+43,Reactive Avoidance (Potential Field),1,34.45,0,193,0,0,0.025,0,0.0,0.0,0.0,0.0
+43,Reactive ORCA (Velocity Obstacles),0,180.0,0,2455,0,0,0.032,0,0.0,0.0,0.0,0.0
+43,Decentralized Local MAPF,0,180.0,0,138,0,107,0.006,0,0.0,0.0,0.0,0.0
+44,D2RO (SW-DGO Proposed),1,44.35,0,0,70,364,0.244,364,0.0061,0.0444,0.1998,1.4214
+44,Static A* (matched controller),1,19.2,0,139,0,8,0.121,8,0.0216,0.0654,0.2753,0.2753
+44,Static A*,1,18.0,0,139,0,0,0.007,0,0.0,0.0,0.0,0.0
+44,Reactive Avoidance (Potential Field),1,34.5,0,334,0,0,0.024,0,0.0,0.0,0.0,0.0
+44,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.031,0,0.0,0.0,0.0,0.0
+44,Decentralized Local MAPF,0,180.0,0,135,0,107,0.006,0,0.0,0.0,0.0,0.0
+45,D2RO (SW-DGO Proposed),1,62.55,0,0,76,544,0.169,544,0.0063,0.0554,0.2043,1.8533
+45,Static A* (matched controller),1,19.2,0,133,0,8,0.115,8,0.0221,0.068,0.2902,0.2902
+45,Static A*,1,18.0,0,133,0,0,0.007,0,0.0,0.0,0.0,0.0
+45,Reactive Avoidance (Potential Field),1,34.55,0,173,0,0,0.024,0,0.0,0.0,0.0,0.0
+45,Reactive ORCA (Velocity Obstacles),0,180.0,0,72,0,0,0.031,0,0.0,0.0,0.0,0.0
+45,Decentralized Local MAPF,0,180.0,0,133,0,107,0.006,0,0.0,0.0,0.0,0.0
+46,D2RO (SW-DGO Proposed),1,38.05,0,0,88,439,0.378,439,0.0067,0.0451,0.188,1.8641
+46,Static A* (matched controller),1,19.2,0,128,0,8,0.127,8,0.0224,0.0652,0.2722,0.2722
+46,Static A*,1,18.0,0,127,0,0,0.007,0,0.0,0.0,0.0,0.0
+46,Reactive Avoidance (Potential Field),1,34.4,0,214,0,0,0.022,0,0.0,0.0,0.0,0.0
+46,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.033,0,0.0,0.0,0.0,0.0
+46,Decentralized Local MAPF,0,180.0,0,122,0,107,0.005,0,0.0,0.0,0.0,0.0
+47,D2RO (SW-DGO Proposed),1,43.35,0,0,74,397,0.36,397,0.0063,0.0411,0.155,1.1983
+47,Static A* (matched controller),1,19.2,0,134,0,8,0.13,8,0.0204,0.0574,0.2284,0.2284
+47,Static A*,1,18.0,0,134,0,0,0.006,0,0.0,0.0,0.0,0.0
+47,Reactive Avoidance (Potential Field),1,35.2,0,241,0,0,0.02,0,0.0,0.0,0.0,0.0
+47,Reactive ORCA (Velocity Obstacles),0,180.0,0,174,0,0,0.032,0,0.0,0.0,0.0,0.0
+47,Decentralized Local MAPF,0,180.0,0,132,0,107,0.005,0,0.0,0.0,0.0,0.0
+48,D2RO (SW-DGO Proposed),1,53.8,0,0,70,460,0.247,460,0.0072,0.0842,0.3392,2.1664
+48,Static A* (matched controller),1,19.2,0,133,0,8,0.113,8,0.0249,0.0694,0.2956,0.2956
+48,Static A*,1,18.0,0,133,0,0,0.008,0,0.0,0.0,0.0,0.0
+48,Reactive Avoidance (Potential Field),1,34.35,0,187,0,0,0.022,0,0.0,0.0,0.0,0.0
+48,Reactive ORCA (Velocity Obstacles),0,180.0,0,2064,0,0,0.034,0,0.0,0.0,0.0,0.0
+48,Decentralized Local MAPF,0,180.0,0,133,0,107,0.007,0,0.0,0.0,0.0,0.0
+49,D2RO (SW-DGO Proposed),1,47.5,0,0,75,524,0.322,524,0.007,0.0654,0.2587,2.114
+49,Static A* (matched controller),1,19.2,0,127,0,8,0.098,8,0.0177,0.0518,0.2163,0.2163
+49,Static A*,1,18.0,0,127,0,0,0.006,0,0.0,0.0,0.0,0.0
+49,Reactive Avoidance (Potential Field),1,35.05,0,325,0,0,0.02,0,0.0,0.0,0.0,0.0
+49,Reactive ORCA (Velocity Obstacles),0,180.0,0,704,0,0,0.033,0,0.0,0.0,0.0,0.0
+49,Decentralized Local MAPF,0,180.0,0,128,0,107,0.005,0,0.0,0.0,0.0,0.0
+50,D2RO (SW-DGO Proposed),1,31.4,0,0,86,428,0.633,428,0.0073,0.0806,0.3162,1.327
+50,Static A* (matched controller),1,19.2,0,129,0,8,0.108,8,0.0201,0.0611,0.2506,0.2506
+50,Static A*,1,18.0,0,129,0,0,0.007,0,0.0,0.0,0.0,0.0
+50,Reactive Avoidance (Potential Field),1,34.55,0,250,0,0,0.021,0,0.0,0.0,0.0,0.0
+50,Reactive ORCA (Velocity Obstacles),0,180.0,0,1284,0,0,0.034,0,0.0,0.0,0.0,0.0
+50,Decentralized Local MAPF,0,180.0,0,149,0,107,0.005,0,0.0,0.0,0.0,0.0
+51,D2RO (SW-DGO Proposed),1,38.65,0,0,64,392,0.384,392,0.0063,0.0406,0.1792,0.9969
+51,Static A* (matched controller),1,19.2,0,129,0,8,0.089,8,0.0201,0.0774,0.3023,0.3023
+51,Static A*,1,18.0,0,129,0,0,0.006,0,0.0,0.0,0.0,0.0
+51,Reactive Avoidance (Potential Field),1,34.55,0,208,0,0,0.019,0,0.0,0.0,0.0,0.0
+51,Reactive ORCA (Velocity Obstacles),0,180.0,0,185,0,0,0.028,0,0.0,0.0,0.0,0.0
+51,Decentralized Local MAPF,0,180.0,0,131,0,107,0.005,0,0.0,0.0,0.0,0.0
+52,D2RO (SW-DGO Proposed),1,36.4,0,0,86,426,0.28,426,0.0065,0.0423,0.21,0.9122
+52,Static A* (matched controller),1,19.2,0,122,0,8,0.104,8,0.016,0.0517,0.2171,0.2171
+52,Static A*,1,18.0,0,122,0,0,0.007,0,0.0,0.0,0.0,0.0
+52,Reactive Avoidance (Potential Field),1,34.55,0,273,0,0,0.021,0,0.0,0.0,0.0,0.0
+52,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.029,0,0.0,0.0,0.0,0.0
+52,Decentralized Local MAPF,0,180.0,0,121,0,107,0.005,0,0.0,0.0,0.0,0.0
+53,D2RO (SW-DGO Proposed),1,69.3,0,0,76,667,0.235,667,0.0072,0.0655,0.251,2.4674
+53,Static A* (matched controller),1,19.2,0,125,0,8,0.094,8,0.0186,0.0538,0.2267,0.2267
+53,Static A*,1,18.0,0,125,0,0,0.008,0,0.0,0.0,0.0,0.0
+53,Reactive Avoidance (Potential Field),1,34.45,0,224,0,0,0.019,0,0.0,0.0,0.0,0.0
+53,Reactive ORCA (Velocity Obstacles),0,180.0,0,1160,0,0,0.027,0,0.0,0.0,0.0,0.0
+53,Decentralized Local MAPF,0,180.0,0,125,0,107,0.005,0,0.0,0.0,0.0,0.0
+54,D2RO (SW-DGO Proposed),1,45.75,0,0,72,353,0.253,353,0.0064,0.0549,0.2503,1.3688
+54,Static A* (matched controller),1,19.2,0,124,0,8,0.099,8,0.0164,0.0538,0.2216,0.2216
+54,Static A*,1,18.0,0,124,0,0,0.005,0,0.0,0.0,0.0,0.0
+54,Reactive Avoidance (Potential Field),1,34.6,0,155,0,0,0.019,0,0.0,0.0,0.0,0.0
+54,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.027,0,0.0,0.0,0.0,0.0
+54,Decentralized Local MAPF,0,180.0,0,126,0,107,0.005,0,0.0,0.0,0.0,0.0
+55,D2RO (SW-DGO Proposed),1,44.35,0,0,72,386,0.278,386,0.0056,0.0397,0.1686,1.3598
+55,Static A* (matched controller),1,19.2,0,127,0,8,0.098,8,0.0213,0.0678,0.291,0.291
+55,Static A*,1,18.0,0,127,0,0,0.006,0,0.0,0.0,0.0,0.0
+55,Reactive Avoidance (Potential Field),1,34.5,0,269,0,0,0.026,0,0.0,0.0,0.0,0.0
+55,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.03,0,0.0,0.0,0.0,0.0
+55,Decentralized Local MAPF,0,180.0,0,123,0,107,0.006,0,0.0,0.0,0.0,0.0
+56,D2RO (SW-DGO Proposed),0,180.0,0,182,84,1422,0.451,1422,0.0071,0.102,0.5199,3.8208
+56,Static A* (matched controller),1,19.2,0,143,0,8,0.116,8,0.0234,0.0923,0.3715,0.3715
+56,Static A*,1,18.0,0,143,0,0,0.007,0,0.0,0.0,0.0,0.0
+56,Reactive Avoidance (Potential Field),1,34.4,0,204,0,0,0.022,0,0.0,0.0,0.0,0.0
+56,Reactive ORCA (Velocity Obstacles),0,180.0,0,1169,0,0,0.032,0,0.0,0.0,0.0,0.0
+56,Decentralized Local MAPF,0,180.0,0,140,0,107,0.005,0,0.0,0.0,0.0,0.0
+57,D2RO (SW-DGO Proposed),1,49.8,0,0,74,494,0.35,494,0.0072,0.0786,0.3476,1.4281
+57,Static A* (matched controller),1,19.2,0,123,0,8,0.118,8,0.0249,0.0689,0.292,0.292
+57,Static A*,1,18.0,0,123,0,0,0.01,0,0.0,0.0,0.0,0.0
+57,Reactive Avoidance (Potential Field),1,34.45,0,431,0,0,0.023,0,0.0,0.0,0.0,0.0
+57,Reactive ORCA (Velocity Obstacles),0,180.0,0,135,0,0,0.031,0,0.0,0.0,0.0,0.0
+57,Decentralized Local MAPF,0,180.0,0,122,0,107,0.006,0,0.0,0.0,0.0,0.0
+58,D2RO (SW-DGO Proposed),1,40.75,0,0,73,479,0.312,479,0.0066,0.0674,0.295,1.4444
+58,Static A* (matched controller),1,19.2,0,125,0,8,0.111,8,0.0256,0.0629,0.2604,0.2604
+58,Static A*,1,18.0,0,125,0,0,0.007,0,0.0,0.0,0.0,0.0
+58,Reactive Avoidance (Potential Field),1,34.55,0,153,0,0,0.024,0,0.0,0.0,0.0,0.0
+58,Reactive ORCA (Velocity Obstacles),0,180.0,0,278,0,0,0.032,0,0.0,0.0,0.0,0.0
+58,Decentralized Local MAPF,0,180.0,0,125,0,107,0.006,0,0.0,0.0,0.0,0.0
+59,D2RO (SW-DGO Proposed),1,57.2,0,0,73,600,0.29,600,0.0072,0.0641,0.2611,2.2927
+59,Static A* (matched controller),1,19.2,0,128,0,8,0.113,8,0.0158,0.0523,0.2184,0.2184
+59,Static A*,1,18.0,0,128,0,0,0.007,0,0.0,0.0,0.0,0.0
+59,Reactive Avoidance (Potential Field),1,34.55,0,168,0,0,0.022,0,0.0,0.0,0.0,0.0
+59,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.032,0,0.0,0.0,0.0,0.0
+59,Decentralized Local MAPF,0,180.0,0,129,0,107,0.005,0,0.0,0.0,0.0,0.0
+60,D2RO (SW-DGO Proposed),1,44.35,0,0,72,410,0.284,410,0.0062,0.0382,0.138,1.6627
+60,Static A* (matched controller),1,19.2,0,124,0,8,0.129,8,0.0255,0.0821,0.3639,0.3639
+60,Static A*,1,18.0,0,124,0,0,0.007,0,0.0,0.0,0.0,0.0
+60,Reactive Avoidance (Potential Field),1,34.5,0,175,0,0,0.028,0,0.0,0.0,0.0,0.0
+60,Reactive ORCA (Velocity Obstacles),0,180.0,0,33,0,0,0.036,0,0.0,0.0,0.0,0.0
+60,Decentralized Local MAPF,0,180.0,0,123,0,107,0.006,0,0.0,0.0,0.0,0.0
+61,D2RO (SW-DGO Proposed),1,38.5,0,0,88,416,0.261,416,0.0066,0.0484,0.2186,1.2781
+61,Static A* (matched controller),1,19.2,0,133,0,8,0.11,8,0.0219,0.0674,0.2817,0.2817
+61,Static A*,1,18.0,0,133,0,0,0.009,0,0.0,0.0,0.0,0.0
+61,Reactive Avoidance (Potential Field),1,34.35,0,220,0,0,0.026,0,0.0,0.0,0.0,0.0
+61,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.031,0,0.0,0.0,0.0,0.0
+61,Decentralized Local MAPF,0,180.0,0,132,0,107,0.005,0,0.0,0.0,0.0,0.0
+62,D2RO (SW-DGO Proposed),1,76.95,0,0,70,542,0.214,542,0.0064,0.0883,0.529,1.9118
+62,Static A* (matched controller),1,19.2,0,132,0,8,0.096,8,0.02,0.0572,0.2232,0.2232
+62,Static A*,1,18.0,0,132,0,0,0.007,0,0.0,0.0,0.0,0.0
+62,Reactive Avoidance (Potential Field),1,34.4,0,186,0,0,0.024,0,0.0,0.0,0.0,0.0
+62,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.027,0,0.0,0.0,0.0,0.0
+62,Decentralized Local MAPF,0,180.0,0,132,0,107,0.005,0,0.0,0.0,0.0,0.0
+63,D2RO (SW-DGO Proposed),1,53.0,0,0,72,465,0.267,465,0.0058,0.042,0.1636,1.0302
+63,Static A* (matched controller),1,19.2,0,129,0,8,0.045,8,0.0085,0.024,0.1004,0.1004
+63,Static A*,1,18.0,0,129,0,0,0.002,0,0.0,0.0,0.0,0.0
+63,Reactive Avoidance (Potential Field),1,34.5,0,334,0,0,0.01,0,0.0,0.0,0.0,0.0
+63,Reactive ORCA (Velocity Obstacles),0,180.0,0,101,0,0,0.01,0,0.0,0.0,0.0,0.0
+63,Decentralized Local MAPF,0,180.0,0,131,0,107,0.002,0,0.0,0.0,0.0,0.0
+64,D2RO (SW-DGO Proposed),1,41.6,0,0,88,686,0.149,686,0.0027,0.0406,0.1695,0.5906
+64,Static A* (matched controller),1,19.2,0,191,0,8,0.037,8,0.0074,0.0224,0.0945,0.0945
+64,Static A*,1,18.0,0,147,0,0,0.002,0,0.0,0.0,0.0,0.0
+64,Reactive Avoidance (Potential Field),1,34.5,0,200,0,0,0.008,0,0.0,0.0,0.0,0.0
+64,Reactive ORCA (Velocity Obstacles),0,180.0,0,2354,0,0,0.01,0,0.0,0.0,0.0,0.0
+64,Decentralized Local MAPF,0,180.0,0,142,0,107,0.002,0,0.0,0.0,0.0,0.0
+65,D2RO (SW-DGO Proposed),1,43.0,0,0,74,373,0.13,373,0.0022,0.0135,0.0512,0.4073
+65,Static A* (matched controller),1,19.2,0,131,0,8,0.038,8,0.0086,0.0245,0.0986,0.0986
+65,Static A*,1,18.0,0,131,0,0,0.002,0,0.0,0.0,0.0,0.0
+65,Reactive Avoidance (Potential Field),1,34.6,0,306,0,0,0.007,0,0.0,0.0,0.0,0.0
+65,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009,0,0.0,0.0,0.0,0.0
+65,Decentralized Local MAPF,0,180.0,0,131,0,107,0.001,0,0.0,0.0,0.0,0.0
+66,D2RO (SW-DGO Proposed),1,54.9,0,0,64,403,0.146,403,0.0024,0.0197,0.0754,0.871
+66,Static A* (matched controller),1,19.2,0,136,0,8,0.036,8,0.0087,0.0295,0.1112,0.1112
+66,Static A*,1,18.0,0,136,0,0,0.002,0,0.0,0.0,0.0,0.0
+66,Reactive Avoidance (Potential Field),1,34.55,0,283,0,0,0.007,0,0.0,0.0,0.0,0.0
+66,Reactive ORCA (Velocity Obstacles),0,180.0,0,1258,0,0,0.01,0,0.0,0.0,0.0,0.0
+66,Decentralized Local MAPF,0,180.0,0,134,0,107,0.002,0,0.0,0.0,0.0,0.0
+67,D2RO (SW-DGO Proposed),1,50.0,0,0,94,644,0.095,644,0.0023,0.026,0.1057,0.5308
+67,Static A* (matched controller),1,19.2,0,131,0,8,0.037,8,0.007,0.0227,0.0965,0.0965
+67,Static A*,1,18.0,0,131,0,0,0.002,0,0.0,0.0,0.0,0.0
+67,Reactive Avoidance (Potential Field),1,34.45,0,170,0,0,0.007,0,0.0,0.0,0.0,0.0
+67,Reactive ORCA (Velocity Obstacles),0,180.0,0,36,0,0,0.009,0,0.0,0.0,0.0,0.0
+67,Decentralized Local MAPF,0,180.0,0,128,0,107,0.002,0,0.0,0.0,0.0,0.0
+68,D2RO (SW-DGO Proposed),1,75.45,0,455,126,759,0.135,759,0.0027,0.0422,0.2169,0.6652
+68,Static A* (matched controller),1,19.2,0,131,0,8,0.036,8,0.0088,0.0229,0.0939,0.0939
+68,Static A*,1,18.0,0,131,0,0,0.002,0,0.0,0.0,0.0,0.0
+68,Reactive Avoidance (Potential Field),1,34.5,0,180,0,0,0.008,0,0.0,0.0,0.0,0.0
+68,Reactive ORCA (Velocity Obstacles),0,180.0,0,164,0,0,0.009,0,0.0,0.0,0.0,0.0
+68,Decentralized Local MAPF,0,180.0,0,128,0,107,0.002,0,0.0,0.0,0.0,0.0
+69,D2RO (SW-DGO Proposed),1,74.25,0,180,128,747,0.106,747,0.003,0.0383,0.1379,0.7781
+69,Static A* (matched controller),1,19.2,0,123,0,8,0.037,8,0.0081,0.0236,0.0962,0.0962
+69,Static A*,1,18.0,0,123,0,0,0.002,0,0.0,0.0,0.0,0.0
+69,Reactive Avoidance (Potential Field),1,34.55,0,137,0,0,0.007,0,0.0,0.0,0.0,0.0
+69,Reactive ORCA (Velocity Obstacles),0,180.0,0,1110,0,0,0.009,0,0.0,0.0,0.0,0.0
+69,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002,0,0.0,0.0,0.0,0.0
+70,D2RO (SW-DGO Proposed),1,34.45,0,0,74,499,0.123,499,0.0023,0.0298,0.1111,0.5881
+70,Static A* (matched controller),1,19.2,0,116,0,8,0.037,8,0.0078,0.0232,0.0962,0.0962
+70,Static A*,1,18.0,0,116,0,0,0.002,0,0.0,0.0,0.0,0.0
+70,Reactive Avoidance (Potential Field),1,34.55,0,184,0,0,0.008,0,0.0,0.0,0.0,0.0
+70,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009,0,0.0,0.0,0.0,0.0
+70,Decentralized Local MAPF,0,180.0,0,237,0,107,0.002,0,0.0,0.0,0.0,0.0
+71,D2RO (SW-DGO Proposed),1,43.0,0,0,72,361,0.084,361,0.0022,0.0181,0.0831,0.5401
+71,Static A* (matched controller),1,19.2,0,123,0,8,0.04,8,0.0072,0.0225,0.0922,0.0922
+71,Static A*,1,18.0,0,123,0,0,0.002,0,0.0,0.0,0.0,0.0
+71,Reactive Avoidance (Potential Field),1,34.6,0,231,0,0,0.008,0,0.0,0.0,0.0,0.0
+71,Reactive ORCA (Velocity Obstacles),0,180.0,0,1003,0,0,0.01,0,0.0,0.0,0.0,0.0
+71,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002,0,0.0,0.0,0.0,0.0
+72,D2RO (SW-DGO Proposed),1,35.4,0,0,73,488,0.139,488,0.0022,0.017,0.0792,0.6203
+72,Static A* (matched controller),1,19.2,0,122,0,8,0.039,8,0.0084,0.023,0.0932,0.0932
+72,Static A*,1,18.0,0,122,0,0,0.002,0,0.0,0.0,0.0,0.0
+72,Reactive Avoidance (Potential Field),1,34.6,0,123,0,0,0.007,0,0.0,0.0,0.0,0.0
+72,Reactive ORCA (Velocity Obstacles),0,180.0,0,2221,0,0,0.01,0,0.0,0.0,0.0,0.0
+72,Decentralized Local MAPF,0,180.0,0,120,0,107,0.002,0,0.0,0.0,0.0,0.0
+73,D2RO (SW-DGO Proposed),1,42.2,0,0,72,355,0.09,355,0.0023,0.0173,0.0832,0.4651
+73,Static A* (matched controller),1,19.2,0,138,0,8,0.037,8,0.0082,0.0235,0.0971,0.0971
+73,Static A*,1,18.0,0,138,0,0,0.002,0,0.0,0.0,0.0,0.0
+73,Reactive Avoidance (Potential Field),1,34.55,0,280,0,0,0.007,0,0.0,0.0,0.0,0.0
+73,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009,0,0.0,0.0,0.0,0.0
+73,Decentralized Local MAPF,0,180.0,0,133,0,107,0.002,0,0.0,0.0,0.0,0.0
+74,D2RO (SW-DGO Proposed),1,35.0,0,0,75,459,0.127,459,0.0023,0.021,0.0866,0.4826
+74,Static A* (matched controller),1,19.2,0,121,0,8,0.037,8,0.0099,0.0239,0.0973,0.0973
+74,Static A*,1,18.0,0,121,0,0,0.002,0,0.0,0.0,0.0,0.0
+74,Reactive Avoidance (Potential Field),1,34.45,0,183,0,0,0.008,0,0.0,0.0,0.0,0.0
+74,Reactive ORCA (Velocity Obstacles),0,180.0,0,494,0,0,0.01,0,0.0,0.0,0.0,0.0
+74,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002,0,0.0,0.0,0.0,0.0
+75,D2RO (SW-DGO Proposed),1,55.9,0,0,72,402,0.14,402,0.0023,0.0233,0.0848,0.8766
+75,Static A* (matched controller),1,19.2,0,131,0,8,0.037,8,0.0071,0.0222,0.0924,0.0924
+75,Static A*,1,18.0,0,131,0,0,0.002,0,0.0,0.0,0.0,0.0
+75,Reactive Avoidance (Potential Field),1,34.5,0,195,0,0,0.007,0,0.0,0.0,0.0,0.0
+75,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009,0,0.0,0.0,0.0,0.0
+75,Decentralized Local MAPF,0,180.0,0,128,0,107,0.002,0,0.0,0.0,0.0,0.0
+76,D2RO (SW-DGO Proposed),1,38.05,0,0,88,384,0.115,384,0.0023,0.0183,0.065,0.9221
+76,Static A* (matched controller),1,19.2,0,137,0,8,0.037,8,0.0073,0.0234,0.0982,0.0982
+76,Static A*,1,18.0,0,137,0,0,0.002,0,0.0,0.0,0.0,0.0
+76,Reactive Avoidance (Potential Field),1,34.6,0,456,0,0,0.007,0,0.0,0.0,0.0,0.0
+76,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009,0,0.0,0.0,0.0,0.0
+76,Decentralized Local MAPF,0,180.0,0,136,0,107,0.002,0,0.0,0.0,0.0,0.0
+77,D2RO (SW-DGO Proposed),1,33.8,0,0,65,452,0.119,452,0.0026,0.0362,0.1139,4.7214
+77,Static A* (matched controller),1,19.2,0,125,0,8,0.038,8,0.0094,0.0237,0.0953,0.0953
+77,Static A*,1,18.0,0,125,0,0,0.002,0,0.0,0.0,0.0,0.0
+77,Reactive Avoidance (Potential Field),1,34.55,0,184,0,0,0.007,0,0.0,0.0,0.0,0.0
+77,Reactive ORCA (Velocity Obstacles),0,180.0,0,139,0,0,0.009,0,0.0,0.0,0.0,0.0
+77,Decentralized Local MAPF,0,180.0,0,123,0,107,0.002,0,0.0,0.0,0.0,0.0
+78,D2RO (SW-DGO Proposed),1,47.15,0,0,70,430,0.088,430,0.0024,0.0246,0.1023,0.6608
+78,Static A* (matched controller),1,19.2,0,125,0,8,0.036,8,0.0088,0.0233,0.0954,0.0954
+78,Static A*,1,18.0,0,125,0,0,0.002,0,0.0,0.0,0.0,0.0
+78,Reactive Avoidance (Potential Field),1,34.55,0,247,0,0,0.011,0,0.0,0.0,0.0,0.0
+78,Reactive ORCA (Velocity Obstacles),0,180.0,0,1511,0,0,0.01,0,0.0,0.0,0.0,0.0
+78,Decentralized Local MAPF,0,180.0,0,122,0,107,0.002,0,0.0,0.0,0.0,0.0
+79,D2RO (SW-DGO Proposed),1,37.35,0,0,75,438,0.151,438,0.0022,0.0221,0.0917,0.5261
+79,Static A* (matched controller),1,19.2,0,130,0,8,0.039,8,0.0081,0.0231,0.0956,0.0956
+79,Static A*,1,18.0,0,130,0,0,0.002,0,0.0,0.0,0.0,0.0
+79,Reactive Avoidance (Potential Field),1,34.4,0,304,0,0,0.008,0,0.0,0.0,0.0,0.0
+79,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009,0,0.0,0.0,0.0,0.0
+79,Decentralized Local MAPF,0,180.0,0,130,0,107,0.002,0,0.0,0.0,0.0,0.0
+80,D2RO (SW-DGO Proposed),1,71.45,0,0,73,670,0.099,670,0.0025,0.0311,0.1106,0.9213
+80,Static A* (matched controller),1,19.2,0,121,0,8,0.038,8,0.008,0.024,0.1034,0.1034
+80,Static A*,1,18.0,0,121,0,0,0.002,0,0.0,0.0,0.0,0.0
+80,Reactive Avoidance (Potential Field),1,34.5,0,203,0,0,0.007,0,0.0,0.0,0.0,0.0
+80,Reactive ORCA (Velocity Obstacles),0,180.0,0,2426,0,0,0.01,0,0.0,0.0,0.0,0.0
+80,Decentralized Local MAPF,0,180.0,0,120,0,107,0.002,0,0.0,0.0,0.0,0.0
+81,D2RO (SW-DGO Proposed),1,59.8,0,0,70,435,0.083,435,0.0022,0.0252,0.0966,0.8336
+81,Static A* (matched controller),1,19.2,0,131,0,8,0.038,8,0.0076,0.0229,0.0964,0.0964
+81,Static A*,1,18.0,0,131,0,0,0.002,0,0.0,0.0,0.0,0.0
+81,Reactive Avoidance (Potential Field),1,34.4,0,198,0,0,0.007,0,0.0,0.0,0.0,0.0
+81,Reactive ORCA (Velocity Obstacles),0,180.0,0,255,0,0,0.009,0,0.0,0.0,0.0,0.0
+81,Decentralized Local MAPF,0,180.0,0,129,0,107,0.002,0,0.0,0.0,0.0,0.0
+82,D2RO (SW-DGO Proposed),1,27.4,0,0,83,445,0.134,445,0.0033,0.0301,0.1031,0.4211
+82,Static A* (matched controller),1,19.2,0,124,0,8,0.04,8,0.0111,0.0273,0.1128,0.1128
+82,Static A*,1,18.0,0,124,0,0,0.002,0,0.0,0.0,0.0,0.0
+82,Reactive Avoidance (Potential Field),1,34.55,0,172,0,0,0.007,0,0.0,0.0,0.0,0.0
+82,Reactive ORCA (Velocity Obstacles),0,180.0,0,386,0,0,0.009,0,0.0,0.0,0.0,0.0
+82,Decentralized Local MAPF,0,180.0,0,125,0,107,0.002,0,0.0,0.0,0.0,0.0
+83,D2RO (SW-DGO Proposed),1,44.35,0,0,70,370,0.097,370,0.0023,0.0188,0.0734,0.487
+83,Static A* (matched controller),1,19.2,0,127,0,8,0.037,8,0.008,0.023,0.0942,0.0942
+83,Static A*,1,18.0,0,127,0,0,0.002,0,0.0,0.0,0.0,0.0
+83,Reactive Avoidance (Potential Field),1,34.5,0,203,0,0,0.008,0,0.0,0.0,0.0,0.0
+83,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009,0,0.0,0.0,0.0,0.0
+83,Decentralized Local MAPF,0,180.0,0,124,0,107,0.002,0,0.0,0.0,0.0,0.0
+84,D2RO (SW-DGO Proposed),1,32.65,0,0,89,501,0.114,501,0.0023,0.0221,0.0851,0.8345
+84,Static A* (matched controller),1,19.2,0,126,0,8,0.037,8,0.0081,0.0237,0.0934,0.0934
+84,Static A*,1,18.0,0,126,0,0,0.002,0,0.0,0.0,0.0,0.0
+84,Reactive Avoidance (Potential Field),1,34.55,0,208,0,0,0.008,0,0.0,0.0,0.0,0.0
+84,Reactive ORCA (Velocity Obstacles),0,180.0,0,225,0,0,0.009,0,0.0,0.0,0.0,0.0
+84,Decentralized Local MAPF,0,180.0,0,126,0,107,0.002,0,0.0,0.0,0.0,0.0
+85,D2RO (SW-DGO Proposed),1,28.65,0,0,86,409,0.125,409,0.0023,0.0219,0.0999,0.735
+85,Static A* (matched controller),1,19.2,0,130,0,8,0.037,8,0.0085,0.0246,0.0947,0.0947
+85,Static A*,1,18.0,0,130,0,0,0.002,0,0.0,0.0,0.0,0.0
+85,Reactive Avoidance (Potential Field),1,34.55,0,198,0,0,0.008,0,0.0,0.0,0.0,0.0
+85,Reactive ORCA (Velocity Obstacles),0,180.0,0,290,0,0,0.01,0,0.0,0.0,0.0,0.0
+85,Decentralized Local MAPF,0,180.0,0,131,0,107,0.002,0,0.0,0.0,0.0,0.0
+86,D2RO (SW-DGO Proposed),1,36.6,0,0,65,458,0.107,458,0.0025,0.0271,0.1076,0.4745
+86,Static A* (matched controller),1,19.2,0,129,0,8,0.037,8,0.0093,0.024,0.099,0.099
+86,Static A*,1,18.0,0,129,0,0,0.002,0,0.0,0.0,0.0,0.0
+86,Reactive Avoidance (Potential Field),1,34.55,0,315,0,0,0.007,0,0.0,0.0,0.0,0.0
+86,Reactive ORCA (Velocity Obstacles),0,180.0,0,365,0,0,0.01,0,0.0,0.0,0.0,0.0
+86,Decentralized Local MAPF,0,180.0,0,127,0,107,0.002,0,0.0,0.0,0.0,0.0
+87,D2RO (SW-DGO Proposed),1,50.6,0,0,72,457,0.188,457,0.0023,0.0205,0.0848,0.5335
+87,Static A* (matched controller),1,19.2,0,127,0,8,0.037,8,0.0086,0.0233,0.0947,0.0947
+87,Static A*,1,18.0,0,127,0,0,0.002,0,0.0,0.0,0.0,0.0
+87,Reactive Avoidance (Potential Field),1,34.4,0,374,0,0,0.007,0,0.0,0.0,0.0,0.0
+87,Reactive ORCA (Velocity Obstacles),0,180.0,0,320,0,0,0.009,0,0.0,0.0,0.0,0.0
+87,Decentralized Local MAPF,0,180.0,0,124,0,107,0.002,0,0.0,0.0,0.0,0.0
+88,D2RO (SW-DGO Proposed),1,50.8,0,0,72,459,0.122,459,0.0023,0.0235,0.0918,0.5125
+88,Static A* (matched controller),1,19.2,0,120,0,8,0.036,8,0.0079,0.0221,0.0927,0.0927
+88,Static A*,1,18.0,0,120,0,0,0.002,0,0.0,0.0,0.0,0.0
+88,Reactive Avoidance (Potential Field),1,34.5,0,178,0,0,0.007,0,0.0,0.0,0.0,0.0
+88,Reactive ORCA (Velocity Obstacles),0,180.0,0,1135,0,0,0.01,0,0.0,0.0,0.0,0.0
+88,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002,0,0.0,0.0,0.0,0.0
+89,D2RO (SW-DGO Proposed),1,48.95,0,0,70,432,0.125,432,0.0024,0.0252,0.0846,0.8254
+89,Static A* (matched controller),1,19.2,0,126,0,8,0.038,8,0.011,0.0251,0.1001,0.1001
+89,Static A*,1,18.0,0,126,0,0,0.003,0,0.0,0.0,0.0,0.0
+89,Reactive Avoidance (Potential Field),1,34.65,0,393,0,0,0.007,0,0.0,0.0,0.0,0.0
+89,Reactive ORCA (Velocity Obstacles),0,180.0,0,306,0,0,0.01,0,0.0,0.0,0.0,0.0
+89,Decentralized Local MAPF,0,180.0,0,123,0,107,0.002,0,0.0,0.0,0.0,0.0
+90,D2RO (SW-DGO Proposed),1,48.75,0,0,72,474,0.118,474,0.0024,0.021,0.0973,0.4867
+90,Static A* (matched controller),1,19.2,0,130,0,8,0.038,8,0.0085,0.0238,0.0981,0.0981
+90,Static A*,1,18.0,0,130,0,0,0.002,0,0.0,0.0,0.0,0.0
+90,Reactive Avoidance (Potential Field),1,34.55,0,171,0,0,0.007,0,0.0,0.0,0.0,0.0
+90,Reactive ORCA (Velocity Obstacles),0,180.0,0,416,0,0,0.01,0,0.0,0.0,0.0,0.0
+90,Decentralized Local MAPF,0,180.0,0,132,0,107,0.002,0,0.0,0.0,0.0,0.0
+91,D2RO (SW-DGO Proposed),1,54.85,0,0,72,452,0.097,452,0.0022,0.0187,0.0696,0.8443
+91,Static A* (matched controller),1,19.2,0,124,0,8,0.044,8,0.0122,0.034,0.0969,0.0969
+91,Static A*,1,18.0,0,124,0,0,0.002,0,0.0,0.0,0.0,0.0
+91,Reactive Avoidance (Potential Field),1,34.55,0,156,0,0,0.008,0,0.0,0.0,0.0,0.0
+91,Reactive ORCA (Velocity Obstacles),0,180.0,0,266,0,0,0.009,0,0.0,0.0,0.0,0.0
+91,Decentralized Local MAPF,0,180.0,0,124,0,107,0.002,0,0.0,0.0,0.0,0.0
+92,D2RO (SW-DGO Proposed),1,42.6,0,0,74,342,0.091,342,0.0022,0.0176,0.0733,0.5841
+92,Static A* (matched controller),1,19.2,0,124,0,8,0.04,8,0.0079,0.0227,0.0948,0.0948
+92,Static A*,1,18.0,0,124,0,0,0.002,0,0.0,0.0,0.0,0.0
+92,Reactive Avoidance (Potential Field),1,34.55,0,130,0,0,0.008,0,0.0,0.0,0.0,0.0
+92,Reactive ORCA (Velocity Obstacles),0,180.0,0,376,0,0,0.009,0,0.0,0.0,0.0,0.0
+92,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002,0,0.0,0.0,0.0,0.0
+93,D2RO (SW-DGO Proposed),1,42.8,0,0,72,359,0.084,359,0.0022,0.0164,0.0749,0.4076
+93,Static A* (matched controller),1,19.2,0,130,0,8,0.038,8,0.0104,0.0252,0.1021,0.1021
+93,Static A*,1,18.0,0,130,0,0,0.002,0,0.0,0.0,0.0,0.0
+93,Reactive Avoidance (Potential Field),1,34.8,0,184,0,0,0.007,0,0.0,0.0,0.0,0.0
+93,Reactive ORCA (Velocity Obstacles),0,180.0,0,205,0,0,0.009,0,0.0,0.0,0.0,0.0
+93,Decentralized Local MAPF,0,180.0,0,127,0,107,0.002,0,0.0,0.0,0.0,0.0
+94,D2RO (SW-DGO Proposed),1,71.85,0,0,75,654,0.137,654,0.0023,0.0291,0.1132,0.6947
+94,Static A* (matched controller),1,19.2,0,125,0,8,0.038,8,0.0088,0.0235,0.0941,0.0941
+94,Static A*,1,18.0,0,125,0,0,0.002,0,0.0,0.0,0.0,0.0
+94,Reactive Avoidance (Potential Field),1,34.35,0,323,0,0,0.007,0,0.0,0.0,0.0,0.0
+94,Reactive ORCA (Velocity Obstacles),0,180.0,0,2306,0,0,0.01,0,0.0,0.0,0.0,0.0
+94,Decentralized Local MAPF,0,180.0,0,121,0,107,0.002,0,0.0,0.0,0.0,0.0
+95,D2RO (SW-DGO Proposed),1,44.35,0,0,72,347,0.098,347,0.0022,0.0168,0.0687,0.4779
+95,Static A* (matched controller),1,19.2,0,129,0,8,0.037,8,0.0072,0.0222,0.0934,0.0934
+95,Static A*,1,18.0,0,129,0,0,0.002,0,0.0,0.0,0.0,0.0
+95,Reactive Avoidance (Potential Field),1,34.6,0,307,0,0,0.007,0,0.0,0.0,0.0,0.0
+95,Reactive ORCA (Velocity Obstacles),0,180.0,0,993,0,0,0.01,0,0.0,0.0,0.0,0.0
+95,Decentralized Local MAPF,0,180.0,0,129,0,107,0.002,0,0.0,0.0,0.0,0.0
+96,D2RO (SW-DGO Proposed),1,49.6,0,0,72,506,0.132,506,0.0026,0.0271,0.1047,0.4039
+96,Static A* (matched controller),1,19.2,0,120,0,8,0.037,8,0.0088,0.0241,0.1005,0.1005
+96,Static A*,1,18.0,0,120,0,0,0.002,0,0.0,0.0,0.0,0.0
+96,Reactive Avoidance (Potential Field),1,34.45,0,222,0,0,0.007,0,0.0,0.0,0.0,0.0
+96,Reactive ORCA (Velocity Obstacles),0,180.0,0,513,0,0,0.01,0,0.0,0.0,0.0,0.0
+96,Decentralized Local MAPF,0,180.0,0,212,0,107,0.002,0,0.0,0.0,0.0,0.0
+97,D2RO (SW-DGO Proposed),1,31.8,0,0,101,450,0.121,450,0.0025,0.0253,0.107,0.336
+97,Static A* (matched controller),1,19.2,0,139,0,8,0.037,8,0.0082,0.0239,0.0946,0.0946
+97,Static A*,1,18.0,0,138,0,0,0.002,0,0.0,0.0,0.0,0.0
+97,Reactive Avoidance (Potential Field),1,34.7,0,187,0,0,0.007,0,0.0,0.0,0.0,0.0
+97,Reactive ORCA (Velocity Obstacles),0,180.0,0,0,0,0,0.009,0,0.0,0.0,0.0,0.0
+97,Decentralized Local MAPF,0,180.0,0,135,0,107,0.002,0,0.0,0.0,0.0,0.0
+98,D2RO (SW-DGO Proposed),1,88.0,0,0,72,661,0.101,661,0.0029,0.0404,0.1342,0.8573
+98,Static A* (matched controller),1,19.2,0,128,0,8,0.037,8,0.009,0.0234,0.0954,0.0954
+98,Static A*,1,18.0,0,128,0,0,0.002,0,0.0,0.0,0.0,0.0
+98,Reactive Avoidance (Potential Field),1,34.5,0,199,0,0,0.007,0,0.0,0.0,0.0,0.0
+98,Reactive ORCA (Velocity Obstacles),0,180.0,0,926,0,0,0.01,0,0.0,0.0,0.0,0.0
+98,Decentralized Local MAPF,0,180.0,0,129,0,107,0.002,0,0.0,0.0,0.0,0.0
+99,D2RO (SW-DGO Proposed),1,44.35,0,0,70,418,0.116,418,0.0022,0.0165,0.0631,0.6494
+99,Static A* (matched controller),1,19.2,0,129,0,8,0.037,8,0.0099,0.0236,0.0958,0.0958
+99,Static A*,1,18.0,0,129,0,0,0.002,0,0.0,0.0,0.0,0.0
+99,Reactive Avoidance (Potential Field),1,34.55,0,413,0,0,0.007,0,0.0,0.0,0.0,0.0
+99,Reactive ORCA (Velocity Obstacles),0,180.0,0,555,0,0,0.009,0,0.0,0.0,0.0,0.0
+99,Decentralized Local MAPF,0,180.0,0,128,0,107,0.001,0,0.0,0.0,0.0,0.0
+100,D2RO (SW-DGO Proposed),1,35.9,0,0,85,564,0.159,564,0.0031,0.0356,0.1331,0.4359
+100,Static A* (matched controller),1,19.2,0,119,0,8,0.036,8,0.008,0.0231,0.0961,0.0961
+100,Static A*,1,18.0,0,119,0,0,0.002,0,0.0,0.0,0.0,0.0
+100,Reactive Avoidance (Potential Field),1,34.55,0,161,0,0,0.007,0,0.0,0.0,0.0,0.0
+100,Reactive ORCA (Velocity Obstacles),0,180.0,0,1156,0,0,0.009,0,0.0,0.0,0.0,0.0
+100,Decentralized Local MAPF,0,180.0,0,118,0,107,0.002,0,0.0,0.0,0.0,0.0
