@@ -25,6 +25,30 @@ Department of Computer Science and Engineering, Koya University
 > of the ORCA baseline against a reference implementation — and that file records
 > exactly what is done and what is not.
 
+## 🌐 Live Web Simulator (GitHub Pages)
+
+> **No installation required!** Experience the interactive D²RO simulator directly in your browser powered by **WebAssembly (Pyodide)** and **HTML5 Canvas**.
+
+* **Live Demo (GitHub Pages)**: `https://polla-fattah.github.io/D2RO/` *(or open [`docs/index.html`](docs/index.html) locally)*
+* **Key Web Features**:
+  * **100% Client-Side Execution**: Runs the Python physics engine, D* Lite, mesh network, and proxemics inside browser WASM memory.
+  * **Multi-Environment Benchmark**: Switch between **Supermarket Architecture**, **Airport Concourse**, and **Hospital Corridors**.
+  * **Scenario Suite A–E**: Interactive tab switching for all 5 benchmark scenarios.
+  * **Ablation Mode Toggles**: Compare **Full D²RO** vs. **No-Mesh** vs. **Static A* Baseline**.
+  * **Interactive Canvas**: Click anywhere on the map to trigger dynamic V2V congestion alerts in real-time.
+  * **Live Research Telemetry**: Monitors $S_{\text{trolley}}$ envelope radius, V2V packet transmissions, human yielding events, and corridor mutex locks.
+
+To test the browser simulator locally:
+```bash
+# Start a local HTTP server in the repository root:
+python -m http.server 8000
+
+# Open in your browser:
+# http://localhost:8000/docs/index.html
+```
+
+---
+
 ## What is D²RO?
 
 **D²RO** enables fleets of autonomous trolleys — retail shopping carts, clinical hospital pushchairs, airport luggage trolleys — to navigate crowded, human-shared environments **safely, efficiently, and socially-compliantly**.

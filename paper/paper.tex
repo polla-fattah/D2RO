@@ -51,13 +51,7 @@ Multi-Agent Path Finding (MAPF), Socially-Aware Navigation, Distributed Graph Op
 \section{Introduction}
 \IEEEPARstart{T}{he} rapid advancement of autonomous mobile robots (AMRs), ubiquitous sensor networks, and edge computing has catalyzed a paradigm shift in service robotics. While early automated guided vehicles (AGVs) operated primarily within segregated industrial warehouses—isolated from humans behind physical safety barriers and governed by rigid guide-paths—the next generation of autonomous service fleets must operate directly within \textbf{human-shared, highly dynamic, and unstructured public environments} \cite{azlan2024intcart, kruse2013human, chen2020relational}.
 
-Prominent examples of such service fleets include:
-\begin{enumerate}
-    \item \textbf{Smart Retail Shopping Trolleys (\textit{Int-Cart}):} Autonomous motorized carts that escort shoppers, assist individuals with mobility impairments, execute in-store item collection for online grocery fulfillment, and autonomously return from checkout concourses to front-of-store cart depots \cite{azlan2024intcart}.
-    \item \textbf{Clinical Hospital Pushchairs \& Mobile Beds:} Robotic patient transport systems and mobile logistics couriers navigating high-stress hospital corridors between Emergency Departments (ER), Surgical Operating Suites (OR), Radiology/MRI suites, and Inpatient Wards.
-    \item \textbf{Airport Terminal Luggage Trolleys:} Heavy-duty autonomous baggage carts managing passenger luggage across open departure concourses, security screening bottlenecks, and narrow boarding gate piers.
-    \item \textbf{Smart Library \& Micro-Fulfillment AGVs:} Material handling robots operating in narrow, single-file book stacks and retail storage aisles alongside human workers and patrons.
-\end{enumerate}
+Such fleets already appear in several settings. Smart retail shopping trolleys (\textit{Int-Cart}) escort shoppers, assist those with mobility impairments, collect items for online grocery fulfilment, and return themselves from checkout to front-of-store depots \cite{azlan2024intcart}. Clinical pushchairs and mobile beds carry patients and supplies between emergency departments, operating suites, radiology, and inpatient wards. Airport luggage trolleys move heavy baggage across open departure concourses, through security screening, and along narrow boarding piers. Library and micro-fulfilment AGVs work in single-file book stacks and storage aisles alongside staff and patrons. What unites them is not the payload but the setting: each shares its floor with people who are under no obligation to get out of the way.
 
 Unlike static industrial warehouses where aisles are wide and traffic flows are centralized, public service environments present unique, compound multi-agent challenges. In these settings, space is severely constrained by orthogonal shelving fixtures, corridors are frequently single-file, and human pedestrians move stochastically with complex browsing and loitering behaviors \cite{kruse2013human}.
 
@@ -82,13 +76,7 @@ In narrow architectural passages (e.g., supermarket grocery aisles, clinical hos
 In decentralized multi-agent systems without communication, robots operate with myopic, line-of-sight sensing. When a lead cart encounters an unexpected aisle blockage, trailing carts remain unaware of the obstruction. Trailing units travel all the way to the blocked entrance before sensing the congestion locally, forcing complete reversals and causing severe inflation in fleet makespan \cite{gielis2022codesign}.
 
 \subsection{Target Application Fields}
-The proposed framework is purposefully designed for multi-agent service fleet coordination across four key human-shared application domains:
-\begin{enumerate}
-    \item \textbf{Smart Retail Commerce \& Supermarkets:} Fleets negotiating narrow grocery aisles (Aisles 1–6), arterial promenades (\textbf{Action Alley}), end-cap displays, and cashier checkout queues.
-    \item \textbf{Clinical Healthcare Facilities \& Hospitals:} Autonomous pushchairs enforcing strict priority hierarchies: emergency trauma vehicles maintain uninhibited right-of-way, while routine pushchairs yield dynamically into \textbf{Turnout Alcoves} ($V_{\text{alcove}}$).
-    \item \textbf{Aviation \& Transportation Terminals:} Luggage trolleys navigating open concourses, security screening bottlenecks, and elongated boarding gate piers (Gates A1–A4, B1–B4).
-    \item \textbf{Public Facilities \& Micro-Fulfillment Stacks:} AGVs operating in narrow book stacks and vertical shelving units where physical clearances are tight.
-\end{enumerate}
+The framework targets the same four domains, each of which stresses it differently. Retail supermarkets combine narrow grocery aisles with arterial promenades (\textbf{Action Alley}), end-caps and checkout queues. Clinical facilities impose a priority hierarchy: emergency trauma vehicles hold right-of-way while routine pushchairs yield into \textbf{Turnout Alcoves} ($V_{\text{alcove}}$). Aviation terminals pair wide open concourses with security pinch points and elongated gate piers. Public facilities and micro-fulfilment stacks offer the tightest physical clearances of all. Three of these---supermarket, hospital and airport---are implemented as simulation domains and evaluated in Section~\ref{sec:cross_domain_failure}.
 
 \subsection{The Proposed Solution: The \texorpdfstring{$\text{D}^2\text{RO}$}{D2RO} Framework}
 To overcome these bottlenecks, this paper proposes the \textbf{Distributed Dynamic Route Optimization (\texorpdfstring{$\text{D}^2\text{RO}$}{D2RO})} framework powered by \textbf{Socially-Weighted Distributed Graph Optimization (SW-DGO)}. Rather than treating navigation as isolated reactive avoidance or purely local search, $\text{D}^2\text{RO}$ establishes a \textbf{distributed, time-varying graph-cost field} $C_i(e, t)$ shared across peer agents:
