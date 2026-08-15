@@ -233,7 +233,7 @@ If you use this framework, simulation testbed, or mathematical formulations in y
 @article{fattah2026d2ro,
   title={Socially-Weighted Distributed Graph Optimization (SW-DGO) for Autonomous Fleet Routing in Crowded Service Environments},
   author={Fattah, Polla},
-  journal={IEEE Transactions on Robotics / Autonomous Systems},
+  journal={},
   year={2026}
 }
 ```

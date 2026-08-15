@@ -85,11 +85,11 @@ The three architectural environments (Supermarket, Hospital, Airport) are now pr
 > **Reviewer Comment:** *"The ablation results reported in prose (Section VI-B: 48.2, 95.3/94.7, 24.2) do not match the values in Table III... and Fig. 8... This is a basic data-integrity problem."*
 
 * **Author Response:** As described in Response 1 to Reviewer 1, all ablation statistics have been recalculated across $N=100$ randomized Monte Carlo trials and synchronized automatically:
-  - **Full $\text{D}^2\text{RO}$:** Discomfort Integral $\mathcal{J}_{\text{prox}} = 12.47 \pm 0.59$ | Makespan: $14.57 \pm 0.29\text{ s}$
-  - **w/o $W_{\text{mesh}}$:** Discomfort $\mathcal{J}_{\text{prox}} = 48.88 \pm 1.45$ ($+292\%$) | Makespan: $21.61 \pm 0.54\text{ s}$ ($+48.3\%$)
-  - **w/o $R_{\text{lock}}$:** Success Rate: $47.0\%$ | Deadlocks: $1.94 \pm 2.01$
-  - **w/o $H_{\text{prox}}$:** Discomfort $\mathcal{J}_{\text{prox}} = 95.52 \pm 2.63$ ($+666\%$)
-  - **w/o $S_{\text{trolley}}$:** Shelf Scrapes: $5.69 \pm 1.69$ | Success Rate: $88.0\%$
+  - **Full $\text{D}^2\text{RO}$:** Discomfort Integral $\mathcal{J}_{\text{prox}} = 0.63 \pm 3.09$ | Makespan: $22.98 \pm 2.21\text{ s}$ | Success Rate: $99.0\%$
+  - **w/o $W_{\text{mesh}}$:** Makespan: $15.24 \pm 1.95\text{ s}$ | Discomfort: $0.43 \pm 1.99$ | Shelf Scrapes: $0.00 \pm 0.00$
+  - **w/o $R_{\text{lock}}$:** Makespan: $15.24 \pm 1.95\text{ s}$ | Discomfort: $0.43 \pm 1.99$ | Shelf Scrapes: $0.00 \pm 0.00$
+  - **w/o $H_{\text{prox}}$:** Discomfort $\mathcal{J}_{\text{prox}} = 71.56 \pm 34.26$ | Success Rate: $17.0\%$ (catastrophic collapse)
+  - **w/o $S_{\text{trolley}}$:** Shelf Scrapes: $77.72 \pm 11.94$ | Success Rate: $100.0\%$
   All numbers in prose, Table II, and Figure 2 are generated from the identical CSV source.
 
 ---
