@@ -99,7 +99,7 @@ class ExperimentRunner:
                 "proxemic_violations": sum(a.proxemic_violations for a in d2ro_agents),
                 "mesh_packets": mesh.total_packets_transmitted,
                 "replan_cycles": sum(a.replan_count for a in d2ro_agents),
-                "avg_replan_latency_ms": round(sum(replan_times) / max(1, len(replan_times)), 3)
+                "avg_replan_latency_ms": round(sum(replan_times) / len(replan_times), 3) if replan_times else 0.0
             })
 
             # ------------------------------------------------------------------

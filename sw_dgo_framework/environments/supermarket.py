@@ -132,13 +132,13 @@ class SupermarketLayout:
             self.shelves.append(ShelfObstacle(sx, self.y_shelf_top_start + 15.0, shelf_width, h_upper_shelf, name=f"Aisle {i+1}A", category="grocery"))
             self.shelves.append(ShelfObstacle(sx, self.y_action_alley + 30.0, shelf_width, h_lower_shelf, name=f"Aisle {i+1}B", category="grocery"))
 
-        # Produce Display Islands
-        self.shelves.append(ShelfObstacle(x_left_produce - 45.0, 180.0, 70.0, 80.0, name="Organic Produce", category="island"))
-        self.shelves.append(ShelfObstacle(x_left_produce - 45.0, 350.0, 70.0, 80.0, name="Fresh Fruits", category="island"))
+        # Produce Display Islands (positioned along left perimeter wall, clear of x=80 aisle)
+        self.shelves.append(ShelfObstacle(15.0, 180.0, 40.0, 80.0, name="Organic Produce", category="island"))
+        self.shelves.append(ShelfObstacle(15.0, 350.0, 40.0, 80.0, name="Fresh Fruits", category="island"))
 
-        # Bakery & Deli Counters
-        self.shelves.append(ShelfObstacle(x_right_deli - 25.0, 180.0, 75.0, 100.0, name="Artisan Bakery", category="deli"))
-        self.shelves.append(ShelfObstacle(x_right_deli - 25.0, 350.0, 75.0, 100.0, name="Meat & Seafood", category="deli"))
+        # Bakery & Deli Counters (positioned along right perimeter wall, clear of x_right_deli aisle)
+        self.shelves.append(ShelfObstacle(x_right_deli + 35.0, 180.0, 60.0, 100.0, name="Artisan Bakery", category="deli"))
+        self.shelves.append(ShelfObstacle(x_right_deli + 35.0, 350.0, 60.0, 100.0, name="Prepared Foods", category="deli"))
 
         # Checkout Register Booths (Placed between aisle checkout lanes)
         for i in range(self.num_aisles - 1):

@@ -5,11 +5,10 @@ navigate through aisles/crossways, and possess directional asymmetric Gaussian p
 """
 
 from __future__ import annotations
-import math
-from math import exp as math_exp, hypot as math_hypot, cos as math_cos, sin as math_sin, atan2 as math_atan2
 import random
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
+from math import exp, hypot, cos, sin, atan2, pi, sqrt
 
 from sw_dgo_framework.core.units import (
     PX_TO_M, M_TO_PX, HUMAN_RADIUS_PX,
@@ -67,24 +66,23 @@ class Human:
                 self.vy = 0.0
                 # When browsing, turn toward nearest shelf to face products
                 if shelves:
-                    closest_shelf_dx = 0.0
                     min_dist = float('inf')
                     for sx1, sy1, sx2, sy2 in shelves:
                         cx = (sx1 + sx2) / 2.0
                         cy = (sy1 + sy2) / 2.0
-                        d = math_hypot(self.x - cx, self.y - cy)
+                        d = hypot(self.x - cx, self.y - cy)
                         if d < min_dist:
                             min_dist = d
-                            self.heading = math_atan2(cy - self.y, cx - self.x)
+                            self.heading = atan2(cy - self.y, cx - self.x)
 
         if self.state == "walking":
             dx = self.target_x - self.x
             dy = self.target_y - self.y
-            dist = math_hypot(dx, dy)
+            dist = hypot(dx, dy)
             if dist > 6.0:
                 self.vx = (dx / dist) * self.speed
                 self.vy = (dy / dist) * self.speed
-                self.heading = math_atan2(self.vy, self.vx)
+                self.heading = atan2(self.vy, self.vx)
                 self.x += self.vx * dt * 30.0
                 self.y += self.vy * dt * 30.0
             else:
@@ -106,7 +104,12 @@ class Human:
                     d_top = self.y - expanded_min_y
                     d_bottom = expanded_max_y - self.y
 
-                    min_d = min(d_left, d_right, d_top, d_bottom)
+                    # Find minimum distance to push out
+                    min_d = d_left
+                    if d_right < min_d: min_d = d_right
+                    if d_top < min_d: min_d = d_top
+                    if d_bottom < min_d: min_d = d_bottom
+
                     if min_d == d_left:
                         self.x = expanded_min_x
                         self.vx = -abs(self.vx)
@@ -121,8 +124,15 @@ class Human:
                         self.vy = abs(self.vy)
 
         # 2. Store Perimeter Boundary Clamping
-        self.x = max(min_x + 15, min(max_x - 15, self.x))
-        self.y = max(min_y + 15, min(max_y - 15, self.y))
+        if self.x < min_x + 15.0:
+            self.x = min_x + 15.0
+        elif self.x > max_x - 15.0:
+            self.x = max_x - 15.0
+
+        if self.y < min_y + 15.0:
+            self.y = min_y + 15.0
+        elif self.y > max_y - 15.0:
+            self.y = max_y - 15.0
 
 
 class ProxemicsField:
@@ -149,8 +159,14 @@ class ProxemicsField:
         transformed into each pedestrian's local body orientation frame.
         """
         total_penalty = 0.0
+        if humans is None:
+            return 0.0
+        if not hasattr(humans, '__iter__') or isinstance(humans, (str, bytes)):
+            humans = [humans]
 
         for human in humans:
+            if not isinstance(human, Human):
+                continue
             dx = x - human.x
             dy = y - human.y
             raw_dist_sq = dx * dx + dy * dy
@@ -161,8 +177,9 @@ class ProxemicsField:
                 continue
 
             # Transform into human's local body frame via 2D rotation matrix R(theta_h)
-            cos_h = math_cos(human.heading)
-            sin_h = math_sin(human.heading)
+            h_ang = human.heading
+            cos_h = cos(h_ang)
+            sin_h = sin(h_ang)
             x_local = dx * cos_h + dy * sin_h   # Longitudinal axis (+front / -rear)
             y_local = -dx * sin_h + dy * cos_h  # Lateral axis (+left / -right)
 
@@ -172,7 +189,7 @@ class ProxemicsField:
 
             exponent = -0.5 * ((x_local / sigma_x) ** 2 + (y_local / sigma_y) ** 2)
             if exponent > -18.0:  # Numerical underflow guard
-                total_penalty += self.amplitude * math_exp(exponent)
+                total_penalty += self.amplitude * exp(exponent)
 
         return total_penalty
 
@@ -183,11 +200,12 @@ class ProxemicsField:
         Returns the peak discomfort sampled along the segment.
         """
         max_penalty = 0.0
-        x1, y1 = p1
-        x2, y2 = p2
+        x1, y1 = p1[0], p1[1]
+        x2, y2 = p2[0], p2[1]
+        n_samp = int(num_samples)
 
-        for step in range(num_samples + 1):
-            tau = step / num_samples
+        for step_idx in range(n_samp + 1):
+            tau = step_idx / n_samp
             sx = (1.0 - tau) * x1 + tau * x2
             sy = (1.0 - tau) * y1 + tau * y2
             pt_penalty = self.compute_penalty_at_point(sx, sy, humans)

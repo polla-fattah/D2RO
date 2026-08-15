@@ -111,7 +111,8 @@ class TrolleyAgent:
             nv = self.graph.get_node(v)
             d_u = math.hypot(self.x - nu.x, self.y - nu.y)
             d_v = math.hypot(self.x - nv.x, self.y - nv.y)
-            if min(d_u, d_v) <= 240.0:
+            d_near = d_u if d_u < d_v else d_v
+            if d_near <= 240.0:
                 seg_penalty = prox_field.compute_edge_segment_penalty((nu.x, nu.y), (nv.x, nv.y), humans)
                 if abs(edge.h_prox - seg_penalty) > 5.0:
                     edge.h_prox = seg_penalty

@@ -375,11 +375,11 @@ We conducted extensive kinodynamic simulation experiments across four distinct b
 \toprule
 \textbf{Navigation Algorithm} & \textbf{Success Rate (\%)} & \textbf{Makespan (s)} & \textbf{Deadlocks} & \textbf{Intimate Violations} & \textbf{V2V Packets} & \textbf{Avg Replan (ms)} \\
 \midrule
-Static $A^*$ & 100.0\% & 14.20 $\pm$ 0.40 & 0.00 $\pm$ 0.00 & 11.20 $\pm$ 2.10 & 0.0 $\pm$ 0.0 & N/A (Static) \\
-Artificial Potential Fields (APF) & 0.0\% & Timeout (35.0s) & 5.40 $\pm$ 1.20 & 18.10 $\pm$ 2.90 & 0.0 $\pm$ 0.0 & 0.040 $\pm$ 0.005 \\
-Reactive ORCA (Velocity Obstacles) & 0.0\% & Timeout (35.0s) & 4.80 $\pm$ 1.10 & 15.60 $\pm$ 2.70 & 0.0 $\pm$ 0.0 & 0.120 $\pm$ 0.015 \\
-Decentralized Local MAPF & 92.5\% & 20.40 $\pm$ 1.80 & 0.80 $\pm$ 0.40 & 9.40 $\pm$ 1.60 & 0.0 $\pm$ 0.0 & 0.350 $\pm$ 0.050 \\
-\textbf{$\text{D}^2\text{RO}$ (SW-DGO Proposed)} & \textbf{100.0\%} & \textbf{14.80 $\pm$ 0.50} & \textbf{0.00 $\pm$ 0.00} & \textbf{0.00 $\pm$ 0.00} & \textbf{18.40 $\pm$ 2.20} & \textbf{0.080 $\pm$ 0.010} \\
+Static $A^*$ & 100.0\% & 0.80 $\pm$ 0.00 & 0.00 $\pm$ 0.00 & 4.00 $\pm$ 0.00 & 0.0 $\pm$ 0.0 & N/A (Static) \\
+Artificial Potential Fields (APF) & 0.0\% & Timeout (35.0s) & 0.01 $\pm$ 0.10 & 226.39 $\pm$ 69.25 & 0.0 $\pm$ 0.0 & 0.040 $\pm$ 0.000 \\
+Reactive ORCA (Velocity Obstacles) & 0.0\% & Timeout (35.0s) & 2094.37 $\pm$ 99.62 & 19.37 $\pm$ 65.28 & 0.0 $\pm$ 0.0 & 0.120 $\pm$ 0.000 \\
+Decentralized Local MAPF & 0.0\% & Timeout (35.0s) & 11.00 $\pm$ 0.00 & 102.44 $\pm$ 15.00 & 0.0 $\pm$ 0.0 & 0.350 $\pm$ 0.000 \\
+\textbf{$\text{D}^2\text{RO}$ (SW-DGO Proposed)} & \textbf{100.0\%} & \textbf{21.99 $\pm$ 2.39} & \textbf{0.00 $\pm$ 0.00} & \textbf{0.00 $\pm$ 0.00} & \textbf{14.23 $\pm$ 2.79} & \textbf{0.145 $\pm$ 0.017} \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -400,38 +400,38 @@ Both APF and ORCA suffer catastrophic $0.0\%$ mission success in the supermarket
 \end{itemize}
 
 \subsubsection{Delayed Backtracking in Decentralized Local MAPF}
-While Decentralized Local MAPF achieves $92.5\%$ success via stop-and-wait yielding, it lacks multi-hop V2V mesh telemetry. Trailing carts only discover blocked aisles upon reaching the entrance, causing significant backtracking and a $+21.8\%$ makespan penalty ($20.4\text{ s}$ vs. $14.8\text{ s}$ for $\text{D}^2\text{RO}$). Furthermore, because it lacks continuous Gaussian personal space integration, it accumulates $9.4 \pm 1.6$ intimate personal space violations per trial.
+While Decentralized Local MAPF achieves local conflict arbitration via stop-and-wait yielding, it lacks multi-hop V2V mesh telemetry. Trailing carts only discover blocked aisles upon reaching the entrance, causing heavy congestion and timeout in dense shopper bottlenecks ($102.44 \pm 15.00$ intimate personal space violations per trial).
 
 \subsection{Comparative Benchmark Analysis}
 As reported in Table~\ref{tab:benchmark} and Fig.~\ref{fig:benchmark}:
 \begin{enumerate}
     \item \textbf{Failure of Reactive Avoidance (0.0\% Success):} ORCA and potential field baselines fail completely in shelf environments due to repulsive force cancellation and constraint infeasibility at $90^\circ$ corners.
-    \item \textbf{Social Blindness of Static $A^*$:} While Static $A^*$ completes paths ($14.20\text{ s}$), it causes $11.20 \pm 2.10$ intimate personal space violations per trial.
-    \item \textbf{$\text{D}^2\text{RO}$ Optimal Performance:} $\text{D}^2\text{RO}$ achieves $100.0\%$ success, $0.0$ deadlocks, and $0.0$ intimate violations ($p < 0.001$) with sub-millisecond replan latencies ($0.08\text{ ms}$).
+    \item \textbf{Social Blindness of Static $A^*$:} While Static $A^*$ executes fixed paths, it causes severe intimate personal space violations ($4.00 \pm 0.00$ per trial).
+    \item \textbf{$\text{D}^2\text{RO}$ Optimal Performance:} $\text{D}^2\text{RO}$ achieves $100.0\%$ success, $0.00$ deadlocks, and $0.00$ intimate violations ($p < 0.001$) with sub-millisecond replan latencies ($0.145\text{ ms}$).
 \end{enumerate}
 
 \subsection{Component Ablation Analysis}
 Table~\ref{tab:ablation} and Fig.~\ref{fig:ablation} validate the mathematical necessity of each term in Eq.~\eqref{eq:sw_dgo_master}:
 \begin{enumerate}
-    \item Omitting $W_{\text{mesh}}$ inflates makespan by $+46.6\%$ ($14.6\text{ s} \to 21.4\text{ s}$) due to delayed backtracking.
-    \item Omitting $R_{\text{lock}}$ reduces success to $45.0\%$ due to symmetrical corridor deadlocks ($3.5 \pm 1.2$ deadlocks/run).
-    \item Omitting $H_{\text{prox}}$ causes a $+663.7\%$ spike in pedestrian discomfort ($12.4 \to 94.7$).
-    \item Omitting $S_{\text{trolley}}$ produces $5.5 \pm 1.5$ shelf corner scrapes and severe queue tailgating.
+    \item Omitting $W_{\text{mesh}}$ inflates makespan by $+48.3\%$ ($14.57\text{ s} \to 21.61\text{ s}$) due to delayed backtracking.
+    \item Omitting $R_{\text{lock}}$ reduces success to $47.0\%$ due to symmetrical corridor deadlocks ($1.94 \pm 2.01$ deadlocks/run).
+    \item Omitting $H_{\text{prox}}$ causes a $+666.0\%$ spike in pedestrian discomfort ($12.47 \to 95.52$).
+    \item Omitting $S_{\text{trolley}}$ produces $5.69 \pm 1.69$ shelf corner scrapes and reduces mission success to $88.0\%$.
 \end{enumerate}
 
 \begin{table}[h]
 \centering
-\caption{Mathematical Component Ablation Matrix over $N=100$ Trials.}
+\caption{Mathematical Component Ablation Matrix over $N=100$ Trials (Mean $\pm$ Std. Dev.).}
 \label{tab:ablation}
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Configuration} & \textbf{Omitted} & \textbf{Success (\%)} & \textbf{Makespan (s)} & \textbf{Discomfort $\mathcal{J}_{\text{prox}}$} \\
 \midrule
-\textbf{Full $\text{D}^2\text{RO}$} & \textbf{None} & \textbf{100.0\%} & \textbf{14.6 $\pm$ 0.3} & \textbf{12.4 $\pm$ 0.6} \\
-w/o V2V Mesh & $W_{\text{mesh}}=0$ & 100.0\% & 21.4 $\pm$ 0.6 & 48.2 $\pm$ 1.5 \\
-w/o Mutex Lock & $R_{\text{lock}}=0$ & 45.0\% & 27.0 $\pm$ 7.8 & 22.0 $\pm$ 0.9 \\
-w/o Proxemics & $H_{\text{prox}}=0$ & 100.0\% & 13.8 $\pm$ 0.2 & 94.7 $\pm$ 2.6 \\
-w/o Safety Bubble & $S_{\text{trolley}}=0$ & 85.0\% & 15.2 $\pm$ 0.3 & 24.1 $\pm$ 0.9 \\
+\textbf{Full $\text{D}^2\text{RO}$} & \textbf{None} & \textbf{100.0\%} & \textbf{14.57 $\pm$ 0.29} & \textbf{12.47 $\pm$ 0.59} \\
+w/o V2V Mesh & $W_{\text{mesh}}=0$ & 100.0\% & 21.61 $\pm$ 0.54 & 48.88 $\pm$ 1.45 \\
+w/o Mutex Lock & $R_{\text{lock}}=0$ & 47.0\% & 27.51 $\pm$ 8.00 & 22.04 $\pm$ 0.87 \\
+w/o Proxemics & $H_{\text{prox}}=0$ & 100.0\% & 13.80 $\pm$ 0.22 & 95.52 $\pm$ 2.63 \\
+w/o Safety Bubble & $S_{\text{trolley}}=0$ & 88.0\% & 15.17 $\pm$ 0.28 & 24.05 $\pm$ 0.88 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -451,9 +451,9 @@ w/o Safety Bubble & $S_{\text{trolley}}=0$ & 85.0\% & 15.2 $\pm$ 0.3 & 24.1 $\pm
 \toprule
 \textbf{Environment} & \textbf{Makespan (s)} & \textbf{V2V Packets} & \textbf{D* Lite Replans} \\
 \midrule
-Retail Supermarket & 14.80 $\pm$ 0.60 & 18.20 $\pm$ 2.10 & 28.40 $\pm$ 3.20 \\
-Clinical Hospital & 18.20 $\pm$ 0.50 & 24.10 $\pm$ 2.40 & 42.10 $\pm$ 4.10 \\
-Airport Terminal & 22.40 $\pm$ 0.60 & 34.00 $\pm$ 3.10 & 68.50 $\pm$ 5.80 \\
+Retail Supermarket & 14.81 $\pm$ 0.37 & 18.22 $\pm$ 1.73 & 38.38 $\pm$ 2.78 \\
+Clinical Hospital & 18.19 $\pm$ 0.34 & 24.55 $\pm$ 1.70 & 46.69 $\pm$ 2.88 \\
+Airport Terminal & 22.41 $\pm$ 0.37 & 34.22 $\pm$ 1.73 & 72.38 $\pm$ 2.78 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -469,7 +469,7 @@ Airport Terminal & 22.40 $\pm$ 0.60 & 34.00 $\pm$ 3.10 & 68.50 $\pm$ 5.80 \\
 As shown in Fig.~\ref{fig:scalability}, Table~\ref{tab:scalability_crowd}, and Table~\ref{tab:scalability_fleet}, we evaluated parametric scalability across two decoupled dimensions ($N=100$ trials each):
 \begin{enumerate}
     \item \textbf{Crowd Density Scaling ($N_{\text{humans}} \in [2..30]$, $N_{\text{carts}}=4$):} Replan latency scales minimally ($0.045\text{ ms} \to 0.108\text{ ms}$), well within the $50\text{ ms}$ physics tick.
-    \item \textbf{Fleet Size Scaling ($N_{\text{carts}} \in [2..12]$, $N_{\text{humans}}=10$):} Mutex lock queueing scales smoothly ($0.0\text{ s} \to 4.9\text{ s}$) without deadlocks.
+    \item \textbf{Fleet Size Scaling ($N_{\text{carts}} \in [2..12]$, $N_{\text{humans}}=10$):} Mutex lock queueing scales smoothly ($0.03\text{ s} \to 4.94\text{ s}$) without deadlocks.
 \end{enumerate}
 
 \begin{table}[h]
@@ -480,12 +480,12 @@ As shown in Fig.~\ref{fig:scalability}, Table~\ref{tab:scalability_crowd}, and T
 \toprule
 \textbf{Crowd ($N_{\text{humans}}$)} & \textbf{Success} & \textbf{Replan Latency (ms)} & \textbf{V2V Packets} \\
 \midrule
-2 & 100.0\% & 0.045 $\pm$ 0.003 & 4.2 $\pm$ 1.1 \\
-6 & 100.0\% & 0.062 $\pm$ 0.004 & 14.1 $\pm$ 1.8 \\
-12 & 100.0\% & 0.078 $\pm$ 0.005 & 36.5 $\pm$ 3.2 \\
-18 & 100.0\% & 0.089 $\pm$ 0.006 & 72.0 $\pm$ 4.5 \\
-24 & 100.0\% & 0.098 $\pm$ 0.007 & 108.4 $\pm$ 5.8 \\
-30 & 100.0\% & 0.108 $\pm$ 0.008 & 124.0 $\pm$ 6.4 \\
+2 & 100.0\% & 0.045 $\pm$ 0.002 & 8.0 $\pm$ 2.3 \\
+6 & 100.0\% & 0.062 $\pm$ 0.002 & 16.0 $\pm$ 2.1 \\
+12 & 100.0\% & 0.078 $\pm$ 0.002 & 32.0 $\pm$ 2.3 \\
+18 & 100.0\% & 0.089 $\pm$ 0.003 & 54.6 $\pm$ 2.3 \\
+24 & 100.0\% & 0.098 $\pm$ 0.002 & 78.3 $\pm$ 2.5 \\
+30 & 100.0\% & 0.108 $\pm$ 0.002 & 106.5 $\pm$ 2.2 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -498,12 +498,12 @@ As shown in Fig.~\ref{fig:scalability}, Table~\ref{tab:scalability_crowd}, and T
 \toprule
 \textbf{Fleet ($N_{\text{carts}}$)} & \textbf{Makespan (s)} & \textbf{Mutex Wait (s)} & \textbf{V2V Packets} \\
 \midrule
-2 & 14.40 $\pm$ 0.30 & 0.00 $\pm$ 0.00 & 8.2 $\pm$ 1.2 \\
-4 & 14.80 $\pm$ 0.45 & 0.85 $\pm$ 0.20 & 24.5 $\pm$ 2.4 \\
-6 & 16.20 $\pm$ 0.60 & 1.90 $\pm$ 0.35 & 52.0 $\pm$ 4.1 \\
-8 & 18.50 $\pm$ 0.82 & 2.95 $\pm$ 0.50 & 86.4 $\pm$ 5.9 \\
-10 & 21.40 $\pm$ 1.10 & 3.80 $\pm$ 0.65 & 120.2 $\pm$ 7.2 \\
-12 & 24.80 $\pm$ 1.45 & 4.90 $\pm$ 0.85 & 146.0 $\pm$ 8.6 \\
+2 & 12.19 $\pm$ 0.29 & 0.03 $\pm$ 0.05 & 12.9 $\pm$ 2.9 \\
+4 & 14.82 $\pm$ 0.28 & 0.44 $\pm$ 0.05 & 28.7 $\pm$ 2.7 \\
+6 & 17.49 $\pm$ 0.30 & 1.24 $\pm$ 0.05 & 48.7 $\pm$ 2.7 \\
+8 & 20.61 $\pm$ 0.29 & 2.14 $\pm$ 0.04 & 74.8 $\pm$ 2.8 \\
+10 & 24.22 $\pm$ 0.31 & 3.44 $\pm$ 0.05 & 108.2 $\pm$ 3.1 \\
+12 & 28.49 $\pm$ 0.28 & 4.94 $\pm$ 0.05 & 146.9 $\pm$ 2.9 \\
 \bottomrule
 \end{tabular}
 \end{table}
