@@ -20,31 +20,19 @@ import os
 import csv
 import math
 import numpy as np
+from scipy import stats
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "..", "experiments", "data")
 
 def welch_ttest(sample1, sample2):
-    """Computes Welch's t-statistic and approximate two-tailed p-value."""
-    n1, n2 = len(sample1), len(sample2)
-    m1, m2 = np.mean(sample1), np.mean(sample2)
-    v1, v2 = np.var(sample1, ddof=1), np.var(sample2, ddof=1)
-    
-    denom = math.sqrt(v1/n1 + v2/n2)
-    if denom == 0:
-        return 0.0, 1.0 if m1 == m2 else 0.0
-    t_stat = (m1 - m2) / denom
-    
-    # Welch-Satterthwaite degrees of freedom
-    num_df = (v1/n1 + v2/n2)**2
-    den_df = (v1/n1)**2 / (n1 - 1) + (v2/n2)**2 / (n2 - 1)
-    df = num_df / den_df if den_df > 0 else 1.0
-    
-    # Approximate normal CDF tail for large df (N=100)
-    z = abs(t_stat)
-    # Standard normal survival approximation
-    p_val = 2.0 * (1.0 - 0.5 * (1.0 + math.erf(z / math.sqrt(2.0))))
-    return t_stat, max(1e-15, p_val)
+    """Computes exact Welch's t-statistic and two-tailed p-value using scipy.stats."""
+    if len(sample1) < 2 or len(sample2) < 2:
+        return 0.0, 1.0
+    res = stats.ttest_ind(sample1, sample2, equal_var=False)
+    p_val = res.pvalue if not np.isnan(res.pvalue) else 1.0
+    t_stat = res.statistic if not np.isnan(res.statistic) else 0.0
+    return float(t_stat), float(max(1e-15, p_val))
 
 
 def run_full_statistical_verification():
