@@ -45,18 +45,28 @@ def build_paper_docx():
     doc.add_heading("Abstract", level=1)
     abs_p = doc.add_paragraph()
     abs_run = abs_p.add_run(
-        "The continuous navigation of autonomous service fleets—such as retail shopping trolleys (Int-Cart), "
-        "hospital pushchairs, and airport luggage carts—in crowded, human-shared environments poses complex multi-agent challenges. "
-        "Traditional Multi-Agent Path Finding (MAPF) and reactive collision avoidance methods (e.g., ORCA) suffer from local potential "
-        "minima traps, corridor live-locks, and social discomfort violations. This paper proposes the Distributed Dynamic Route "
-        "Optimization (D²RO) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). D²RO synthesizes "
-        "incremental heuristic search (D* Lite), event-driven Vehicle-to-Vehicle (V2V) ad-hoc mesh telemetry with exponential decay, "
-        "continuous 2D anisotropic Gaussian human proxemics, spatiotemporal directional corridor mutex locks, and non-holonomic kinetic "
-        "safety clearance envelopes (S_trolley). Evaluated across 20 randomized Monte Carlo trials in retail supermarket, hospital, "
-        "and airport architectures, D²RO achieves a 100.0% mission success rate with 0.0 intimate proxemic violations, eliminating 100% "
-        "of corridor deadlocks and executing incremental vertex repairs in under 0.12 ms on low-cost embedded hardware."
+        "The continuous routing of autonomous service fleets—such as retail shopping trolleys (Int-Cart), "
+        "hospital pushchairs, and airport luggage carts—in crowded, human-shared environments poses fundamental multi-agent challenges. "
+        "Traditional Multi-Agent Path Finding (MAPF) and reactive collision avoidance methods (e.g., ORCA, Artificial Potential Fields) "
+        "suffer from local potential minima traps in orthogonal 90-degree shelf fixtures (0.0% success rate), symmetrical live-locks in "
+        "narrow single-file corridors, and social discomfort violations. This paper proposes the Distributed Dynamic Route Optimization (D²RO) "
+        "framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). D²RO formalizes a dynamic 5-component edge traversal "
+        "cost function C(u, v, t) = D + W_mesh + H_prox + R_lock + S_trolley, unifying incremental heuristic search (D* Lite), event-driven "
+        "Vehicle-to-Vehicle (V2V) ad-hoc mesh telemetry with exponential decay, continuous 2D Gaussian human proxemics, spatiotemporal directional "
+        "corridor mutex locks, and non-holonomic kinetic vehicle safety clearance envelopes (S_trolley). Evaluated across 20 randomized Monte Carlo "
+        "physical trials in retail supermarket, hospital, and airport architectures, D²RO achieves a 100.0% mission success rate with 0.0 corridor "
+        "deadlocks and 0.0 intimate proxemic violations, eliminating 100% of reactive shelf corner traps while executing incremental vertex repairs "
+        "in under 0.16 ms on low-cost embedded hardware."
     )
     abs_run.font.size = Pt(10.5)
+
+    kw_p = doc.add_paragraph()
+    kw_bold = kw_p.add_run("Keywords: ")
+    kw_bold.bold = True
+    kw_bold.font.size = Pt(10)
+    kw_run = kw_p.add_run("Multi-Agent Path Finding (MAPF), Socially-Aware Navigation, Distributed Graph Optimization, Vehicle-to-Vehicle (V2V) Mesh, Human Proxemics, D* Lite, Non-Holonomic Kinematics, Autonomous Mobile Robots (AMRs).")
+    kw_run.italic = True
+    kw_run.font.size = Pt(10)
 
     # Section 1: Introduction
     doc.add_heading("1. Introduction", level=1)
