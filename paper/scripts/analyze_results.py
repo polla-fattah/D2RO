@@ -66,13 +66,15 @@ BOOTSTRAP_SEED = 20260815
 
 # Expected row counts; a dataset that does not match is treated as incomplete.
 EXPECTED_ROWS = {
-    "benchmark_comparison.csv": 500,
+    "benchmark_comparison.csv": 600,   # 6 planners x 100 paired trials
     "ablation_study.csv": 500,
     "cross_domain_benchmark.csv": 300,
     "scalability_crowd_density.csv": 600,
     "scalability_fleet_size.csv": 600,
     "mesh_anticipation_experiment.csv": 100,
     "corridor_lock_experiment.csv": 100,
+    "weight_sensitivity.csv": 630,
+    "comm_robustness.csv": 480,
 }
 
 D2RO_LABEL = "D2RO (SW-DGO Proposed)"
@@ -557,6 +559,20 @@ def main() -> None:
             "scalability_fleet_size.csv", "fleet_size_carts",
             {"makespan": "makespan_s", "replan_latency_ms": "mean_replan_latency_ms",
              "mutex_wait_s": "corridor_mutex_wait_s", "mesh_packets": "v2v_mesh_packets"}),
+        # Weight sensitivity: one group per configuration. Grouping by `config`
+        # keeps each perturbed weight identifiable; the nominal row serves as the
+        # x1.0 point shared by all five curves.
+        "weight_sensitivity": analyse_grouped(
+            "weight_sensitivity.csv", "config",
+            {"makespan": "makespan_s",
+             "intimate_exposure": "intimate_exposure_ticks",
+             "discomfort": "discomfort_integral", "replans": "replans"}),
+        # Communication robustness: grouped by the channel condition itself.
+        "comm_robustness": analyse_grouped(
+            "comm_robustness.csv", "channel",
+            {"makespan": "makespan_s",
+             "intimate_exposure": "intimate_exposure_ticks",
+             "mesh_packets": "mesh_packets", "replans": "replans"}),
         "mesh_anticipation": analyse_paired_mechanism(
             "mesh_anticipation_experiment.csv", "mesh_enabled", "1",
             ["anticipation_lead_time_s", "backtrack_distance_m",

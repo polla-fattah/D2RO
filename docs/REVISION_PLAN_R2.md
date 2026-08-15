@@ -314,9 +314,9 @@ whose stamp ends in `-dirty` as **not submittable**.
 | A4 | Mesh latency wiring + integration test | **done** | **Yes** |
 | A5 | Fixture-contact event/exposure split | **done** | No |
 | A6 | Diversion evidence in Experiment B | **done** | No |
-| B1 | Weight sensitivity (25 configs) | 1 d + runtime | **Yes** |
-| B2 | Communication robustness sweep | 0.5 d + runtime | No |
-| B3 | Demote ORCA/MAPF to supplementary | 2 h | **Yes** |
+| B1 | Weight sensitivity (21 configs, disjoint seeds) | **done** | **Yes** |
+| B2 | Communication robustness sweep (4x4 channels) | **done** | No |
+| B3 | Demote ORCA/MAPF to supplementary | **done** | **Yes** |
 | C | Single regeneration + analysis | ~1 h wall | **Yes** |
 | D | Manuscript revision | 2–3 d | **Yes** |
 | E | Reference audit (automated) | 0.5 d | **Yes** |

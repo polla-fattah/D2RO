@@ -61,6 +61,14 @@ SHORT = {
     "Reactive ORCA (Velocity Obstacles)": "ORCA",
     "Decentralized Local MAPF": "MAPF",
 }
+# Primary comparison: the planners that complete their missions and whose
+# implementations we are prepared to stand behind.
+#
+# ORCA and Local MAPF are deliberately NOT here. Both are our own implementations,
+# both return 0% success, and we decline to infer from that that the published
+# algorithms fail. Plotting them at 0% beside D2RO would communicate visually a
+# comparison the text then asks the reader to distrust, so they are reported in a
+# separate supplementary table instead, clearly labelled as diagnostic.
 ORDER = [
     "D2RO (SW-DGO Proposed)",
     # The matched-controller arm sits immediately beside D2RO: it is the comparison
@@ -68,6 +76,8 @@ ORDER = [
     "Static A* (matched controller)",
     "Static A*",
     "Reactive Avoidance (Potential Field)",
+]
+SUPPLEMENTARY = [
     "Reactive ORCA (Velocity Obstacles)",
     "Decentralized Local MAPF",
 ]
@@ -583,6 +593,131 @@ def commit_stamp() -> None:
     print(f"  [ok]   generated/commit.tex ({stamp})")
 
 
+
+# --------------------------------------------------------------------------- #
+# Supplementary + Phase-B experiments
+# --------------------------------------------------------------------------- #
+def table_supplementary_baselines(bench):
+    """The two baselines we decline to draw conclusions from."""
+    if not _usable(bench.get("status")) or not bench.get("groups"):
+        _placeholder("table_supp_baselines", f"benchmark dataset {bench.get('status')}")
+        return False
+    groups = bench["groups"]
+    methods = [m for m in SUPPLEMENTARY if m in groups]
+    if not methods:
+        _placeholder("table_supp_baselines", "no supplementary baselines present")
+        return False
+    L = _header(
+        "Diagnostic baselines, reported separately. Both are our own implementations "
+        "and neither completes any mission under the common arrival criterion. We "
+        "report them for completeness but draw no conclusion about the published "
+        r"algorithms from them: an in-house implementation returning $0\%$ where the "
+        "method is widely used in practice is at least as likely to indicate a defect "
+        "in our code. No claim in this paper depends on these rows.",
+        "tab:supp_baselines", "lccc",
+        r"\textbf{Implementation} & \textbf{Success} & \textbf{Deadlocks} & "
+        r"\textbf{Intimate exposure, median [IQR]} \\",
+        wide=False, resize=True)
+    for m in methods:
+        g = groups[m]
+        L.append(f"{SHORT.get(m, m)} & {_pct(g)} & {_f(g['deadlocks'])} & "
+                 f"{_med(g['intimate_exposure'])} \\\\")
+    L += _footer(wide=False, resize=True)
+    return _emit("table_supp_baselines", L)
+
+
+def figure_weight_sensitivity(res):
+    """One panel per outcome; one line per weight, across the multiplier grid."""
+    if not _usable(res.get("status")) or not res.get("groups"):
+        _placeholder("fig_weight_sensitivity",
+                     f"weight_sensitivity dataset {res.get('status', 'missing')}")
+        return False
+    groups = res["groups"]
+    if "nominal" not in groups:
+        _placeholder("fig_weight_sensitivity", "nominal configuration missing")
+        return False
+
+    weights = ["w_D", "w_M", "w_H", "w_R", "w_S"]
+    mults = [0.5, 0.75, 1.0, 1.25, 1.5]
+    panels = [("success_rate", "Mission success (%)", "(a) Success"),
+              ("makespan", "Makespan (s)", "(b) Makespan"),
+              ("intimate_exposure", "Intimate exposure (ticks)", "(c) Social exposure")]
+
+    fig, axes = plt.subplots(1, 3, figsize=(10.4, 3.2))
+    for ax, (key, ylabel, title) in zip(axes, panels):
+        for i, w in enumerate(weights):
+            xs, ys = [], []
+            for m in mults:
+                name = "nominal" if m == 1.0 else f"{w}x{m}"
+                g = groups.get(name)
+                if not g:
+                    continue
+                xs.append(m)
+                ys.append(g["success_rate"] if key == "success_rate"
+                          else g[key]["mean"])
+            if xs:
+                ax.plot(xs, ys, marker="o", markersize=3.5, linewidth=1.3,
+                        color=PALETTE[i % len(PALETTE)], label=f"${w[0]}_{w[2]}$",
+                        zorder=3)
+        ax.set_xlabel("Weight multiplier")
+        ax.set_ylabel(ylabel)
+        ax.set_title(title, loc="left")
+        ax.set_xticks(mults)
+        if key == "success_rate":
+            ax.set_ylim(0, 108)
+        ax.yaxis.set_major_locator(MaxNLocator(5))
+        _style(ax)
+    axes[0].legend(frameon=False, fontsize=7, ncol=2)
+    fig.tight_layout()
+    for ext in ("pdf", "png"):
+        fig.savefig(os.path.join(FIG_DIR, f"fig_weight_sensitivity.{ext}"))
+    plt.close(fig)
+    print("  [ok]   fig_weight_sensitivity.{pdf,png}")
+
+    return _emit("fig_weight_sensitivity", [
+        r"% GENERATED FILE - do not edit by hand.",
+        r"\begin{figure*}[t]", r"\centering",
+        r"\includegraphics[width=\textwidth]{fig_weight_sensitivity.pdf}",
+        r"\caption{Sensitivity of the five cost weights. Each weight is scaled in turn "
+        r"while the other four are held at nominal; the $\times 1.0$ point is the shared "
+        r"nominal configuration. Evaluated on a seed set disjoint from every other "
+        r"experiment, so the operating point is not assessed on the seeds used to "
+        r"select it.}",
+        r"\label{fig:weight_sensitivity}", r"\end{figure*}", "",
+    ])
+
+
+def table_comm_robustness(res):
+    """Success and makespan across the packet-loss x latency grid."""
+    if not _usable(res.get("status")) or not res.get("groups"):
+        _placeholder("table_comm_robustness",
+                     f"comm_robustness dataset {res.get('status', 'missing')}")
+        return False
+    groups = res["groups"]
+
+    def parse(name):
+        loss = int(name.split("_")[0].replace("loss", ""))
+        lat = int(name.split("_")[1].replace("lat", "").replace("ms", ""))
+        return loss, lat
+
+    keys = sorted(groups, key=parse)
+    n = groups[keys[0]].get("n", 0)
+    L = _header(
+        f"Communication robustness ($N={n}$ trials per channel condition). All other "
+        f"experiments in this paper assume an ideal channel; this one does not. "
+        f"Packet loss and one-hop latency are swept independently.",
+        "tab:comm_robustness", "cccc",
+        r"\textbf{Packet loss} & \textbf{Latency} & \textbf{Success} & "
+        r"\textbf{Makespan (s)} \\",
+        wide=False, resize=True)
+    for k in keys:
+        loss, lat = parse(k)
+        g = groups[k]
+        L.append(rf"{loss}\% & {lat}\,ms & {_pct(g)} & {_f(g['makespan'])} \\")
+    L += _footer(wide=False, resize=True)
+    return _emit("table_comm_robustness", L)
+
+
 def main() -> None:
     results = load_analysis()
     print("Generating manuscript artefacts from analysis_results.json\n")
@@ -599,6 +734,9 @@ def main() -> None:
     table_corridor_lock(results.get("corridor_lock", {}))
     figure_crowd_density(results.get("crowd_density", {}))
     figure_fleet_size(results.get("fleet_size", {}))
+    table_supplementary_baselines(results.get("benchmark", {}))
+    figure_weight_sensitivity(results.get("weight_sensitivity", {}))
+    table_comm_robustness(results.get("comm_robustness", {}))
 
     # fig1_note.tex exists only to explain an ABSENT Figure 1. Once the benchmark
     # figure is produced the note is stale by definition, so it is removed rather

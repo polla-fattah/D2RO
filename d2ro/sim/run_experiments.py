@@ -39,7 +39,9 @@ from d2ro.core.mesh_network import MeshNetwork
 from d2ro.core.agent import TrolleyAgent
 from d2ro.core.human import Human, ProxemicsField
 from d2ro.core.units import (PX_TO_M, HEAD_ON_CONFLICT_RADIUS_PX,
-                             SENSING_RADIUS_PX, SENSING_RADIUS_M)
+                             SENSING_RADIUS_PX, SENSING_RADIUS_M,
+                             WEIGHT_DISTANCE_WD, WEIGHT_MESH_WM, WEIGHT_PROXEMIC_WH,
+                             WEIGHT_MUTEX_LOCK_WR, WEIGHT_TROLLEY_WS)
 from d2ro.baselines import (
     StaticAStarAgent, ArtificialPotentialFieldAgent,
     ORCAAgent, DecentralizedLocalMAPFAgent
@@ -908,6 +910,174 @@ class ExperimentRunner:
     #    Constructs explicit leader/follower topology: Cart A leads, Cart B is 12 m behind
     #    upstream of a divergence junction. A blockage lies ahead of A outside B's sensing radius.
     # --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
+    # 5. Weight Sensitivity (reviewer: "calibrated" weights were never calibrated)
+    # --------------------------------------------------------------------------
+    def run_weight_sensitivity(self, num_trials: int = 30) -> str:
+        r"""
+        Perturbs each of the five cost weights in turn and measures the effect.
+
+        The method is explicitly a weighted multi-component objective, so robustness
+        to the weights is not peripheral -- if the reported operating point sits on a
+        narrow ridge, the result is fragile in a way the reader must be told about.
+
+        Design
+        ------
+        One weight is scaled at a time by x{0.5, 0.75, 1.25, 1.5} while the other four
+        are held at nominal, plus a single nominal run that serves as the x1.0 point of
+        all five curves. That is 5*4 + 1 = 21 configurations, rather than 25, because
+        re-running the identical nominal configuration five times on identical seeds
+        would produce five identical result sets.
+
+        Seeds
+        -----
+        Deliberately DISJOINT from every other experiment (7000+). The nominal weights
+        were hand-selected; evaluating their robustness on the same seeds used to pick
+        and report them would be a form of tuning on the test set.
+        """
+        csv_path = os.path.join(self.output_dir, "weight_sensitivity.csv")
+        fieldnames = [
+            "trial_id", "config", "weight_varied", "multiplier",
+            "w_D", "w_M", "w_H", "w_R", "w_S",
+            "success", "makespan_s", "intimate_exposure_ticks",
+            "discomfort_integral", "replans"
+        ]
+
+        nominal = {"w_D": WEIGHT_DISTANCE_WD, "w_M": WEIGHT_MESH_WM,
+                   "w_H": WEIGHT_PROXEMIC_WH, "w_R": WEIGHT_MUTEX_LOCK_WR,
+                   "w_S": WEIGHT_TROLLEY_WS}
+        multipliers = [0.5, 0.75, 1.25, 1.5]
+
+        configs = [("nominal", "none", 1.0, dict(nominal))]
+        for key in ("w_D", "w_M", "w_H", "w_R", "w_S"):
+            for m in multipliers:
+                w = dict(nominal)
+                w[key] = nominal[key] * m
+                configs.append((f"{key}x{m}", key, m, w))
+
+        dt = 0.05
+        max_time = T_MAX_MISSION
+        prox_field = ProxemicsField()
+        print(f"\n[Experiment C] Weight Sensitivity "
+              f"({len(configs)} configurations x N={num_trials} trials, disjoint seeds)...")
+
+        rows = []
+        for cfg_name, varied, mult, w in configs:
+            for trial in range(1, num_trials + 1):
+                seed_val = 7000 + trial          # disjoint from 1000/3000/6000 ranges
+                random.seed(seed_val)
+                layout = SupermarketLayout()
+                shelf_boxes = [sh.bounds for sh in layout.shelves]
+                cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
+                mesh = MeshNetwork(comm_radius=350.0, seed=seed_val)
+                agents = [TrolleyAgent(c["id"], layout.graph, c["start"], c["goal"],
+                                       mesh, weights=w) for c in cfgs]
+
+                sim_time = 0.0
+                total_discomfort = 0.0
+                while sim_time < max_time and not all(a.is_docked for a in agents):
+                    for h in humans:
+                        h.update(dt, layout.bounds, shelf_boxes)
+                    for a in agents:
+                        a.step(dt, humans, prox_field, current_sim_time=sim_time,
+                               shelves=shelf_boxes, peer_agents=agents)
+                        # Same continuous discomfort integral the ablation uses, so
+                        # the two experiments report a comparable quantity.
+                        point_disc = prox_field.compute_penalty_at_point(a.x, a.y, humans)
+                        total_discomfort += (point_disc / 100.0) * dt
+                    sim_time += dt
+
+                rows.append({
+                    "trial_id": trial, "config": cfg_name,
+                    "weight_varied": varied, "multiplier": mult,
+                    **{k: round(v, 4) for k, v in w.items()},
+                    "success": 1 if all(a.is_docked for a in agents) else 0,
+                    "makespan_s": round(sim_time, 2),
+                    "intimate_exposure_ticks": sum(a.proxemic_violations for a in agents),
+                    "discomfort_integral": round(total_discomfort, 3),
+                    "replans": sum(a.replan_count for a in agents),
+                })
+            print(f"  -> {cfg_name:12s} done ({num_trials} trials)", flush=True)
+
+        _atomic_write_csv(csv_path, fieldnames, rows)
+        print(f"  -> Exported: {csv_path} ({len(rows)} rows)")
+        return csv_path
+
+    # --------------------------------------------------------------------------
+    # 6. Communication Robustness (reviewer: results are ideal-channel only)
+    # --------------------------------------------------------------------------
+    def run_comm_robustness(self, num_trials: int = 30) -> str:
+        r"""
+        Sweeps V2V packet loss and one-hop latency.
+
+        Every other experiment in this suite runs an ideal channel: MeshNetwork is
+        constructed with its defaults of zero loss and zero latency. The deployment
+        discussion appeals to RF attenuation in steel-fixture retail environments, so
+        the paper should not imply robustness to degraded communication without
+        measuring it.
+
+        This experiment is only meaningful because the agent now honours deliver_at
+        timestamps; before that fix, latency was configurable but inert, since
+        fetch_inbound() defaulted to +inf and released every packet immediately.
+        """
+        csv_path = os.path.join(self.output_dir, "comm_robustness.csv")
+        fieldnames = [
+            "trial_id", "channel", "packet_loss_rate", "latency_s",
+            "success", "makespan_s", "intimate_exposure_ticks",
+            "mesh_packets", "replans"
+        ]
+
+        losses = [0.0, 0.05, 0.10, 0.20]
+        latencies = [0.0, 0.05, 0.10, 0.20]
+
+        dt = 0.05
+        max_time = T_MAX_MISSION
+        prox_field = ProxemicsField()
+        print(f"\n[Experiment D] Communication Robustness "
+              f"({len(losses)}x{len(latencies)} channels x N={num_trials} trials)...")
+
+        rows = []
+        for loss in losses:
+            for lat in latencies:
+                for trial in range(1, num_trials + 1):
+                    seed_val = 8000 + trial      # disjoint seed set
+                    random.seed(seed_val)
+                    layout = SupermarketLayout()
+                    shelf_boxes = [sh.bounds for sh in layout.shelves]
+                    cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
+                    mesh = MeshNetwork(comm_radius=350.0, packet_loss_rate=loss,
+                                       latency_s=lat, seed=seed_val)
+                    agents = [TrolleyAgent(c["id"], layout.graph, c["start"],
+                                           c["goal"], mesh) for c in cfgs]
+
+                    sim_time = 0.0
+                    while sim_time < max_time and not all(a.is_docked for a in agents):
+                        for h in humans:
+                            h.update(dt, layout.bounds, shelf_boxes)
+                        for a in agents:
+                            a.step(dt, humans, prox_field, current_sim_time=sim_time,
+                                   shelves=shelf_boxes, peer_agents=agents)
+                        sim_time += dt
+
+                    rows.append({
+                        "trial_id": trial,
+                        # Single label for the channel condition, so the grouped
+                        # analysis has one key rather than a composite of two.
+                        "channel": f"loss{int(loss * 100):02d}_lat{int(lat * 1000):03d}ms",
+                        "packet_loss_rate": loss,
+                        "latency_s": lat,
+                        "success": 1 if all(a.is_docked for a in agents) else 0,
+                        "makespan_s": round(sim_time, 2),
+                        "intimate_exposure_ticks": sum(a.proxemic_violations for a in agents),
+                        "mesh_packets": mesh.total_packets_transmitted,
+                        "replans": sum(a.replan_count for a in agents),
+                    })
+                print(f"  -> loss={loss:.2f} latency={lat:.2f}s done", flush=True)
+
+        _atomic_write_csv(csv_path, fieldnames, rows)
+        print(f"  -> Exported: {csv_path} ({len(rows)} rows)")
+        return csv_path
+
     def run_mesh_anticipation_experiment(self, num_trials: int = 50) -> str:
         r"""
         Mechanism Experiment A: V2V anticipatory horizon extension.

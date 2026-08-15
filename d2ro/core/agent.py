@@ -35,7 +35,8 @@ class TrolleyAgent:
                  enable_mesh: bool = True, enable_lock: bool = True,
                  enable_prox: bool = True, enable_safety: bool = True,
                  lock_priority: float = 1.0, static_route: bool = False,
-                 enable_yield: bool = True):
+                 enable_yield: bool = True,
+                 weights: Optional[Dict[str, float]] = None):
         self.agent_id = agent_id
         self.graph = graph.clone()
         self.current_node = start_node
@@ -95,6 +96,22 @@ class TrolleyAgent:
             for edge in self.graph.edges.values():
                 edge.s_clearance = 0.0
                 edge.s_trolley = 0.0
+
+        # Per-agent weight overrides for the sensitivity study (Eq. 3). Applied to
+        # this agent's OWN cloned graph, so one agent's weights never leak into a
+        # peer's cost field, and applied BEFORE the first solve so the initial route
+        # already reflects them.
+        self.weights = {"w_D": None, "w_M": None, "w_H": None,
+                        "w_R": None, "w_S": None}
+        if weights:
+            self.weights.update(weights)
+            field = {"w_D": "weight_d", "w_M": "weight_m", "w_H": "weight_h",
+                     "w_R": "weight_r", "w_S": "weight_s"}
+            for edge in self.graph.edges.values():
+                for key, attr in field.items():
+                    val = self.weights.get(key)
+                    if val is not None:
+                        setattr(edge, attr, float(val))
 
         # Latency tracking
         self.last_compute_time_ms: float = 0.15

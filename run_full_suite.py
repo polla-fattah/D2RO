@@ -49,6 +49,9 @@ EXPERIMENTS = {
     "4B": ("Fleet-size scalability",    "run_fleet_size_scalability",     100, 600),
     "A":  ("Mesh anticipation",         "run_mesh_anticipation_experiment", 50, 100),
     "B":  ("Corridor mutex lock",       "run_corridor_lock_experiment",     50, 100),
+    # 21 weight configurations x 30 trials; 16 channel conditions x 30 trials.
+    "C":  ("Weight sensitivity",        "run_weight_sensitivity",           30, 630),
+    "D":  ("Communication robustness",  "run_comm_robustness",              30, 480),
 }
 
 
@@ -132,6 +135,8 @@ def main() -> None:
             "4B": "scalability_fleet_size.csv",
             "A": "mesh_anticipation_experiment.csv",
             "B": "corridor_lock_experiment.csv",
+            "C": "weight_sensitivity.csv",
+            "D": "comm_robustness.csv",
         }[key]
         rows = _row_count(os.path.join(OUT, fname))
         complete = (code == 0 and rows == expected)
