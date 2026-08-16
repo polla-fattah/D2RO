@@ -73,6 +73,8 @@ ALLOWLIST: list[tuple[str, str | None]] = [
 
     # The browser simulator (Pyodide/WASM). GitHub Pages serves docs/ directly.
     ("docs/index.html", None),
+    ("docs/simulator.html", None),
+    ("docs/landing.css", None),
     ("docs/simulator.js", None),
     ("docs/python_bundle.js", None),
     ("docs/styles.css", None),

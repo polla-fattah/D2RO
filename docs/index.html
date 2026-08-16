@@ -3,180 +3,231 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>D²RO Autonomous Fleet Simulator — WebAssembly Edition</title>
-  <meta name="description" content="Interactive browser simulator for D²RO / SW-DGO multi-agent autonomous trolley fleet routing in retail supermarkets, airport concourses, and hospital corridors.">
+  <title>SW-DGO — Socially-Weighted Distributed Graph Optimization</title>
+  <meta name="description" content="Multi-agent route planning for autonomous service fleets in crowded, human-shared indoor space. Browser simulator, open datasets and full source.">
   <link rel="stylesheet" href="styles.css">
-  <!-- Pyodide CDN -->
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
+  <link rel="stylesheet" href="landing.css">
 </head>
-<body>
-  <div class="app-container">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="header-title">
-        <h1>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-          </svg>
-          D²RO / SW-DGO Autonomous Fleet Simulator
-        </h1>
-        <p>Decentralized Route Optimization for Autonomous Trolley Fleets in Dynamic Indoor Facilities</p>
-      </div>
-      <div class="header-badges">
-        <span class="badge badge-wasm">WebAssembly / Pyodide</span>
-        <span class="badge badge-status"><span class="dot"></span> Client-Side Execution</span>
-      </div>
-    </header>
+<body class="landing">
 
-    <!-- Navigation & Scenario Controls -->
-    <section class="tabs-container">
-      <!-- Environment Selection -->
-      <div class="tab-group">
-        <span class="tab-group-label">Environment:</span>
-        <div class="tab-buttons">
-          <button class="tab-btn env-btn active" data-env="supermarket">Supermarket Architecture</button>
-          <button class="tab-btn env-btn" data-env="airport">Airport Concourse</button>
-          <button class="tab-btn env-btn" data-env="hospital">Hospital Corridors</button>
-        </div>
-      </div>
+<header class="lp-hero">
+  <div class="lp-wrap">
+    <div class="lp-eyebrow">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+      <span>SW-DGO</span>
+    </div>
 
-      <!-- Scenario Suite Tabs -->
-      <div class="tab-group">
-        <span class="tab-group-label">Benchmark:</span>
-        <div class="tab-buttons">
-          <button class="tab-btn scen-btn active" data-scen="A">Scenario A: Aisle Crowd</button>
-          <button class="tab-btn scen-btn" data-scen="B">Scenario B: Head-On Lock</button>
-          <button class="tab-btn scen-btn" data-scen="C">Scenario C: Sudden V2V Blockage</button>
-          <button class="tab-btn scen-btn" data-scen="D">Scenario D: Action Alley Crossing</button>
-          <button class="tab-btn scen-btn" data-scen="E">Scenario E: Full Rush Hour</button>
-        </div>
-      </div>
+    <h1>Socially-Weighted<br>Distributed Graph Optimization</h1>
+    <p class="lp-lede">
+      Multi-agent route planning for autonomous service fleets — shopping carts,
+      hospital pushchairs, airport trolleys — moving through space full of people
+      who are under no obligation to get out of the way.
+    </p>
 
-      <!-- Ablation / Algorithm Mode Selection -->
-      <div class="tab-group">
-        <span class="tab-group-label">Algorithm:</span>
-        <div class="tab-buttons">
-          <button class="tab-btn ablation-btn active" data-mode="d2ro">Full D²RO (SW-DGO Comms + Proxemics + Mutex)</button>
-          <button class="tab-btn ablation-btn" data-mode="no_mesh">No V2V Mesh Comms (Local Only)</button>
-          <button class="tab-btn ablation-btn" data-mode="static_a_star" title="Matched-controller baseline: identical vehicle dynamics and safety envelope, socially blind routing on a frozen shortest path. Differs from the proposed method in routing policy only.">Matched Static A* Baseline</button>
-        </div>
-      </div>
-
-      <!-- Scenario Description Banner -->
-      <div id="scenarioDescBanner" class="scenario-desc-banner">
-        Loading scenario specifications...
-      </div>
-    </section>
-
-    <!-- Simulation Viewport -->
-    <main class="viewport-card">
-      <div class="canvas-wrapper">
-        <!-- Loading Overlay -->
-        <div id="loadingOverlay" class="loading-overlay">
-          <div class="spinner"></div>
-          <div id="loadingText" class="loading-text">Starting Python WebAssembly Engine...</div>
-          <div class="loading-subtext">Initializing CPython v0.26 runtime & scientific packages</div>
-        </div>
-
-        <canvas id="simCanvas"></canvas>
-      </div>
-
-      <!-- Toolbar & Controls -->
-      <div class="controls-bar">
-        <div class="btn-group">
-          <button id="playBtn" class="btn btn-primary">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5,3 19,12 5,21"/>
-            </svg>
-            Play
-          </button>
-          <button id="stepBtn" class="btn btn-secondary">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5,4 15,12 5,20"/>
-              <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="3"/>
-            </svg>
-            Step Frame
-          </button>
-          <button id="restartBtn" class="btn btn-secondary">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 4v6h-6"/>
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-            </svg>
-            Restart
-          </button>
-        </div>
-
-        <div class="slider-group">
-          <label for="speedSlider">Simulation Speed:</label>
-          <input type="range" id="speedSlider" min="0.2" max="3.0" step="0.1" value="1.0">
-          <span id="speedVal">1.0x</span>
-        </div>
-
-        <div style="font-size: 0.8rem; color: var(--text-muted);">
-          💡 Tip: Click anywhere on the map to trigger a dynamic V2V blockage alert!
-        </div>
-      </div>
-    </main>
-
-    <!-- Telemetry & Metrics Cards -->
-    <section class="telemetry-grid">
-      <div class="telemetry-card">
-        <span class="telemetry-label">Simulation Time</span>
-        <span id="telSimTime" class="telemetry-value">0.0 s</span>
-        <span class="telemetry-sub">Physics dt = 0.05 s</span>
-      </div>
-
-      <div class="telemetry-card">
-        <span class="telemetry-label">Fleet Active Status</span>
-        <span id="telFleetStatus" class="telemetry-value">-- Active</span>
-        <span class="telemetry-sub">Docked vs. Routing</span>
-      </div>
-
-      <div class="telemetry-card">
-        <span class="telemetry-label">Safety Envelope S<sub>trolley</sub></span>
-        <span id="telSafetyEnvelope" class="telemetry-value">1.00 m</span>
-        <span class="telemetry-sub">Kinetic Clearance Radius</span>
-      </div>
-
-      <div class="telemetry-card">
-        <span class="telemetry-label">V2V Mesh Messages</span>
-        <span id="telV2vPackets" class="telemetry-value">0</span>
-        <span class="telemetry-sub">Ad-Hoc Relays Transmitted</span>
-      </div>
-
-      <div class="telemetry-card">
-        <span class="telemetry-label">Human Yielding Events</span>
-        <span id="telHumanYields" class="telemetry-value">0</span>
-        <span class="telemetry-sub">Social Compliance Halts</span>
-      </div>
-
-      <div class="telemetry-card">
-        <span class="telemetry-label">Corridor Locks</span>
-        <span id="telCorridorLocks" class="telemetry-value">0</span>
-        <span class="telemetry-sub">Single-File Mutex Waits</span>
-      </div>
-    </section>
-
-    <!-- Legend Bar -->
-    <section class="legend-bar">
-      <span style="font-weight: 700; color: var(--text-main);">Trolley States:</span>
-      <div class="legend-item"><span class="legend-color" style="background-color: #3b82f6;"></span> Normal Routing</div>
-      <div class="legend-item"><span class="legend-color" style="background-color: #f59e0b;"></span> Yielding to Pedestrian</div>
-      <div class="legend-item"><span class="legend-color" style="background-color: #a855f7;"></span> Waiting Corridor Lock</div>
-      <div class="legend-item"><span class="legend-color" style="background-color: #06b6d4;"></span> Anti-Tailgating Spacing</div>
-      <div class="legend-item"><span class="legend-color" style="background-color: #10b981;"></span> Docked at Bay</div>
-      <div class="legend-item"><span class="legend-color" style="background-color: #f97316;"></span> Human Pedestrian Halo</div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="app-footer">
-      <p>D²RO: Dynamic Decentralized Route Optimization Framework — Autonomous Fleet Routing Research Project</p>
-      <p>Hosted on <a href="https://pages.github.com/" target="_blank">GitHub Pages</a> | Powered by <a href="https://pyodide.org/" target="_blank">Pyodide WebAssembly</a></p>
-    </footer>
+    <div class="lp-cta-row">
+      <a class="lp-cta lp-cta-primary" href="simulator.html">
+        Launch the simulator
+        <span class="lp-cta-sub">runs the real Python planner in your browser</span>
+      </a>
+      <a class="lp-cta lp-cta-ghost" href="https://github.com/polla-fattah/SW-DGO">
+        Source on GitHub
+        <span class="lp-cta-sub">MIT · datasets CC BY 4.0</span>
+      </a>
+    </div>
   </div>
+</header>
 
-  <!-- JavaScript Bundles -->
-  <script src="python_bundle.js"></script>
-  <script src="simulator.js"></script>
+<main class="lp-wrap">
+
+  <!-- ------------------------------------------------------------------ -->
+  <section class="lp-section">
+    <h2>The problem</h2>
+    <div class="lp-two-col">
+      <div class="lp-panel">
+        <h3>Pedestrians are not obstacles</h3>
+        <p>
+          A shortest-path planner will drive straight through a browsing shopper's
+          personal space, because nothing in its objective says not to. Reactive
+          avoidance only helps once someone is already close — by then the
+          intrusion has happened.
+        </p>
+      </div>
+      <div class="lp-panel">
+        <h3>Symmetric conflicts have no local fix</h3>
+        <p>
+          Two carts entering the same single-file aisle from opposite ends is not a
+          collision-avoidance problem. It is a coordination problem, and a purely
+          local controller can only oscillate.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <section class="lp-section">
+    <h2>The formulation</h2>
+    <p class="lp-note">
+      Each agent minimises four weighted soft terms over its own directed cost
+      graph, subject to one hard feasibility constraint, solved by
+      <strong>D* Lite</strong> incremental repair.
+    </p>
+<pre class="lp-code"><code>minimise  C(u,v,t) = w_D · D(u,v)         <span class="c">// Euclidean distance</span>
+                   + w_M · W_mesh(u,v,t)   <span class="c">// V2V anticipatory congestion</span>
+                   + w_H · H_prox(v,t)     <span class="c">// human proxemics</span>
+                   + w_S · S_trolley(v,t)  <span class="c">// clearance envelope</span>
+
+subject to  (u,v) ∉ E_reserved(t)          <span class="c">// corridor reservation</span></code></pre>
+    <p class="lp-note lp-muted">
+      Reservation is a <em>constraint</em>, not a fifth weight: a reserved edge is
+      unavailable at any coefficient and an unreserved one contributes zero, so a
+      weight on it would have no operative magnitude in any reachable state.
+    </p>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <section class="lp-section">
+    <h2>Explore the project</h2>
+    <div class="lp-grid">
+
+      <a class="lp-card" href="simulator.html">
+        <div class="lp-card-icon" style="--ic:#38bdf8">▶</div>
+        <h3>Interactive simulator</h3>
+        <p>
+          Three environments, live ablation toggles, real-time metrics. Executes the
+          actual planner compiled to WebAssembly via Pyodide — not a JavaScript
+          re-implementation.
+        </p>
+        <span class="lp-card-go">Launch →</span>
+      </a>
+
+      <a class="lp-card" href="https://github.com/polla-fattah/SW-DGO/tree/main/d2ro">
+        <div class="lp-card-icon" style="--ic:#a855f7">{ }</div>
+        <h3>Python package</h3>
+        <p>
+          The planner itself: D* Lite, the cost graph, proxemics field, V2V mesh,
+          reservation protocol, plus four baselines and three environments.
+        </p>
+        <span class="lp-card-go">Browse <code>d2ro/</code> →</span>
+      </a>
+
+      <a class="lp-card" href="https://github.com/polla-fattah/SW-DGO/tree/main/experiments/data">
+        <div class="lp-card-icon" style="--ic:#10b981">↯</div>
+        <h3>Experiment data</h3>
+        <p>
+          Raw CSVs from 4,650 trials across eleven experiments. Every file carries a
+          fingerprint of the code that produced it, so results can never silently
+          drift from their source.
+        </p>
+        <span class="lp-card-go">Open datasets →</span>
+      </a>
+
+      <a class="lp-card" href="https://github.com/polla-fattah/SW-DGO/tree/main/analysis/scripts">
+        <div class="lp-card-icon" style="--ic:#f59e0b">σ</div>
+        <h3>Analysis pipeline</h3>
+        <p>
+          One script turns the raw CSVs into every reported statistic: paired tests,
+          Holm correction, bootstrap intervals. It refuses to report data whose code
+          has changed.
+        </p>
+        <span class="lp-card-go">Read the pipeline →</span>
+      </a>
+
+      <a class="lp-card" href="https://github.com/polla-fattah/SW-DGO/tree/main/d2ro/tests">
+        <div class="lp-card-icon" style="--ic:#f43f5e">✓</div>
+        <h3>Test suite</h3>
+        <p>
+          67 tests: replanner optimality against Dijkstra, heuristic admissibility,
+          kinematics, metric semantics, and the provenance fingerprint itself.
+        </p>
+        <span class="lp-card-go">See tests →</span>
+      </a>
+
+      <a class="lp-card" href="https://github.com/polla-fattah/SW-DGO#readme">
+        <div class="lp-card-icon" style="--ic:#94a3b8">▤</div>
+        <h3>Full documentation</h3>
+        <p>
+          Repository layout, reproduction commands, how provenance is enforced, the
+          complete list of limitations, and the future-work agenda.
+        </p>
+        <span class="lp-card-go">Read the README →</span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <section class="lp-section">
+    <h2>What the evidence shows</h2>
+
+    <div class="lp-stats">
+      <div class="lp-stat">
+        <span class="lp-stat-n">0.00</span>
+        <span class="lp-stat-l">person-seconds of intimate-space exposure (median)</span>
+      </div>
+      <div class="lp-stat">
+        <span class="lp-stat-n">6.40</span>
+        <span class="lp-stat-l">for a matched-controller shortest path</span>
+      </div>
+      <div class="lp-stat">
+        <span class="lp-stat-n">4,650</span>
+        <span class="lp-stat-l">kinodynamic trials, eleven experiments</span>
+      </div>
+    </div>
+
+    <div class="lp-two-col">
+      <div class="lp-panel lp-panel-good">
+        <h3>Social routing does the work</h3>
+        <p>
+          A 2×2 factorial with the mesh and reservation disabled in every cell
+          isolates the proxemic cost term: enabling it alone cuts exposure by
+          <strong>6.40 person-seconds</strong> (95% CI [−6.48, −6.31],
+          <em>p</em> = 1.5 × 10⁻⁹), costing 19.03 s of travel time. Reactive
+          yielding adds no detectable reduction on top of it.
+        </p>
+      </div>
+      <div class="lp-panel lp-panel-warn">
+        <h3>The distributed layer is conditional</h3>
+        <p>
+          An ordinary human-aware planner with no mesh and no reservation matches
+          that compliance <em>exactly</em> (<em>p</em> = 1) while finishing ~8 s
+          sooner. The distributed machinery earns its cost only under the topologies
+          it was designed for. We report this rather than omit it.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <section class="lp-section">
+    <h2>Honest limits</h2>
+    <ul class="lp-limits">
+      <li>Simulated pedestrians do <strong>not react</strong> to the robots, so reported exposure is an upper bound on a real crowd.</li>
+      <li>Weights are <strong>hand-selected</strong>; the sensitivity sweep shows a plateau but claims no optimality.</li>
+      <li>Sensing is <strong>range-limited</strong>, without ray-casting against shelf occlusion.</li>
+      <li>Fleet scaling is bounded — success falls to 78% at twelve carts in 36 × 24 m.</li>
+      <li>ORCA and local MAPF are <strong>our own implementations</strong>; no conclusion depends on them.</li>
+      <li>Everything is <strong>simulation</strong>. No physical fleet was deployed.</li>
+      <li>We report <em>when</em> the distributed layer helps, not <em>how often</em> those conditions arise.</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="lp-footer">
+  <div class="lp-wrap">
+    <p>
+      Code under <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE">MIT</a> ·
+      datasets under <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE-DATA">CC BY 4.0</a>
+    </p>
+    <p class="lp-muted">
+      A manuscript describing this work is under peer review. Citation details will be
+      added on acceptance.
+    </p>
+  </div>
+</footer>
+
 </body>
 </html>
