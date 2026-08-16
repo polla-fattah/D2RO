@@ -285,6 +285,44 @@ def gate_control_characters() -> None:
           "; ".join(hits[:5]) + (f" (+{len(hits) - 5} more)" if len(hits) > 5 else ""))
 
 
+def gate_anonymity() -> None:
+    r"""
+    When the manuscript is set to anonymous, nothing identifying may survive.
+
+    Anonymising is easy to do incompletely: the author block is obvious, but the
+    running head repeats a surname on every page, the acknowledgment names a
+    laboratory, and a repository URL carries an account name. Desk rejection for a
+    double-blind violation costs a review cycle, so the check is mechanical.
+
+    Only runs when \anonymoustrue is set; in camera-ready mode the same strings are
+    supposed to be present and their absence would be the bug.
+    """
+    tex = os.path.join(PAPER, "paper.tex")
+    pdf = os.path.join(PAPER, "paper.pdf")
+    if not os.path.exists(tex):
+        return
+    src = io.open(tex, encoding="utf-8", errors="ignore").read()
+    if not re.search(r"^\s*\\anonymoustrue", src, re.M):
+        print("  [note] manuscript is in NAMED mode; anonymity check skipped")
+        return
+    if not os.path.exists(pdf):
+        warn("anonymity", "paper.pdf missing; cannot verify")
+        return
+    try:
+        r = subprocess.run(["pdftotext", pdf, "-"], capture_output=True, text=True)
+        text = (r.stdout or "")
+    except FileNotFoundError:
+        warn("anonymity", "pdftotext unavailable; skipped")
+        return
+
+    # Surnames, institution, contact domain and the account name inside any URL.
+    IDENTIFIERS = ["Fattah", "Fawzi", "Koya", "koyauniversity", "polla-fattah",
+                   "Autonomous Systems and Robotics"]
+    found = sorted({w for w in IDENTIFIERS if w.lower() in text.lower()})
+    check("anonymous build carries no identifying text", not found,
+          "found in the PDF: " + ", ".join(found))
+
+
 def gate_aims_consistent() -> None:
     """The manuscript declares four aims; the conclusion must assess four."""
     tex = os.path.join(PAPER, "paper.tex")
@@ -355,6 +393,7 @@ def main() -> int:
     gate_tag_exists()
     gate_semantic_consistency()
     gate_control_characters()
+    gate_anonymity()
     gate_aims_consistent()
     gate_no_invented_p_values()
     gate_references(args.no_net)

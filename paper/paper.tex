@@ -23,15 +23,37 @@
 
 \graphicspath{{figures/}}
 
+% ===========================================================================
+% SUBMISSION MODE -- the only line to change between blind and camera-ready.
+%
+% Double-blind review requires the manuscript to carry NOTHING identifying the
+% authors. That is more than the author block: the running head repeats a
+% surname on every page, the acknowledgment names a laboratory, and a
+% repository URL carries an account name. All four are conditional below, so
+% anonymising is one switch rather than four hand-edits that can be forgotten
+% individually -- and the one most often forgotten is the running head.
+%
+%   \anonymoustrue   -> double-blind submission
+%   \anonymousfalse  -> camera-ready, preprint, or personal copy
+% ===========================================================================
+\newif\ifanonymous
+\anonymoustrue
+
 \begin{document}
 
 \title{Socially-Weighted Distributed Graph Optimization (SW-DGO) for Autonomous Multi-Agent Service Fleets in Crowded Environments}
 
-\author{Polla~Fattah~and~Sanar~Fawzi%
-\thanks{P. Fattah and S. Fawzi are with the Department of Computer Science and Engineering. (e-mail: polla.fattah@koyauniversity.org; sanar.fawzi@koyauniversity.org).}}
-
-\markboth{Fattah \MakeLowercase{\textit{et al.}}: Socially-Weighted Distributed Graph Optimization (SW-DGO)}%
-{Fattah \MakeLowercase{\textit{et al.}}: Socially-Weighted Distributed Graph Optimization ($\text{D}^2\text{RO}$)}
+\ifanonymous
+  \author{Anonymous Author(s)%
+  \thanks{Author names and affiliations are withheld for double-blind review.}}
+  \markboth{Socially-Weighted Distributed Graph Optimization (SW-DGO)}%
+  {Socially-Weighted Distributed Graph Optimization (SW-DGO)}
+\else
+  \author{Polla~Fattah~and~Sanar~Fawzi%
+  \thanks{P. Fattah and S. Fawzi are with the Department of Computer Science and Engineering, Koya University. (e-mail: polla.fattah@koyauniversity.org; sanar.fawzi@koyauniversity.org).}}
+  \markboth{Fattah \MakeLowercase{\textit{et al.}}: Socially-Weighted Distributed Graph Optimization (SW-DGO)}%
+  {Fattah \MakeLowercase{\textit{et al.}}: Socially-Weighted Distributed Graph Optimization (SW-DGO)}
+\fi
 
 \maketitle
 
@@ -907,10 +929,12 @@ The limitations above define the immediate agenda; the last two items are longer
 \end{enumerate}
 
 \section*{Data and Code Availability}
-All simulation source code, experimental harnesses, test suites, raw CSV datasets and vector figures are available at \url{https://github.com/polla-fattah/D2RO}. Every number, table and figure in this paper is generated programmatically from the committed raw data by a single analysis pipeline; none is entered by hand. The results reported here correspond to release \texttt{v4.0-review4}, commit \texttt{\PaperCommitSHA}. The stamp names the commit whose sources produced this document; the compiled PDF is committed immediately afterwards, so the file in the repository is one commit later than the stamp it carries. Continuous integration rebuilds the same artefact from the tag on a clean checkout, and \texttt{paper/scripts/release\_gate.py} certifies either build, refusing any in which a dataset is stale, a prose claim disagrees with the data, a reference is unresolved, or a quoted $p$-value does not appear in the analysis output. Each dataset carries a provenance stamp recording the SHA-256 fingerprint of the simulation source that produced it, and the analysis pipeline refuses to emit a table or figure for any dataset whose fingerprint does not match the committed code.
+\ifanonymous All simulation source code, experimental harnesses, test suites, raw CSV datasets and vector figures will be released under open licences in a public repository; the URL is withheld here because it identifies the authors, and will be supplied on acceptance. \else All simulation source code, experimental harnesses, test suites, raw CSV datasets and vector figures are available at \url{https://github.com/polla-fattah/SW-DGO}. \fi Every number, table and figure in this paper is generated programmatically from the committed raw data by a single analysis pipeline; none is entered by hand. The results reported here correspond to release \texttt{v4.0-review4}, commit \texttt{\PaperCommitSHA}. The stamp names the commit whose sources produced this document; the compiled PDF is committed immediately afterwards, so the file in the repository is one commit later than the stamp it carries. Continuous integration rebuilds the same artefact from the tag on a clean checkout, and \texttt{paper/scripts/release\_gate.py} certifies either build, refusing any in which a dataset is stale, a prose claim disagrees with the data, a reference is unresolved, or a quoted $p$-value does not appear in the analysis output. Each dataset carries a provenance stamp recording the SHA-256 fingerprint of the simulation source that produced it, and the analysis pipeline refuses to emit a table or figure for any dataset whose fingerprint does not match the committed code.
 
+\ifanonymous\else
 \section*{Acknowledgment}
-The authors thank the Autonomous Systems and Robotics Laboratory for hardware access and computing support.
+The authors thank the Autonomous Systems and Robotics Laboratory for computing support.
+\fi
 
 % ==============================================================================
 % REFERENCES
