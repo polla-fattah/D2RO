@@ -37,6 +37,27 @@ MATCHED = "Static A* (matched controller)"
 LOCAL = "Local Social D* Lite"
 APF = "Reactive Avoidance (Potential Field)"
 
+# Timing claims are wall-clock measurements and therefore machine-dependent: the
+# same deterministic simulation reports different microsecond figures on a loaded
+# laptop and on a CI runner. Every other quantity here is a property of the seeded
+# simulation and reproduces exactly.
+#
+# Checking timings for exact equality would make this gate fail on any machine other
+# than the one the manuscript was last written on -- including CI, which is precisely
+# where it most needs to pass. They are therefore checked against a tolerance band,
+# wide enough to absorb hardware and load differences but narrow enough to catch a
+# genuine regression such as a repair that has become milliseconds rather than
+# microseconds. The manuscript already tells the reader to read these ordinally.
+TIMING_TOLERANCE = 0.60      # +/-60% of the quoted value
+
+TIMING_CHECKS = [
+    ("repair median ms",   0.002,  lambda: B[D2]["repair_median_ms"]["mean"]),
+    ("repair p95 ms",      0.10,   lambda: B[D2]["repair_p95_ms"]["mean"]),
+    ("controller step ms", 0.118,  lambda: B[D2]["step_compute_ms"]["mean"]),
+    ("crowd step ms @2",   0.093,  lambda: C["2"]["replan_latency_ms"]["mean"]),
+    ("crowd step ms @30",  0.172,  lambda: C["30"]["replan_latency_ms"]["mean"]),
+]
+
 CHECKS = [
     # --- benchmark ------------------------------------------------------------
     ("D2RO success",              99.0,   B[D2]["success_rate"], 1),
@@ -53,9 +74,6 @@ CHECKS = [
     ("APF exposure",              10.18,  B[APF]["exposure_person_s"]["median"], 2),
     ("APF makespan",              34.54,  B[APF]["makespan_successful"]["mean"], 2),
     # --- timing ---------------------------------------------------------------
-    ("repair median ms",          0.002,  B[D2]["repair_median_ms"]["mean"], 3),
-    ("repair p95 ms",             0.09,   B[D2]["repair_p95_ms"]["mean"], 2),
-    ("controller step ms",        0.119,  B[D2]["step_compute_ms"]["mean"], 3),
     # --- factorial (the attribution experiment) -------------------------------
     ("factorial A makespan",      19.20,  Y["A_frozen_noyield"]["makespan"]["mean"], 2),
     ("factorial A exposure",       6.43,  Y["A_frozen_noyield"]["exposure_person_s"]["mean"], 2),
@@ -77,8 +95,6 @@ CHECKS = [
     ("cross airport success",     95.0,   X["Airport Terminal"]["success_rate"], 1),
     # --- scalability ------------------------------------------------------------
     ("fleet success @12",         78.0,   F["12"]["success_rate"], 1),
-    ("crowd step ms @2",          0.092,  C["2"]["replan_latency_ms"]["mean"], 3),
-    ("crowd step ms @30",         0.171,  C["30"]["replan_latency_ms"]["mean"], 3),
     # --- sensitivity (post heuristic fix) --------------------------------------
     ("w_H x0.5 makespan",         37.5,   W["w_Hx0.5"]["makespan"]["mean"], 1),
     ("w_H x1.5 makespan",         47.1,   W["w_Hx1.5"]["makespan"]["mean"], 1),
@@ -98,7 +114,19 @@ def main() -> int:
         if round(float(actual), dp) != round(float(claimed), dp):
             print(f"  MISMATCH  {label:28s} paper={claimed}  data={round(float(actual), dp)}")
             bad += 1
-    print(f"{len(CHECKS) - bad}/{len(CHECKS)} prose claims match analysis_results.json")
+    print(f"{len(CHECKS) - bad}/{len(CHECKS)} exact claims match analysis_results.json")
+
+    print("\n  timing claims (machine-dependent, checked within "
+          f"+/-{TIMING_TOLERANCE:.0%}):")
+    for label, claimed, getter in TIMING_CHECKS:
+        actual = float(getter())
+        lo, hi = claimed * (1 - TIMING_TOLERANCE), claimed * (1 + TIMING_TOLERANCE)
+        ok = lo <= actual <= hi
+        if not ok:
+            bad += 1
+        mark = "ok " if ok else "OUT"
+        print(f"    [{mark}] {label:20s} paper={claimed:.3f}  data={actual:.3f} "
+              f"  band=[{lo:.3f}, {hi:.3f}]")
 
     # derived statements made in the text
     gap_unmatched = (B[D2]["makespan_successful"]["mean"]
