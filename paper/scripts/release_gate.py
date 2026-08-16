@@ -323,6 +323,60 @@ def gate_anonymity() -> None:
           "found in the PDF: " + ", ".join(found))
 
 
+def gate_docs_not_superseded() -> None:
+    r"""
+    No document in docs/ may teach a formulation the manuscript has corrected.
+
+    `docs/Mathematical_Formalization.md` survived two review rounds stating
+    `C = D + W_mesh + H_prox + R_lock` -- four terms, but the wrong four. It
+    carried the reservation as an ADDITIVE COST TERM, which is precisely what the
+    manuscript spends a section establishing it is not; it omitted the kinematic
+    clearance envelope entirely; and it used the "mutex" language the paper
+    abandoned once the mechanism turned out to be cost-projected diversion rather
+    than mutual exclusion.
+
+    A reviewer browsing the repository would have found the corrected claim and
+    its superseded version one directory apart. The manuscript is swept for this
+    class of contradiction; the documentation beside it should be too.
+
+    Reviewer correspondence and response letters are exempt: they discuss the old
+    formulation precisely in order to record that it was fixed, and rewriting
+    history to remove the error would defeat the purpose of keeping them.
+    """
+    docs = os.path.join(BASE, "docs")
+    if not os.path.isdir(docs):
+        return
+
+    EXEMPT = ("email", "comments", "response_to_reviewers", "engineering_notes",
+              "outstanding_work", "reference_audit")
+
+    RULES = [
+        (r"R_?\{?\\?text\{?lock\}?\}?\s*(?:\(|\+)",
+         "reservation presented as an additive cost term"),
+        (r"mutex lock|corridor mutex",
+         "superseded 'mutex' terminology for the reservation"),
+        (r"five weights|5-component|five-component|five cost terms",
+         "superseded five-term objective"),
+    ]
+
+    violations = []
+    for fn in sorted(os.listdir(docs)):
+        if not fn.endswith(".md"):
+            continue
+        if any(tag in fn.lower() for tag in EXEMPT):
+            continue
+        text = io.open(os.path.join(docs, fn), encoding="utf-8",
+                       errors="ignore").read()
+        for pattern, meaning in RULES:
+            m = re.search(pattern, text, re.IGNORECASE)
+            if m:
+                line = text[:m.start()].count("\n") + 1
+                violations.append(f"docs/{fn}:{line} {meaning}")
+
+    check("no document teaches a superseded formulation", not violations,
+          "; ".join(violations[:5]))
+
+
 def gate_aims_consistent() -> None:
     """The manuscript declares four aims; the conclusion must assess four."""
     tex = os.path.join(PAPER, "paper.tex")
@@ -394,6 +448,7 @@ def main() -> int:
     gate_semantic_consistency()
     gate_control_characters()
     gate_anonymity()
+    gate_docs_not_superseded()
     gate_aims_consistent()
     gate_no_invented_p_values()
     gate_references(args.no_net)

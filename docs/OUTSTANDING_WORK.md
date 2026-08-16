@@ -6,9 +6,12 @@
 **Status date:** 16 August 2026 (round-4 revision)
 **Round:** 4 (third Major Revision). Reviewer correspondence in
 [`email.md`](email.md), [`email2.md`](email2.md) and [`comments1.md`](comments1.md);
-the current reply is [`RESPONSE_TO_REVIEWERS_R4.md`](RESPONSE_TO_REVIEWERS_R4.md),
-and the earlier plans are [`REVISION_PLAN_R2.md`](REVISION_PLAN_R2.md) and
-[`REVISION_PLAN_R3.md`](REVISION_PLAN_R3.md).
+the current reply is
+[`RESPONSE_TO_REVIEWERS_R5_MINOR.md`](RESPONSE_TO_REVIEWERS_R5_MINOR.md), and the
+previous one is [`RESPONSE_TO_REVIEWERS_R4.md`](RESPONSE_TO_REVIEWERS_R4.md). The
+round-2 and round-3 revision plans were deleted once executed: the response
+letters record what was actually done, which is the better record, and git
+retains the plans if the intent is ever needed.
 
 ---
 

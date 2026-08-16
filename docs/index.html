@@ -6,140 +6,368 @@
 <title>SW-DGO — Socially-Weighted Distributed Graph Optimization</title>
 <meta name="description" content="Multi-agent route planning for autonomous service fleets in crowded, human-shared indoor space. Browser simulator, open datasets, full source.">
 <link rel="stylesheet" href="landing.css">
+<!-- KaTeX for crisp mathematical typesetting -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
 </head>
 <body>
 
-<p class="eyebrow">Multi-agent navigation research</p>
+<div class="page-container">
 
-<h1>Socially-Weighted Distributed Graph Optimization</h1>
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="eyebrow-container">
+      <span class="eyebrow">
+        <span class="pulse-dot"></span>
+        Multi-agent navigation research
+      </span>
+    </div>
 
-<p class="sub">
-Multi-agent route planning for autonomous service fleets — shopping carts,
-hospital pushchairs, airport trolleys — in space shared with people who are under
-no obligation to get out of the way.
-</p>
+    <h1>Socially-Weighted Distributed Graph Optimization</h1>
 
-<p class="repo">
-<a href="https://github.com/polla-fattah/SW-DGO">github.com/polla-fattah/SW-DGO</a>
-&nbsp;&mdash;&nbsp; source, datasets and tests
-</p>
+    <p class="sub">
+      Multi-agent route planning for autonomous service fleets — shopping carts,
+      hospital pushchairs, airport trolleys — in space shared with people who are under
+      no obligation to get out of the way.
+    </p>
 
-<p class="meta">
-Code under <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE">MIT</a>,
-datasets under <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE-DATA">CC BY 4.0</a>.
-</p>
+    <div class="hero-cta-group">
+      <a href="simulator.html" class="btn btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        Interactive Simulator
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
 
-<hr>
+      <a href="https://github.com/polla-fattah/SW-DGO" class="btn btn-secondary" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+        </svg>
+        GitHub Repository
+      </a>
 
-<h2>Contents</h2>
+      <div class="badge-group">
+        <span class="badge-pill">
+          Code: <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>
+        </span>
+        <span class="badge-pill">
+          Data: <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE-DATA" target="_blank" rel="noopener">CC BY 4.0</a>
+        </span>
+      </div>
+    </div>
+  </header>
 
-<dl>
-  <dt><a href="simulator.html">Interactive simulator</a></dt>
-  <dd>Three environments with live ablation toggles. Runs the actual Python
-      planner compiled to WebAssembly, not a re-implementation.</dd>
+  <!-- Key Benchmark Stat Highlights -->
+  <section class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-value">4,650</span>
+      <span class="stat-label">Trial Evaluations</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">99.0%</span>
+      <span class="stat-label">Mission Success Rate</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">0.00</span>
+      <span class="stat-label">Median Exposure (p-s)</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">67</span>
+      <span class="stat-label">Automated Tests</span>
+    </div>
+  </section>
 
-  <dt><a href="https://github.com/polla-fattah/SW-DGO/tree/main/d2ro">Python package (<code>d2ro/</code>)</a></dt>
-  <dd>D* Lite replanner, directed cost graph, proxemics field, V2V mesh,
-      reservation protocol, four baselines, three environments.</dd>
+  <hr class="section-divider">
 
-  <dt><a href="https://github.com/polla-fattah/SW-DGO/tree/main/experiments/data">Experiment data</a></dt>
-  <dd>Raw CSVs from 4,650 trials across eleven experiments. Each file carries a
-      fingerprint of the code that produced it.</dd>
+  <!-- Contents / Navigation Cards -->
+  <section>
+    <h2>Contents & Research Assets</h2>
 
-  <dt><a href="https://github.com/polla-fattah/SW-DGO/tree/main/analysis/scripts">Analysis pipeline</a></dt>
-  <dd>Turns the raw CSVs into every reported statistic. Refuses to report data
-      whose source code has since changed.</dd>
+    <div class="resource-grid">
+      <!-- Featured Interactive Simulator Card -->
+      <a href="simulator.html" class="resource-card featured">
+        <div class="resource-header">
+          <div class="resource-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+            Interactive Simulator
+          </div>
+          <span class="featured-badge">Live WASM Demo</span>
+        </div>
+        <p class="resource-desc">
+          Three environments with live ablation toggles. Runs the actual Python
+          planner compiled to WebAssembly (Pyodide), not a re-implementation.
+        </p>
+      </a>
 
-  <dt><a href="https://github.com/polla-fattah/SW-DGO/tree/main/d2ro/tests">Test suite</a></dt>
-  <dd>67 tests: replanner optimality against Dijkstra, heuristic admissibility,
-      kinematics, metric semantics, provenance.</dd>
+      <!-- Python Package Card -->
+      <a href="https://github.com/polla-fattah/SW-DGO/tree/main/d2ro" class="resource-card" target="_blank" rel="noopener">
+        <div class="resource-header">
+          <div class="resource-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+            Python package (<code>d2ro/</code>)
+          </div>
+          <span class="resource-arrow">&rarr;</span>
+        </div>
+        <p class="resource-desc">
+          D* Lite replanner, directed cost graph, proxemics field, V2V mesh,
+          reservation protocol, four baselines, three environments.
+        </p>
+      </a>
 
-  <dt><a href="https://github.com/polla-fattah/SW-DGO#readme">README</a></dt>
-  <dd>Repository layout, reproduction commands, limitations, future work.</dd>
-</dl>
+      <!-- Experiment Data Card -->
+      <a href="https://github.com/polla-fattah/SW-DGO/tree/main/experiments/data" class="resource-card" target="_blank" rel="noopener">
+        <div class="resource-header">
+          <div class="resource-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+            </svg>
+            Experiment data
+          </div>
+          <span class="resource-arrow">&rarr;</span>
+        </div>
+        <p class="resource-desc">
+          Raw CSVs from 4,650 trials across eleven experiments. Each file carries a
+          fingerprint of the code that produced it.
+        </p>
+      </a>
 
-<hr>
+      <!-- Analysis Pipeline Card -->
+      <a href="https://github.com/polla-fattah/SW-DGO/tree/main/analysis/scripts" class="resource-card" target="_blank" rel="noopener">
+        <div class="resource-header">
+          <div class="resource-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            Analysis pipeline
+          </div>
+          <span class="resource-arrow">&rarr;</span>
+        </div>
+        <p class="resource-desc">
+          Turns the raw CSVs into every reported statistic. Refuses to report data
+          whose source code has since changed.
+        </p>
+      </a>
 
-<h2>Problem</h2>
+      <!-- Test Suite Card -->
+      <a href="https://github.com/polla-fattah/SW-DGO/tree/main/d2ro/tests" class="resource-card" target="_blank" rel="noopener">
+        <div class="resource-header">
+          <div class="resource-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            Test suite
+          </div>
+          <span class="resource-arrow">&rarr;</span>
+        </div>
+        <p class="resource-desc">
+          67 tests: replanner optimality against Dijkstra, heuristic admissibility,
+          kinematics, metric semantics, provenance.
+        </p>
+      </a>
 
-<p>
-Classical planners fail here in two specific ways. A shortest-path planner drives
-through a browsing shopper's personal space because nothing in its objective says
-not to, and reactive avoidance only engages once someone is already close — by
-which point the intrusion has happened. Separately, two carts entering one
-single-file aisle from opposite ends is not a collision-avoidance problem but a
-coordination problem, and a purely local controller can only oscillate.
-</p>
+      <!-- README Card -->
+      <a href="https://github.com/polla-fattah/SW-DGO#readme" class="resource-card" target="_blank" rel="noopener">
+        <div class="resource-header">
+          <div class="resource-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            README & Documentation
+          </div>
+          <span class="resource-arrow">&rarr;</span>
+        </div>
+        <p class="resource-desc">
+          Repository layout, reproduction commands, limitations, future work.
+        </p>
+      </a>
+    </div>
+  </section>
 
-<h2>Formulation</h2>
+  <hr class="section-divider">
 
-<p>
-Each agent minimises four weighted soft terms over its own directed cost graph,
-subject to one hard feasibility constraint, solved by D* Lite incremental repair:
-</p>
+  <!-- Problem Section -->
+  <section>
+    <h2>Problem Context</h2>
+    <div class="content-box">
+      <p>
+        Classical planners fail here in two specific ways. A shortest-path planner drives
+        through a browsing shopper's personal space because nothing in its objective says
+        not to, and reactive avoidance only engages once someone is already close — by
+        which point the intrusion has happened. Separately, two carts entering one
+        single-file aisle from opposite ends is not a collision-avoidance problem but a
+        coordination problem, and a purely local controller can only oscillate.
+      </p>
+    </div>
+  </section>
 
-<pre>minimise  C(u,v,t) = w_D · D(u,v)          Euclidean distance
+  <!-- Formulation Section -->
+  <section>
+    <h2>Mathematical Formulation</h2>
+    <div class="content-box">
+      <p>
+        Each agent minimises four weighted soft terms over its own directed cost graph,
+        subject to one hard feasibility constraint, solved by D* Lite incremental repair:
+      </p>
+
+      <div class="formula-container">
+        <pre>minimise  C(u,v,t) = w_D · D(u,v)          Euclidean distance
                    + w_M · W_mesh(u,v,t)    V2V anticipatory congestion
                    + w_H · H_prox(v,t)      human proxemics
                    + w_S · S_trolley(v,t)   clearance envelope
 
 subject to  (u,v) ∉ E_reserved(t)           corridor reservation</pre>
+      </div>
 
-<p>
-Reservation is a constraint, not a fifth weight: a reserved edge is unavailable at
-any coefficient and an unreserved one contributes zero, so a weight on it would
-have no operative magnitude in any reachable state.
-</p>
+      <div class="formula-badge-grid">
+        <div class="formula-tag">
+          <code>w_D · D(u,v)</code> Euclidean distance path cost
+        </div>
+        <div class="formula-tag">
+          <code>w_M · W_mesh(u,v,t)</code> V2V anticipatory congestion
+        </div>
+        <div class="formula-tag">
+          <code>w_H · H_prox(v,t)</code> Human proxemics cost field
+        </div>
+        <div class="formula-tag">
+          <code>w_S · S_trolley(v,t)</code> Dynamic clearance envelope
+        </div>
+      </div>
 
-<h2>Results</h2>
+      <p style="margin-top: 1.25rem;">
+        Reservation is a constraint, not a fifth weight: a reserved edge is unavailable at
+        any coefficient and an unreserved one contributes zero, so a weight on it would
+        have no operative magnitude in any reachable state.
+      </p>
+    </div>
+  </section>
 
-<table>
-<thead>
-<tr><th>Planner</th><th>Success</th><th>Makespan (s)</th><th>Exposure (person-s, median)</th></tr>
-</thead>
-<tbody>
-<tr><td>SW-DGO</td><td>99.0%</td><td>47.18 ± 13.40</td><td>0.00</td></tr>
-<tr><td>Local Social D* Lite</td><td>100.0%</td><td>39.06 ± 15.12</td><td>0.00</td></tr>
-<tr><td>Static A* (matched controller)</td><td>100.0%</td><td>19.20</td><td>6.40</td></tr>
-<tr><td>Static A*</td><td>100.0%</td><td>18.00</td><td>6.40</td></tr>
-<tr><td>Artificial potential fields</td><td>100.0%</td><td>34.54</td><td>10.18</td></tr>
-</tbody>
-</table>
+  <!-- Results Section -->
+  <section>
+    <h2>Experimental Results</h2>
 
-<p>
-A 2&times;2 factorial with the mesh and reservation disabled in every cell isolates
-the proxemic cost term: enabling it alone reduces exposure by 6.40 person-seconds
-(95% CI [&minus;6.48, &minus;6.31], <i>p</i> = 1.5 &times; 10<sup>&minus;9</sup>),
-at a cost of 19.03 s of travel time. Reactive yielding adds no statistically
-detectable reduction on top of it (<i>p</i> = 0.59).
-</p>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Planner</th>
+            <th>Success</th>
+            <th>Makespan (s)</th>
+            <th>Exposure (person-s, median)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="highlight-row">
+            <td>
+              <strong>SW-DGO</strong>
+              <span class="badge-proposed">Proposed</span>
+            </td>
+            <td><strong>99.0%</strong></td>
+            <td>47.18 ± 13.40</td>
+            <td><strong>0.00</strong></td>
+          </tr>
+          <tr>
+            <td>Local Social D* Lite</td>
+            <td>100.0%</td>
+            <td>39.06 ± 15.12</td>
+            <td>0.00</td>
+          </tr>
+          <tr>
+            <td>Static A* (matched controller)</td>
+            <td>100.0%</td>
+            <td>19.20</td>
+            <td>6.40</td>
+          </tr>
+          <tr>
+            <td>Static A*</td>
+            <td>100.0%</td>
+            <td>18.00</td>
+            <td>6.40</td>
+          </tr>
+          <tr>
+            <td>Artificial potential fields</td>
+            <td>100.0%</td>
+            <td>34.54</td>
+            <td>10.18</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-<p>
-The distributed layer is conditional. An ordinary human-aware planner with no mesh
-and no reservation matches that social compliance exactly (<i>p</i> = 1) while
-finishing about 8 s sooner. The mesh and reservation earn their cost only under the
-topologies they were designed for — a blockage outside a follower's sensing range,
-and a single-file corridor entered from both ends.
-</p>
+    <div class="content-box">
+      <p>
+        A 2&times;2 factorial with the mesh and reservation disabled in every cell isolates
+        the proxemic cost term: enabling it alone reduces exposure by 6.40 person-seconds
+        (95% CI [&minus;6.48, &minus;6.31], <i>p</i> = 1.5 &times; 10<sup>&minus;9</sup>),
+        at a cost of 19.03 s of travel time. Reactive yielding adds no statistically
+        detectable reduction on top of it (<i>p</i> = 0.59).
+      </p>
 
-<h2>Limitations</h2>
+      <p>
+        The distributed layer is conditional. An ordinary human-aware planner with no mesh
+        and no reservation matches that social compliance exactly (<i>p</i> = 1) while
+        finishing about 8 s sooner. The mesh and reservation earn their cost only under the
+        topologies they were designed for — a blockage outside a follower's sensing range,
+        and a single-file corridor entered from both ends.
+      </p>
+    </div>
+  </section>
 
-<ul>
-<li>Simulated pedestrians do not react to the robots; reported exposure is an upper bound on a real crowd.</li>
-<li>Weights are hand-selected. The sensitivity sweep shows a plateau but claims no optimality, and is one-at-a-time.</li>
-<li>Sensing is range-limited, without ray-casting against shelf occlusion.</li>
-<li>Fleet scaling is bounded: success falls to 78% at twelve carts in 36 &times; 24 m.</li>
-<li>ORCA and local MAPF are our own implementations and complete 0% of missions; no conclusion depends on them.</li>
-<li>All results are simulation. No physical fleet was deployed.</li>
-<li>We report when the distributed layer helps, not how often those conditions arise.</li>
-</ul>
+  <!-- Limitations Section -->
+  <section>
+    <h2>Limitations & Scoping</h2>
+    <div class="content-box">
+      <ul class="styled-list">
+        <li>Simulated pedestrians do not react to the robots; reported exposure is an upper bound on a real crowd.</li>
+        <li>Weights are hand-selected. The sensitivity sweep shows a plateau but claims no optimality, and is one-at-a-time.</li>
+        <li>Sensing is range-limited, without ray-casting against shelf occlusion.</li>
+        <li>Fleet scaling is bounded: success falls to 78% at twelve carts in 36 &times; 24 m.</li>
+        <li>ORCA and local MAPF are our own implementations and complete 0% of missions; no conclusion depends on them.</li>
+        <li>All results are simulation. No physical fleet was deployed.</li>
+        <li>We report when the distributed layer helps, not how often those conditions arise.</li>
+      </ul>
+    </div>
+  </section>
 
-<hr>
+  <hr class="section-divider">
 
-<p class="colophon">
-A manuscript describing this work is under peer review. Citation details will be
-added on acceptance.
-</p>
+  <!-- Colophon / Publication Details -->
+  <div class="colophon-card">
+    <div class="colophon-text">
+      <strong>Publication Status:</strong> A manuscript describing this work is under peer review. Citation details will be added on acceptance.
+    </div>
+  </div>
+
+  <footer>
+    <div>
+      SW-DGO Research &copy; Dr. Polla Abdulhamid Fattah & Sub-authors
+    </div>
+    <div>
+      <a href="https://github.com/polla-fattah/SW-DGO" target="_blank" rel="noopener">GitHub Repository</a>
+      &bull;
+      <a href="simulator.html">Interactive Simulator</a>
+    </div>
+  </footer>
+
+</div>
 
 </body>
 </html>

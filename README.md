@@ -43,7 +43,10 @@ Department of Computer Science and Engineering, Koya University
 > **New here, or returning after a break?** Start with
 > [`docs/ENGINEERING_NOTES.md`](docs/ENGINEERING_NOTES.md) — every pipeline,
 > the reasoning behind each design decision, the file map, and the traps that
-> have bitten this project more than once.
+> have bitten this project more than once. [`docs/CONCEPTS.md`](docs/CONCEPTS.md)
+> is the companion vocabulary: the research ideas the paper argues with and the
+> engineering ideas the repository is built from, each pointing at where it lives
+> in the code.
 >
 > Point-by-point replies to the reviewers are in
 > [`docs/RESPONSE_TO_REVIEWERS_R5_MINOR.md`](docs/RESPONSE_TO_REVIEWERS_R5_MINOR.md).
@@ -252,13 +255,9 @@ D2RO/
 │   ├── RESPONSE_TO_REVIEWERS_R4.md     # ← current point-by-point reply
 │   ├── OUTSTANDING_WORK.md             # what is knowingly still open
 │   ├── REFERENCE_AUDIT.md              # Crossref DOI verification of every entry
-│   ├── REVISION_PLAN_R2.md             # round-2 plan (historical)
-│   ├── REVISION_PLAN_R3.md             # round-3 plan (historical)
+│   ├── ENGINEERING_NOTES.md            # ← pipelines, decisions, file map, traps
 │   ├── email.md, email2.md, comments1.md   # reviewer correspondence, verbatim
-│   ├── Metrics_and_Evaluation_Guide.md # Metric definitions & formulas
-│   ├── Mathematical_Formalization.md   # Mathematical formalization notes
-│   ├── Mathematical_Notes.md
-│   ├── Algorithm_Design_Options.md     # Early design exploration notes
+│   ├── CONCEPTS.md                     # research + engineering vocabulary
 │   └── index.html, simulator.js, …     # browser demo (Pyodide; GitHub Pages)
 │
 ├── literature/                         # Reference PDFs
