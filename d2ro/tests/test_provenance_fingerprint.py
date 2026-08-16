@@ -84,11 +84,23 @@ class TestFingerprintIsSourceIdentity(unittest.TestCase):
             "fingerprint changes with line-ending style, so datasets generated on "
             "one platform report STALE on another")
 
+    # The analysis pipeline sits beside the manuscript in the research repository
+    # and under analysis/ in the public code release. The two trees otherwise share
+    # identical sources, and this test should not be the one thing that differs, so
+    # it searches rather than assuming.
+    ANALYZER_LOCATIONS = [
+        os.path.join("paper", "scripts", "analyze_results.py"),
+        os.path.join("analysis", "scripts", "analyze_results.py"),
+    ]
+
     def test_writer_and_verifier_agree(self):
         """The stamp writer and the stamp checker must compute the same value."""
         runner = _load("d2ro_runner", os.path.join("d2ro", "sim", "run_experiments.py"))
-        analyzer = _load("d2ro_analyzer",
-                         os.path.join("paper", "scripts", "analyze_results.py"))
+        rel = next((p for p in self.ANALYZER_LOCATIONS
+                    if os.path.exists(os.path.join(PROJECT_ROOT, p))), None)
+        if rel is None:
+            self.skipTest("analyze_results.py is not present in this tree")
+        analyzer = _load("d2ro_analyzer", rel)
         self.assertEqual(
             runner._code_fingerprint(), analyzer.current_code_fingerprint(),
             "run_experiments.py and analyze_results.py disagree about the code "
