@@ -248,6 +248,31 @@ that no reviewer had yet flagged: two overlapping sets of aim assessments had
 accumulated, with A1's opening sentence overwritten and A2–A4 duplicated, leaving
 an orphaned fragment quoting a superseded 29.94 s routing cost. Repaired.
 
+## One change you did not ask for
+
+You twice credited us for reporting that the local-social baseline matches D²RO's
+compliance while running faster. Rereading the manuscript with that in mind, we
+found we were presenting our own strongest methodological result as an apology —
+"a negative result about our own contribution", "we bound the claim accordingly" —
+which fairly invites the question of why a paper titled *Distributed* Dynamic Route
+Optimization argues that its distributed half is dispensable.
+
+We have therefore changed the framing, though not a single number. The research gap
+is no longer "no one has fused mesh-informed graph updates with reactive
+human-aware avoidance", which is engineering rather than a finding. It is now the
+absence of studies that hold social competence **fixed** and vary only the
+coordination architecture — the comparison whose omission allows a distributed
+layer's necessity to be assumed rather than demonstrated. Aim A2 asks not whether a
+distributed layer *can* coordinate a fleet but when it is *needed*. And the boundary
+itself is now stated as a contribution: nothing detectable in the broad scenario,
+decisive under the two target topologies, with the deployment consequence made
+explicit — which topologies justify the radio, and which should simply run the local
+planner.
+
+We think this is what the evidence always said; it is now said in the order that
+makes it a result. We flag the change because you have read the previous version
+closely and will notice it.
+
 ## What we have not done
 
 In the interest of not overstating this revision:
