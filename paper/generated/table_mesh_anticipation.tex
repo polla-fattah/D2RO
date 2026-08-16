@@ -3,19 +3,17 @@
 % Produced by paper/scripts/generate_tables_and_figures.py
 \begin{table}[t]
 \centering
-\caption{Mechanism experiment A: V2V mesh anticipation. A corridor is blocked out of line of sight; with the mesh enabled the follower learns of the obstruction before observing it ($N=50$ paired trials; the same seed drives both arms, so each row is a within-pair comparison). Continuous outcomes use the Wilcoxon signed-rank test and mission success McNemar's exact test; rows marked \emph{identical} were equal in every pair. $p$-values are Holm-adjusted across the rows of this table.}
+\caption{Mechanism experiment A: V2V mesh anticipation. A corridor is blocked out of line of sight; with the mesh enabled the follower learns of the obstruction before observing it ($N=50$ paired trials; the same seed drives both arms, so each row is a within-pair comparison). Continuous outcomes use the Wilcoxon signed-rank test; rows whose two arms were equal in every pair admit no test. $p$-values are Holm-adjusted across the rows of this table. Both arms completed 100.0\% of missions, so mission success does not separate them and is omitted from the table.}
 \label{tab:mech_mesh}
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{lcccc}
+\begin{tabular}{lccc}
 \toprule
-\textbf{Metric} & \textbf{ON} & \textbf{OFF} & \textbf{Test} & \textbf{$p$ (Holm)} \\
+\textbf{Metric} & \textbf{ON} & \textbf{OFF} & \textbf{$p$ (Holm)} \\
 \midrule
-Anticipation lead time (s) & $10.70 \pm 4.20$ & $-0.10 \pm 0.04$ & Wilcoxon & $3.8 \times 10^{-9}$ \\
-Backtrack distance (m) & $1.08 \pm 0.68$ & $2.73 \pm 0.87$ & Wilcoxon & $3.2 \times 10^{-8}$ \\
-Path length (m) & $23.97 \pm 3.58$ & $25.81 \pm 3.44$ & Wilcoxon & $0.00283$ \\
-Makespan (s) & $21.44 \pm 3.40$ & $23.78 \pm 3.61$ & Wilcoxon & $0.00196$ \\
-\midrule
-Mission success & 100.0\% & 100.0\% & McNemar & $1$ \\
+Anticipation lead time (s) & $10.70 \pm 4.20$ & $-0.10 \pm 0.04$ & $3.8 \times 10^{-9}$ \\
+Backtrack distance (m) & $1.08 \pm 0.68$ & $2.73 \pm 0.87$ & $3.2 \times 10^{-8}$ \\
+Path length (m) & $23.97 \pm 3.58$ & $25.81 \pm 3.44$ & $0.00283$ \\
+Makespan (s) & $21.44 \pm 3.40$ & $23.78 \pm 3.61$ & $0.00196$ \\
 \bottomrule
 \end{tabular}%
 }

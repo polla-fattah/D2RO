@@ -3,18 +3,18 @@
 % Produced by paper/scripts/generate_tables_and_figures.py
 \begin{table*}[t]
 \centering
-\caption{Component ablation of the five cost terms in the retail supermarket domain ($N=100$ trials per configuration). Each row removes exactly one term from Eq.~(1); all other parameters are held fixed.}
+\caption{Component ablation of the five cost terms in the retail supermarket domain ($N=100$ trials per configuration). Each row removes exactly one term from Eq.~(1); all other parameters are held fixed. Counts are reported as median [IQR] because they are right-skewed; makespan is mean $\pm$ SD. No configuration recorded a deadlock in any trial.}
 \label{tab:ablation}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{lcccccc}
+\begin{tabular}{lccccc}
 \toprule
-\textbf{Configuration} & \textbf{Success (95\% CI)} & \textbf{Makespan (s)} & \textbf{Discomfort} & \textbf{Deadlocks} & \textbf{Fixture contacts} & \textbf{Contact ticks} \\
+\textbf{Configuration} & \textbf{Success (95\% CI)} & \textbf{Makespan (s)} & \textbf{Discomfort} & \textbf{Fixture contacts} & \textbf{Contact ticks} \\
 \midrule
-\textbf{Full $\text{D}^2\text{RO}$} & 100.0\% [96.3, 100.0] & $47.38 \pm 13.96$ & $0.05 \pm 0.13$ & $0.00 \pm 0.00$ & $5.71 \pm 7.29$ & $193.05 \pm 169.90$ \\
-w/o V2V mesh $W_{\text{mesh}}$ & 100.0\% [96.3, 100.0] & $38.23 \pm 16.88$ & $0.09 \pm 0.43$ & $0.00 \pm 0.00$ & $7.59 \pm 12.25$ & $191.59 \pm 182.39$ \\
-w/o corridor mutex $R_{\text{lock}}$ & 100.0\% [96.3, 100.0] & $37.86 \pm 15.13$ & $0.09 \pm 0.38$ & $0.00 \pm 0.00$ & $7.69 \pm 13.76$ & $186.13 \pm 164.45$ \\
-w/o proxemics $H_{\text{prox}}$ & 11.0\% [6.3, 18.6] & $172.05 \pm 26.67$ & $13.14 \pm 3.57$ & $0.00 \pm 0.00$ & $59.18 \pm 27.69$ & $244.86 \pm 154.18$ \\
-w/o safety envelope $S_{\text{trolley}}$ & 100.0\% [96.3, 100.0] & $43.02 \pm 8.84$ & $0.05 \pm 0.17$ & $0.00 \pm 0.00$ & $95.14 \pm 25.44$ & $271.71 \pm 84.16$ \\
+\textbf{Full $\text{D}^2\text{RO}$} & 100.0\% [96.3, 100.0] & $47.38 \pm 13.96$ & 0.0 [0.0, 0.0] & 3 [2, 6] & 154 [114, 191] \\
+w/o V2V mesh $W_{\text{mesh}}$ & 100.0\% [96.3, 100.0] & $38.23 \pm 16.88$ & 0.0 [0.0, 0.0] & 3 [3, 9] & 131 [80, 246] \\
+w/o corridor reservation $R_{\text{lock}}$ & 100.0\% [96.3, 100.0] & $37.86 \pm 15.13$ & 0.0 [0.0, 0.0] & 3 [3, 9] & 131 [80, 242] \\
+w/o proxemics $H_{\text{prox}}$ & 11.0\% [6.3, 18.6] & $172.05 \pm 26.67$ & 13.5 [11.2, 15.6] & 56 [39, 78] & 219 [127, 313] \\
+w/o safety envelope $S_{\text{trolley}}$ & 100.0\% [96.3, 100.0] & $43.02 \pm 8.84$ & 0.0 [0.0, 0.0] & 94 [82, 96] & 244 [224, 310] \\
 \bottomrule
 \end{tabular}%
 }

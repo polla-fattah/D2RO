@@ -60,6 +60,15 @@ CHECKS = [
     ("contacts no-prox",          59.18,  A["w/o Human Gaussian Proxemics"]["shelf_contact_events"]["mean"], 2),
     ("ticks full",                193.05, A["Full D2RO Framework"]["shelf_contact_ticks"]["mean"], 2),
     ("ticks no-safety",           271.71, A["w/o Trolley Kinetic Safety Bubble"]["shelf_contact_ticks"]["mean"], 2),
+    # Medians now carry the ablation argument in both the table and the prose, so
+    # they are checked as first-class claims rather than left to the table alone.
+    ("contacts full median",      3,      A["Full D2RO Framework"]["shelf_contact_events"]["median"], 0),
+    ("contacts no-safety median", 93.5,   A["w/o Trolley Kinetic Safety Bubble"]["shelf_contact_events"]["median"], 1),
+    ("contacts no-prox median",   56,     A["w/o Human Gaussian Proxemics"]["shelf_contact_events"]["median"], 0),
+    ("ticks full median",         154,    round(A["Full D2RO Framework"]["shelf_contact_ticks"]["median"]), 0),
+    ("ticks no-safety median",    244,    A["w/o Trolley Kinetic Safety Bubble"]["shelf_contact_ticks"]["median"], 0),
+    ("discomfort no-prox median", 13.5,   A["w/o Human Gaussian Proxemics"]["discomfort"]["median"], 1),
+    ("discomfort full median",    0,      A["Full D2RO Framework"]["discomfort"]["median"], 1),
     # --- cross-domain --------------------------------------------------------
     ("cross supermarket success", 99.0,   X["Retail Supermarket"]["success_rate"], 1),
     ("cross hospital success",    100.0,  X["Clinical Hospital"]["success_rate"], 1),
@@ -121,10 +130,13 @@ def main() -> int:
     print(f"\n  derived: D2RO - unmatched gap    = {gap_unmatched:.2f} s   (paper: 29.18)")
     ratio = (A["w/o Trolley Kinetic Safety Bubble"]["shelf_contact_events"]["mean"]
              / A["Full D2RO Framework"]["shelf_contact_events"]["mean"])
+    ratio_med = (A["w/o Trolley Kinetic Safety Bubble"]["shelf_contact_events"]["median"]
+                 / A["Full D2RO Framework"]["shelf_contact_events"]["median"])
     succ = [g["success_rate"] for g in W.values()]
     print(f"  derived: D2RO - matched gap      = {gap:.2f} s   (paper: ~28, the routing share)")
     print(f"  derived: controller share        = {ctrl:.2f} s   (paper: 1.20)")
-    print(f"  derived: contact-event ratio     = {ratio:.1f}x   (paper: 16.7)")
+    print(f"  derived: contact-event ratio     = {ratio:.1f}x   (paper: 16.7, by mean)")
+    print(f"  derived: contact-event ratio med = {ratio_med:.1f}x   (paper: ~31, by median)")
     print(f"  derived: sensitivity success rng = {min(succ):.0f}-{max(succ):.0f}%  (paper: 97-100)")
     rs = [g["success_rate"] for g in R.values()]
     mk = [g["makespan"]["mean"] for g in R.values()]

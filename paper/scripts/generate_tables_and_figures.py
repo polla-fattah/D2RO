@@ -68,7 +68,8 @@ SHORT = {
 # both return 0% success, and we decline to infer from that that the published
 # algorithms fail. Plotting them at 0% beside D2RO would communicate visually a
 # comparison the text then asks the reader to distrust, so they are reported in a
-# separate supplementary table instead, clearly labelled as diagnostic.
+# a sentence of prose in the failure-mode discussion instead, clearly labelled
+# as diagnostic. SUPPLEMENTARY is retained so that list stays documented.
 ORDER = [
     "D2RO (SW-DGO Proposed)",
     # The matched-controller arm sits immediately beside D2RO: it is the comparison
@@ -200,9 +201,20 @@ def figure_benchmark(bench: Dict[str, Any]) -> bool:
     ax.errorbar(labels, med, yerr=[lo, hi], fmt="none", ecolor=MUTED,
                 elinewidth=0.9, capsize=2.5, zorder=4)
     top = max(q3 + [1.0])
-    for b, v, e in zip(bars, med, hi):
+    adj = bench.get("holm_adjusted_p", {})
+    for b, v, e, m in zip(bars, med, hi, methods):
         ax.text(b.get_x() + b.get_width() / 2, v + e + top * 0.05, f"{v:.0f}",
                 ha="center", va="bottom", fontsize=8, color=INK)
+        # Significance against D2RO, printed beneath each bar. This previously lived
+        # in a separate table that otherwise duplicated this figure; carrying it here
+        # lets the comparison and its evidence be read in one place.
+        if not m.startswith("D2RO"):
+            p = adj.get(f"{m}|intimate")
+            if p is not None:
+                exp = int(f"{p:.0e}".split("e")[1])
+                ax.text(b.get_x() + b.get_width() / 2, top * 0.03,
+                        f"$p\\!<\\!10^{{{exp + 1}}}$", ha="center", va="bottom",
+                        fontsize=6.5, color=MUTED)
     ax.set_ylabel("Intimate-space exposure (control ticks)")
     ax.set_ylim(0, top * 1.34)
     ax.set_title("(c) Social compliance — median [IQR]", loc="left")
@@ -229,71 +241,6 @@ def _f(d: Optional[Dict[str, Any]], p: int = 2) -> str:
     if not d or not d.get("n"):
         return "--"
     return f"${d['mean']:.{p}f} \\pm {d['sd']:.{p}f}$"
-
-
-def table_benchmark(bench: Dict[str, Any]) -> bool:
-    if not _usable(bench.get("status")) or not bench.get("groups"):
-        _placeholder("table_benchmark", f"benchmark dataset {bench.get('status')}")
-        return False
-
-    groups = bench["groups"]
-    adj = bench.get("holm_adjusted_p", {})
-    methods = [m for m in ORDER if m in groups] or list(groups)
-    n = bench.get("n_trials", 0)
-
-    L = [
-        "% GENERATED FILE - do not edit by hand.",
-        "% Source: experiments/data/analysis_results.json",
-        "% Produced by paper/scripts/generate_tables_and_figures.py",
-        "\\begin{table*}[t]",
-        "\\centering",
-        f"\\caption{{Comparative benchmark in the retail supermarket domain "
-        f"($N={n}$ paired Monte Carlo trials, identical seeds across all planners). "
-        f"Social exposure is reported as median [IQR] because the distribution is "
-        f"zero-inflated and strongly right-skewed. $p$-values are Holm-adjusted "
-        f"within the family of comparisons and each refers to the single outcome "
-        f"on its own row.}}",
-        "\\label{tab:benchmark}",
-        "\\resizebox{\\textwidth}{!}{%",
-        "\\begin{tabular}{lccccc}",
-        "\\toprule",
-        "\\textbf{Algorithm} & \\textbf{Success (95\\% CI)} & "
-        "\\textbf{Makespan, successful (s)} & \\textbf{Deadlocks} & "
-        "\\textbf{Intimate exposure, median [IQR]} & \\textbf{$p$ (exposure)} \\\\",
-        "\\midrule",
-    ]
-
-    for m in methods:
-        g = groups[m]
-        lo, hi = g["success_ci95"]
-        ex = g["intimate_exposure"]
-        iqr = ex.get("iqr", [0, 0])
-        name = m.replace("D2RO (SW-DGO Proposed)",
-                         "\\textbf{$\\text{D}^2\\text{RO}$ (proposed)}")
-        name = name.replace("Static A* (matched controller)",
-                            "Static $A^*$ (matched controller)")
-        name = name.replace("Static A*", "Static $A^*$") if "matched" not in name else name
-        name = name.replace("Reactive Avoidance (Potential Field)", "APF")
-        name = name.replace("Reactive ORCA (Velocity Obstacles)", "Reactive ORCA")
-        pv = adj.get(f"{m}|intimate")
-        pcell = "--" if m.startswith("D2RO") else (
-            f"${pv:.1e}$".replace("e-0", "\\times 10^{-").replace("e-", "\\times 10^{-") + "}$"
-            if pv is not None else "--")
-        if not m.startswith("D2RO") and pv is not None:
-            pcell = f"${pv:.2g}$"
-        mk = g["makespan_successful"]
-        mkcell = _f(mk) if mk.get("n") else "no success"
-        L.append(
-            f"{name} & {g['success_rate']:.1f}\\% [{lo:.1f}, {hi:.1f}] & "
-            f"{mkcell} & {_f(g['deadlocks'])} & "
-            f"{ex.get('median', 0):.0f} [{iqr[0]:.0f}, {iqr[1]:.0f}] & {pcell} \\\\")
-
-    L += ["\\bottomrule", "\\end{tabular}%", "}", "\\end{table*}", ""]
-
-    with open(os.path.join(TAB_DIR, "table_benchmark.tex"), "w", encoding="utf-8") as f:
-        f.write("\n".join(L))
-    print("  [ok]   generated/table_benchmark.tex")
-    return True
 
 
 def _pct(g: Dict[str, Any]) -> str:
@@ -362,7 +309,7 @@ def _emit(name: str, lines: List[str]) -> bool:
 ABLATION_LABEL = {
     "Full D2RO Framework": "\\textbf{Full $\\text{D}^2\\text{RO}$}",
     "w/o V2V Mesh Telemetry": "w/o V2V mesh $W_{\\text{mesh}}$",
-    "w/o Corridor Mutex Lock": "w/o corridor mutex $R_{\\text{lock}}$",
+    "w/o Corridor Mutex Lock": "w/o corridor reservation $R_{\\text{lock}}$",
     "w/o Human Gaussian Proxemics": "w/o proxemics $H_{\\text{prox}}$",
     "w/o Trolley Kinetic Safety Bubble": "w/o safety envelope $S_{\\text{trolley}}$",
 }
@@ -378,17 +325,24 @@ def table_ablation(res: Dict[str, Any]) -> bool:
     L = _header(
         f"Component ablation of the five cost terms in the retail supermarket domain "
         f"($N={n}$ trials per configuration). Each row removes exactly one term from "
-        f"Eq.~(1); all other parameters are held fixed.",
-        "tab:ablation", "lcccccc",
+        f"Eq.~(1); all other parameters are held fixed. Counts are reported as "
+        f"median [IQR] because they are right-skewed; makespan is mean $\\pm$ SD. "
+        f"No configuration recorded a deadlock in any trial.",
+        "tab:ablation", "lccccc",
         "\\textbf{Configuration} & \\textbf{Success (95\\% CI)} & \\textbf{Makespan (s)} & "
-        "\\textbf{Discomfort} & \\textbf{Deadlocks} & \\textbf{Fixture contacts} & "
+        "\\textbf{Discomfort} & \\textbf{Fixture contacts} & "
         "\\textbf{Contact ticks} \\\\",
         wide=True, resize=True)
     for k in order:
         g = groups[k]
+        # Discomfort and contact counts are right-skewed and, for several arms, have
+        # a standard deviation larger than their mean -- "5.71 +/- 7.29" implies
+        # negative counts, which cannot occur. They are reported as median [IQR],
+        # the same treatment already applied to intimate exposure. Makespan stays
+        # mean +/- SD: it is continuous and roughly symmetric.
         L.append(f"{ABLATION_LABEL.get(k, k)} & {_pct(g)} & {_f(g['makespan'])} & "
-                 f"{_f(g['discomfort'])} & {_f(g['deadlocks'])} & "
-                 f"{_f(g['shelf_contact_events'])} & {_f(g['shelf_contact_ticks'])} \\\\")
+                 f"{_med(g['discomfort'], 1)} & "
+                 f"{_med(g['shelf_contact_events'])} & {_med(g['shelf_contact_ticks'])} \\\\")
     L += _footer(wide=True, resize=True)
     return _emit("table_ablation", L)
 
@@ -434,31 +388,38 @@ def _table_mechanism(res: Dict[str, Any], name: str, label: str,
     comp = res.get("comparisons", {})
     adj = res.get("holm_adjusted_p", {})
     n = res.get("n_pairs", 0)
-    # The test column is abbreviated ("Wilcoxon", "McNemar") and expanded in the
-    # caption: spelling the tests out in full forces \resizebox to shrink the
-    # whole table well below the surrounding body text.
-    short_test = {"Wilcoxon signed-rank": "Wilcoxon", "McNemar (exact)": "McNemar"}
+    # No "Test" column. Every continuous row uses the same test, so a column
+    # repeating it carries no information and costs a fifth of the table width; the
+    # caption states it once instead.
+    #
+    # The mission-success row is included ONLY when the two arms differ. Where both
+    # complete every mission, a row reading "100.0% / 100.0% / p = 1" tells the
+    # reader nothing they cannot be told in half a sentence of prose.
+    on_succ = on.get("success_rate", 0.0)
+    off_succ = off.get("success_rate", 0.0)
+    success_differs = abs(on_succ - off_succ) > 1e-9
+
+    succ_note = ("" if success_differs else
+                 f" Both arms completed {on_succ:.1f}\\% of missions, so mission "
+                 f"success does not separate them and is omitted from the table.")
     L = _header(
         f"{caption} ($N={n}$ paired trials; the same seed drives both arms, so each "
         f"row is a within-pair comparison). Continuous outcomes use the Wilcoxon "
-        f"signed-rank test and mission success McNemar's exact test; rows marked "
-        f"\\emph{{identical}} were equal in every pair. $p$-values are Holm-adjusted "
-        f"across the rows of this table.",
-        label, "lcccc",
+        f"signed-rank test; rows whose two arms were equal in every pair admit no "
+        f"test. $p$-values are Holm-adjusted across the rows of this table.{succ_note}",
+        label, "lccc",
         "\\textbf{Metric} & \\textbf{ON} & \\textbf{OFF} & "
-        "\\textbf{Test} & \\textbf{$p$ (Holm)} \\\\",
+        "\\textbf{$p$ (Holm)} \\\\",
         wide=False, resize=True)
     for key, pretty, prec in rows:
         if key not in on:
             continue
-        test = comp.get(key, {}).get("test", "--")
         L.append(f"{pretty} & {_f(on[key], prec)} & {_f(off[key], prec)} & "
-                 f"{short_test.get(test, test)} & {_p(adj.get(key))} \\\\")
-    L.append("\\midrule")
-    st = comp.get("success", {}).get("test", "McNemar (exact)")
-    L.append(f"Mission success & {on.get('success_rate', 0.0):.1f}\\% & "
-             f"{off.get('success_rate', 0.0):.1f}\\% & {short_test.get(st, st)} & "
-             f"{_p(adj.get('success'))} \\\\")
+                 f"{_p(adj.get(key))} \\\\")
+    if success_differs:
+        L.append("\\midrule")
+        L.append(f"Mission success (McNemar) & {on_succ:.1f}\\% & "
+                 f"{off_succ:.1f}\\% & {_p(adj.get('success'))} \\\\")
     L += _footer(wide=False, resize=True)
     return _emit(name, L)
 
@@ -478,7 +439,7 @@ def table_mesh_anticipation(res: Dict[str, Any]) -> bool:
 def table_corridor_lock(res: Dict[str, Any]) -> bool:
     return _table_mechanism(
         res, "table_corridor_lock", "tab:mech_lock",
-        "Mechanism experiment B: distributed corridor mutex. Two carts are routed into "
+        "Mechanism experiment B: directional corridor reservation. Two carts are routed into "
         "the same single-file corridor from opposite ends",
         [("head_on_events", "Head-on encounters", 2),
          ("deadlocks", "Deadlocks", 2),
@@ -597,35 +558,6 @@ def commit_stamp() -> None:
 # --------------------------------------------------------------------------- #
 # Supplementary + Phase-B experiments
 # --------------------------------------------------------------------------- #
-def table_supplementary_baselines(bench):
-    """The two baselines we decline to draw conclusions from."""
-    if not _usable(bench.get("status")) or not bench.get("groups"):
-        _placeholder("table_supp_baselines", f"benchmark dataset {bench.get('status')}")
-        return False
-    groups = bench["groups"]
-    methods = [m for m in SUPPLEMENTARY if m in groups]
-    if not methods:
-        _placeholder("table_supp_baselines", "no supplementary baselines present")
-        return False
-    L = _header(
-        "Diagnostic baselines, reported separately. Both are our own implementations "
-        "and neither completes any mission under the common arrival criterion. We "
-        "report them for completeness but draw no conclusion about the published "
-        r"algorithms from them: an in-house implementation returning $0\%$ where the "
-        "method is widely used in practice is at least as likely to indicate a defect "
-        "in our code. No claim in this paper depends on these rows.",
-        "tab:supp_baselines", "lccc",
-        r"\textbf{Implementation} & \textbf{Success} & \textbf{Deadlocks} & "
-        r"\textbf{Intimate exposure, median [IQR]} \\",
-        wide=False, resize=True)
-    for m in methods:
-        g = groups[m]
-        L.append(f"{SHORT.get(m, m)} & {_pct(g)} & {_f(g['deadlocks'])} & "
-                 f"{_med(g['intimate_exposure'])} \\\\")
-    L += _footer(wide=False, resize=True)
-    return _emit("table_supp_baselines", L)
-
-
 def figure_weight_sensitivity(res):
     """One panel per outcome; one line per weight, across the multiplier grid."""
     if not _usable(res.get("status")) or not res.get("groups"):
@@ -687,42 +619,10 @@ def figure_weight_sensitivity(res):
     ])
 
 
-def table_comm_robustness(res):
-    """Success and makespan across the packet-loss x latency grid."""
-    if not _usable(res.get("status")) or not res.get("groups"):
-        _placeholder("table_comm_robustness",
-                     f"comm_robustness dataset {res.get('status', 'missing')}")
-        return False
-    groups = res["groups"]
-
-    def parse(name):
-        loss = int(name.split("_")[0].replace("loss", ""))
-        lat = int(name.split("_")[1].replace("lat", "").replace("ms", ""))
-        return loss, lat
-
-    keys = sorted(groups, key=parse)
-    n = groups[keys[0]].get("n", 0)
-    L = _header(
-        f"Communication robustness ($N={n}$ trials per channel condition). All other "
-        f"experiments in this paper assume an ideal channel; this one does not. "
-        f"Packet loss and one-hop latency are swept independently.",
-        "tab:comm_robustness", "cccc",
-        r"\textbf{Packet loss} & \textbf{Latency} & \textbf{Success} & "
-        r"\textbf{Makespan (s)} \\",
-        wide=False, resize=True)
-    for k in keys:
-        loss, lat = parse(k)
-        g = groups[k]
-        L.append(rf"{loss}\% & {lat}\,ms & {_pct(g)} & {_f(g['makespan'])} \\")
-    L += _footer(wide=False, resize=True)
-    return _emit("table_comm_robustness", L)
-
-
 def main() -> None:
     results = load_analysis()
     print("Generating manuscript artefacts from analysis_results.json\n")
     bench_ok = figure_benchmark(results.get("benchmark", {}))
-    table_benchmark(results.get("benchmark", {}))
     commit_stamp()
 
     # Each generator emits its artefact when the dataset is usable and a
@@ -734,9 +634,7 @@ def main() -> None:
     table_corridor_lock(results.get("corridor_lock", {}))
     figure_crowd_density(results.get("crowd_density", {}))
     figure_fleet_size(results.get("fleet_size", {}))
-    table_supplementary_baselines(results.get("benchmark", {}))
     figure_weight_sensitivity(results.get("weight_sensitivity", {}))
-    table_comm_robustness(results.get("comm_robustness", {}))
 
     # fig1_note.tex exists only to explain an ABSENT Figure 1. Once the benchmark
     # figure is produced the note is stale by definition, so it is removed rather
