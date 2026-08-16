@@ -36,7 +36,7 @@
 \maketitle
 
 \begin{abstract}
-The continuous routing of autonomous service fleets—such as retail shopping carts (\textit{Int-Cart}), clinical hospital pushchairs, and airport luggage trolleys—in crowded, human-shared public environments poses fundamental multi-agent coordination challenges. Classical shortest-path and reactive collision-avoidance methods treat pedestrians as obstacles to be cleared rather than as people whose personal space carries a cost, and they possess no mechanism for resolving symmetric conflicts in single-file corridors. This paper proposes the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). $\text{D}^2\text{RO}$ formalizes a dimensionally weighted edge traversal cost, $C_i(e, t) = w_D \cdot C_{\text{geom}}(e) + w_M \cdot C_{\text{mesh}}(e, t) + w_H \cdot C_{\text{social}}(e, t) + w_S \cdot C_{\text{kinematic}}(i, e, t)$, minimised \emph{subject to} a directional corridor reservation constraint ($R_{\text{lock}}$), and solved by incremental heuristic graph repair ($\text{D}^*$ Lite) over event-driven Vehicle-to-Vehicle (V2V) telemetry with exponential decay, continuous 2D asymmetric Gaussian human proxemics, and non-holonomic clearance envelopes. We evaluate over $4{,}600$ kinodynamic simulation trials in eleven experiments, designed so that each claim is attributable. A $2\times2$ factorial isolates social \emph{routing} ($H_{\text{prox}}$) from reactive human \emph{yielding} under dynamic $\text{D}^*$ Lite search, showing that routing alone reduces intimate-space exposure from $6.45$ to $0.00$ person-seconds ($95\%$ CI $[-6.48, -6.31]$) while reactive yielding contributes no measurable further reduction on a social route ($0.11$ person-s, $95\%$ CI $[0.00, 0.32]$, $p = 0.59$) and collapses success from $100\%$ to $12\%$ on a shortest-path one. Against socially blind planners the effect is categorical: median exposure $0$ person-seconds [IQR $0$, $0$] versus $6.40$ [$6.2$, $6.6$] for a matched-controller shortest path ($N=100$ seed-paired trials, Holm-adjusted $p = 9.4 \times 10^{-16}$), bought with makespan of $47.18 \pm 13.40\text{ s}$ against $19.20\text{ s}$. We also report a negative result that bounds the contribution honestly: an ordinary human-aware planner without any distributed layer matches that social compliance exactly ($p=1$) while running $8\text{ s}$ faster, so the mesh and reservation earn their cost only under the topologies our controlled experiments isolate --- anticipatory rerouting $11.10\text{ s}$ before a blockage becomes observable, and corridor success raised from $36\%$ to $88\%$ by cost-projected diversion. Sensitivity over the four weighted terms holds success at $97$--$100\%$ throughout; the paired anticipation advantage is statistically unchanged at $10\%$ packet loss ($p = 0.16$) and falls by $38\%$ at $20\%$ ($p = 6.6 \times 10^{-6}$). The unchanged planner transfers across supermarket, hospital and airport topologies ($99.0\%$, $100.0\%$, $95.0\%$) with $\text{D}^*$ Lite repairs costing a median $0.002\text{ ms}$ within a $0.12\text{ ms}$ control step.
+The continuous routing of autonomous service fleets—such as retail shopping carts (\textit{Int-Cart}), clinical hospital pushchairs, and airport luggage trolleys—in crowded, human-shared public environments poses fundamental multi-agent coordination challenges. Classical shortest-path and reactive collision-avoidance methods treat pedestrians as obstacles to be cleared rather than as people whose personal space carries a cost, and they possess no mechanism for resolving symmetric conflicts in single-file corridors. This paper proposes the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). $\text{D}^2\text{RO}$ formalizes a dimensionally weighted edge traversal cost, $C_i(e, t) = w_D \cdot C_{\text{geom}}(e) + w_M \cdot C_{\text{mesh}}(e, t) + w_H \cdot C_{\text{social}}(e, t) + w_S \cdot C_{\text{kinematic}}(i, e, t)$, minimised \emph{subject to} a directional corridor reservation constraint ($R_{\text{lock}}$), and solved by incremental heuristic graph repair ($\text{D}^*$ Lite) over event-driven Vehicle-to-Vehicle (V2V) telemetry with exponential decay, continuous 2D asymmetric Gaussian human proxemics, and non-holonomic clearance envelopes. We evaluate over $4{,}600$ kinodynamic simulation trials in eleven experiments, designed so that each claim is attributable. A $2\times2$ factorial isolates social \emph{routing} ($H_{\text{prox}}$) from reactive human \emph{yielding} under dynamic $\text{D}^*$ Lite search, showing that routing alone reduces intimate-space exposure from $6.45$ to $0.00$ person-seconds ($95\%$ CI $[-6.48, -6.31]$) while reactive yielding contributes no measurable further reduction on a social route ($0.11$ person-s, $95\%$ CI $[0.00, 0.32]$, $p = 0.59$) and collapses success from $100\%$ to $12\%$ on a shortest-path one. Against socially blind planners the effect is categorical: median exposure $0$ person-seconds [IQR $0$, $0$] versus $6.40$ [$6.2$, $6.6$] for a matched-controller shortest path ($N=100$ seed-paired trials, Holm-adjusted $p = 9.4 \times 10^{-16}$), bought with makespan of $47.18 \pm 13.40\text{ s}$ against $19.20\text{ s}$. Holding social competence fixed and varying only the coordination architecture then bounds what the distributed layer contributes, which is the question the study is organised around: an ordinary human-aware planner carrying the same proxemic cost but no distributed layer matches that social compliance exactly ($p=1$) while running $8\text{ s}$ faster, so the mesh and reservation earn their cost only under the topologies our controlled experiments isolate --- anticipatory rerouting $11.10\text{ s}$ before a blockage becomes observable, and corridor success raised from $36\%$ to $88\%$ by cost-projected diversion. Sensitivity over the four weighted terms holds success at $97$--$100\%$ throughout; the paired anticipation advantage is statistically unchanged at $10\%$ packet loss ($p = 0.16$) and falls by $38\%$ at $20\%$ ($p = 6.6 \times 10^{-6}$). The unchanged planner transfers across supermarket, hospital and airport topologies ($99.0\%$, $100.0\%$, $95.0\%$) with $\text{D}^*$ Lite repairs costing a median $0.002\text{ ms}$ within a $0.12\text{ ms}$ control step.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -89,13 +89,14 @@ seamlessly unifying incremental heuristic graph repair ($\text{D}^*$ Lite) \cite
 
 \subsection{Research Aims \& Key Contributions}
 \label{sec:aims}
-The framework is designed against four explicit aims, and we return to each of them in the discussion and conclusion. \textbf{A1, social compliance:} route service fleets so that pedestrians' intimate space is not entered, accepting bounded additional travel time as the price (Section~\ref{sec:tradeoff}). \textbf{A2, distributed coordination without a central server:} resolve congestion and single-file conflicts using only peer-to-peer information within a bounded sensing radius (Section~\ref{sec:mechanism}). \textbf{A3, architectural generality and real-time feasibility:} operate unchanged across dissimilar public topologies within a $50\text{ ms}$ control budget (Sections~\ref{sec:cross_domain_failure} and~\ref{sec:scalability}). \textbf{A4, attributable evaluation:} measure the contribution of the routing policy \emph{itself}, separately from the vehicle controller that executes it, and establish whether the result depends on the particular weights chosen (Sections~\ref{sec:tradeoff} and~\ref{sec:sensitivity}).
+The framework is designed against four explicit aims, and we return to each of them in the discussion and conclusion. \textbf{A1, social compliance:} route service fleets so that pedestrians' intimate space is not entered, accepting bounded additional travel time as the price (Section~\ref{sec:tradeoff}). \textbf{A2, distributed coordination without a central server, and the conditions under which it is warranted:} resolve congestion and single-file conflicts using only peer-to-peer information within a bounded sensing radius, and establish when that layer earns its cost by comparing it against a non-distributed planner of equal social competence rather than against a socially blind one (Section~\ref{sec:mechanism}). \textbf{A3, architectural generality and real-time feasibility:} operate unchanged across dissimilar public topologies within a $50\text{ ms}$ control budget (Sections~\ref{sec:cross_domain_failure} and~\ref{sec:scalability}). \textbf{A4, attributable evaluation:} measure the contribution of the routing policy \emph{itself}, separately from the vehicle controller that executes it, and establish whether the result depends on the particular weights chosen (Sections~\ref{sec:tradeoff} and~\ref{sec:sensitivity}).
 
 The primary scientific contributions of this research are:
 \begin{enumerate}
     \item \textbf{Distributed Anticipatory Edge-Cost Propagation \& Horizon Extension:} We formalize a distributed dynamic graph-cost field in which localized physical and social perturbations observed by leading agents become peer-to-peer, time-decayed edge penalties $C_{\text{mesh}}(e, t)$. This extends each robot's effective planning horizon ($\mathcal{O}_i^{\text{effective}}(t)$) beyond its onboard sensing radius ($R_s$). Under a controlled experiment that isolates the mechanism (Section~\ref{sec:mechanism}), agents divert $10.70 \pm 4.20\text{ s}$ before they could have observed the obstruction directly, and more than halve their backtracking distance ($1.08 \pm 0.68\text{ m}$ vs. $2.73 \pm 0.87\text{ m}$, Holm-adjusted $p = 3.2 \times 10^{-8}$).
     \item \textbf{Distributed Directional Bottleneck Reservation Protocol:} We formalize an explicit distributed protocol for single-file topological bottlenecks (Eq.~\eqref{eq:singlefile}) via directional reservation tuples $\mathcal{L}_e = \langle \text{owner}, \vec{d}, t_{\text{acquire}}, t_{\text{expire}}, \text{priority} \rangle$ and Turnout Alcoves ($V_{\text{alcove}}$). In the controlled corridor experiment the protocol raises mission success from $36.0\%$ to $88.0\%$ ($p = 1.7 \times 10^{-4}$). The mechanism operates by \emph{cost-projected diversion} rather than by mutual exclusion: agents leave the contested corridor ($2.16 \pm 1.36$ off-corridor vertices against $0.00$, $p = 2.3 \times 10^{-8}$) while accumulating $0.030 \pm 0.070\text{ s}$ of waiting. We therefore describe it as a directional reservation rather than a mutex, and analyse the distinction in Section~\ref{sec:mechanism}.
     \item \textbf{Kinodynamically \& Socially Conditioned Incremental Optimization:} We unify asymmetric human proxemic discomfort fields ($C_{\text{social}}$) and vehicle-specific clearance envelopes ($C_{\text{kinematic}}$) directly into an incremental $\text{D}^*$ Lite graph repair engine, executing incremental repairs at a median of $0.002\text{ ms}$ (p95 $0.10\text{ ms}$) without global re-heapification. Ablation shows the proxemic term is load-bearing: removing it collapses mission success from $100.0\%$ to $11.0\%$.
+    \item \textbf{A Boundary Condition on Distributed Coordination:} We hold social competence fixed and vary only the coordination architecture, which is what makes the distributed layer's contribution separable. Measured this way it is not a general improvement. In a broad randomized scenario it contributes nothing detectable: an ordinary human-aware $\text{D}^*$ Lite planner carrying the same proxemic cost but no mesh and no reservation matches the full system's social compliance exactly ($p = 1$) while completing missions $8.12\text{ s}$ sooner. Under the two topologies the mechanisms are designed for --- a blockage outside a follower's sensing range, and a single-file corridor entered from both ends --- the same layer is decisive, advancing rerouting by $10.70\text{ s}$ and raising corridor success from $36.0\%$ to $88.0\%$. We report this boundary as a finding rather than as a caveat, because it is the practically useful part: it tells a deployer which topologies justify the radio and which do not.
     \item \textbf{Comprehensive Multi-Domain Empirical Benchmark Suite:} We validate the framework across three distinct architectural topologies (Retail Supermarket, Clinical Hospital, and Airport Terminal) over $4{,}600$ simulation trials in eleven experiments, including a matched-controller baseline that separates routing from vehicle dynamics, a local-social baseline that separates the distributed layer from ordinary human-aware navigation, a route-by-yield factorial, a four-weight sensitivity study on a disjoint seed set, and communication degradation applied where the mesh is causally responsible. Every table and figure in this paper is generated programmatically from the committed raw data by a single analysis pipeline, with no hand-entered numbers; datasets and code are released under open licenses.
 \end{enumerate}
 
@@ -133,7 +134,9 @@ Bringing these concepts into physical retail spaces, Mohamad Azlan \textit{et al
 \subsection{Human-Aware Navigation \& Research Gap}
 A consistent theme of the human-aware navigation literature is that robots cannot treat people simply as ``moving cylindrical obstacles''. Kruse \textit{et al.} \cite{kruse2013human} survey this position at length: comfort, legibility and social convention are objectives in their own right, not by-products of collision avoidance, and a planner that satisfies only the geometric constraint can still be experienced as intrusive. Planners must therefore incorporate proxemics (personal-space boundaries) and contextual human activity into routing itself. 
 
-\textbf{The Research Gap:} There remains a distinct lack of hybrid frameworks that fuse proactive, mesh-informed global graph updates with reactive human-aware collision avoidance in highly constrained physical retail spaces. Most decentralized MAPF algorithms assume either complete centralized knowledge (vulnerable to latency/failure) or rely on myopic range-limited sensing (resulting in late-stage deadlocks in narrow corridors). The $\text{D}^2\text{RO}$ framework bridges this gap.
+\textbf{The Research Gap:} Distributed coordination layers --- peer-to-peer telemetry, reservation protocols, negotiated passage --- are widely proposed for multi-robot navigation in human environments. They are also, almost without exception, evaluated against baselines that lack \emph{both} the distributed layer \emph{and} any social competence: a shortest-path planner, a reactive avoider, a centralized solver. That comparison cannot separate the two contributions. A socially weighted distributed planner will outperform a socially blind one whether or not the distribution itself does any work, so the necessity of the distributed layer is customarily assumed rather than demonstrated.
+
+The gap we address is therefore not the absence of another hybrid. It is the absence of a study that holds social competence \emph{fixed} and varies only the coordination architecture, and so can say when a distributed layer is warranted at all. This paper is organised around that question. We build the hybrid framework, and then we spend most of the evaluation trying to find out whether its distributed half is necessary --- including against a baseline that is deliberately constructed to be its equal in social behaviour while sharing none of its coordination machinery. The answer turns out to be conditional, and the conditions are the contribution.
 
 % ==============================================================================
 % SECTION III: PROBLEM FORMULATION & METHODOLOGY
@@ -495,25 +498,32 @@ the conventional unmatched implementation. They differ by only $1.20\text{ s}$
 $29.18\text{ s}$ separating $\text{D}^2\text{RO}$ from a shortest path. Both record
 identical exposure, confirming the matched arm is socially blind as intended.
 
-\textbf{The distributed layer does not pay for itself in this scenario, and we
-report that.} Local Social $\text{D}^*$ Lite --- proxemics, yielding, safety and
-dynamic replanning, but no V2V mesh and no reservation --- is the comparator a
-reader most wants, because it is ordinary human-aware navigation. It achieves
-\emph{exactly} the social compliance of the full system (median $0$ person-seconds;
-the paired difference is not distinguishable from zero, $p = 1$) at
-$39.06 \pm 15.12\text{ s}$ against $47.18 \pm 13.40\text{ s}$, a difference that is
-significant ($p = 2.0\times10^{-5}$). In the broad supermarket benchmark the
-distributed layer therefore costs roughly $8\text{ s}$ and returns nothing
-measurable.
+\textbf{The equal-competence control: is the distributed layer necessary here?}
+This is the comparison Aim~A2 requires and the one the literature usually omits.
+Local Social $\text{D}^*$ Lite carries the same proxemic cost, yielding, safety
+envelope and dynamic replanning as the full system, and none of its coordination
+machinery --- no V2V mesh, no reservation. It is ordinary human-aware navigation,
+constructed to be $\text{D}^2\text{RO}$'s equal in social behaviour so that any
+remaining difference is attributable to distribution alone.
 
-This is a negative result about our own contribution and it bounds the claim
-properly. What eliminates intimate-space exposure is the \emph{socially weighted
-graph}, which both systems share. What the \emph{distributed} layer adds appears
-only where its target topology is instantiated: anticipatory diversion before a
-blockage is observable, and corridor conflicts that a single agent cannot resolve
-alone. Section~\ref{sec:mechanism} evaluates exactly those conditions, and the
-broad benchmark should not be read as evidence for or against mechanisms it does
-not exercise.
+It achieves \emph{exactly} the social compliance of the full system (median $0$
+person-seconds; the paired difference is not distinguishable from zero, $p = 1$) at
+$39.06 \pm 15.12\text{ s}$ against $47.18 \pm 13.40\text{ s}$, a difference that is
+significant ($p = 2.0\times10^{-5}$). In this scenario the distributed layer
+therefore costs roughly $8\text{ s}$ and returns nothing measurable, and the answer
+to the question is: not here.
+
+The comparison also localises \emph{why}. What eliminates intimate-space exposure is
+the socially weighted graph, which both systems share --- consistent with the
+factorial of Section~\ref{sec:factorial}, which reaches the same conclusion by a
+different route. What the \emph{distributed} layer adds appears only where its target
+topology is instantiated: anticipatory diversion before a blockage is observable, and
+corridor conflicts a single agent cannot resolve alone. Section~\ref{sec:mechanism}
+evaluates exactly those conditions and finds the layer decisive there. Neither result
+subsumes the other, and the broad benchmark should not be read as evidence for or
+against mechanisms it does not exercise; read together they delimit when the
+distributed architecture is worth its cost, which is what Aim~A2 set out to
+establish.
 
 \textbf{On makespan reporting.} Fig.~\ref{fig:benchmark}(b) summarises makespan over
 \emph{successful} missions only, whereas the paired tests operate on all $N=100$
@@ -760,16 +770,24 @@ This paper introduced the Distributed Dynamic Route Optimization ($\text{D}^2\te
 
 \textbf{A1 (social compliance) is met, and now attributably so.} Median intimate-space exposure is $0.00$ person-seconds [IQR $0$, $0$] against $6.40$ for a matched-controller shortest path and $10.18$ for artificial potential fields (Holm-adjusted $p = 9.4 \times 10^{-16}$ and $4.7 \times 10^{-16}$ respectively). The $2\times2$ factorial of Section~\ref{sec:factorial} establishes that this is produced by the socially weighted graph ($H_{\text{prox}}$) and not by the reactive yielding layer: routing alone drives exposure to $0.00$ person-seconds, while reactive yielding without social routing inflates exposure by $42.92\text{ person-s}$ ($95\%$ CI $[37.89, 48.08]$) and produces a strongly negative interaction contrast ($\Delta_{\text{interaction}} = -42.81\text{ person-s}$, $95\%$ CI $[-47.99, -37.76]$, Holm-adjusted $p = 4.7 \times 10^{-21}$). Adding yielding to an already social route changes exposure by $0.11\text{ person-s}$ ($p = 0.59$), a null we report as such. The compliance is bought with $19.03\text{ s}$ of makespan ($95\%$ CI $[16.27, 22.31]$), measured with yielding held constant.
 
-\textbf{A2 (distributed coordination) is met only under the conditions it targets,
-and we bound the claim accordingly.} Under controlled conditions the mesh advances
-rerouting by $10.70 \pm 4.20\text{ s}$ and the directional reservation raises corridor
-success from $36.0\%$ to $88.0\%$ by cost-projected diversion rather than by
-queueing. But an ordinary human-aware planner with no distributed layer at all
+\textbf{A2 (distributed coordination, and the conditions under which it is
+warranted) is met, and the answer is conditional.} This aim asked not whether a
+distributed layer \emph{can} coordinate a fleet but when it is \emph{needed}, which
+is answerable only against a control of equal social competence. Against that
+control the layer contributes nothing detectable in the broad scenario: an ordinary
+human-aware planner carrying the same proxemic cost but no mesh and no reservation
 matches the full system's social compliance exactly ($p = 1$) while running
-$8\text{ s}$ faster in the broad benchmark. The distributed layer is therefore not a
-general improvement; it is a targeted one, and a deployment whose topology never
-produces out-of-sight blockages or contested single-file corridors would be right to
-omit it.
+$8\text{ s}$ faster. Under the topologies the mechanisms target it is decisive,
+advancing rerouting by $10.70 \pm 4.20\text{ s}$ and raising corridor success from
+$36.0\%$ to $88.0\%$ by cost-projected diversion rather than by queueing.
+
+The distributed layer is therefore not a general improvement but a targeted one, and
+we regard locating that boundary as the more useful result. A deployment whose
+topology routinely produces blockages outside a follower's sensing range, or
+single-file corridors entered from both ends, should pay for the radio; one that
+does not would be right to omit it and run the local planner, which is simpler,
+faster and equally well behaved around people. Reporting the condition is what makes
+the positive result actionable rather than merely favourable.
 
 \textbf{A3 (generality and real-time feasibility) is met, within a stated fleet
 bound.} The unchanged planner achieves $99.0\%$, $100.0\%$ and $95.0\%$ success

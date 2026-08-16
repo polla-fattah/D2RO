@@ -78,8 +78,20 @@ maximised:
 | Static A\* | 100.0% | **18.00 s** | 6.40 |
 | APF | 100.0% | 34.54 s | 10.18 |
 
-**What the evidence supports.** Socially weighted routing essentially eliminates
-intimate-space intrusion (median 0 person-seconds vs 6.40, Holm-adjusted
+### The question this study is organised around
+
+Distributed coordination layers — peer-to-peer telemetry, reservation protocols — are
+widely proposed for multi-robot navigation and almost always evaluated against
+baselines that lack *both* the distributed layer *and* any social competence. That
+comparison cannot separate the two: a socially weighted distributed planner beats a
+socially blind one whether or not the distribution does any work.
+
+So we hold social competence fixed and vary only the coordination architecture, and
+ask **when a distributed layer is actually necessary.** The answer is conditional,
+and the conditions are the contribution.
+
+**Where the social behaviour comes from.** Socially weighted routing essentially
+eliminates intimate-space intrusion (median 0 person-seconds vs 6.40, Holm-adjusted
 *p* = 9.4 × 10⁻¹⁶). A 2×2 factorial isolates the cause: with the mesh and the
 reservation disabled in every cell and D\* Lite replanning in every cell, enabling
 the proxemic cost term alone drops exposure by 6.40 person-seconds
@@ -87,12 +99,17 @@ the proxemic cost term alone drops exposure by 6.40 person-seconds
 Reactive yielding adds nothing on top of a social route (0.11 person-s, *p* = 0.59)
 and collapses success to 12% on a shortest-path one.
 
-**What it does not.** An ordinary human-aware planner with no distributed layer
-matches that compliance exactly (*p* = 1) while running 8 s faster. The V2V mesh and
-the corridor reservation earn their cost only under the topologies the controlled
-experiments isolate — anticipatory rerouting 10.7 s before a blockage is observable,
-and corridor success raised from 36% to 88%. We report that negative result rather
-than omit it.
+**When the distributed layer is not needed.** Against an equal-competence control —
+Local Social D\* Lite, same proxemic cost, no mesh, no reservation — the full system
+gains nothing measurable in the broad scenario: identical social compliance
+(*p* = 1) while running 8 s slower.
+
+**When it is decisive.** Under the two topologies the mechanisms target, the same
+layer carries the outcome: anticipatory rerouting 10.7 s before a blockage enters
+sensing range, and corridor success raised from 36% to 88% by cost-projected
+diversion. A deployment whose topology produces out-of-sight blockages or contested
+single-file corridors should pay for the radio; one that does not should run the
+local planner, which is simpler, faster, and equally well behaved around people.
 
 > ORCA and Decentralized Local MAPF are our own implementations and complete 0% of
 > missions. They are reported as diagnostics only; no claim depends on them.
