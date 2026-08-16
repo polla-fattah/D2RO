@@ -571,7 +571,7 @@ If you use this code or data in your research, please cite (details to be update
 
 ```bibtex
 @unpublished{fattah2026d2ro,
-  title   = {Socially-Weighted Distributed Graph Optimization ({D\textsuperscript{2}RO})
+  title   = {Socially-Weighted Distributed Graph Optimization ({SW-DGO})
              for Autonomous Multi-Agent Service Fleets in Crowded Environments},
   author  = {Fattah, Polla and Fawzi, Sanar},
   note    = {Manuscript under review},
