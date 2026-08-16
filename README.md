@@ -14,10 +14,10 @@ Department of Computer Science and Engineering, Koya University
 
 ---
 
-> ℹ️ **Status: round-4 revision. All 11 datasets verified against the current code.**
+> ℹ️ **Status: minor revision. All 11 datasets verified against the current code.**
 > 4,650 simulation trials across 11 experiments. Every table, figure and numeric
 > claim in the manuscript is generated or verified against the committed raw data
-> by a single pipeline; `paper/scripts/verify_manuscript_claims.py` pins 51 exact
+> by a single pipeline; `paper/scripts/verify_manuscript_claims.py` pins 58 exact
 > claims and fails the build if the prose and the data disagree.
 >
 > **Reproduce everything from a clean checkout with one command:**
@@ -46,7 +46,7 @@ Department of Computer Science and Engineering, Koya University
 > have bitten this project more than once.
 >
 > Point-by-point replies to the reviewers are in
-> [`docs/RESPONSE_TO_REVIEWERS_R4.md`](docs/RESPONSE_TO_REVIEWERS_R4.md).
+> [`docs/RESPONSE_TO_REVIEWERS_R5_MINOR.md`](docs/RESPONSE_TO_REVIEWERS_R5_MINOR.md).
 > Work still open is tracked in [`docs/OUTSTANDING_WORK.md`](docs/OUTSTANDING_WORK.md).
 
 ## What is D²RO?
