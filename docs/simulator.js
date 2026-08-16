@@ -118,12 +118,28 @@ class PySimEngine:
         self.mesh_net = MeshNetwork(comm_radius=350.0)
         self.agents = []
 
-        # Ablation mode flags
-        enable_mesh = (ablation_mode != "no_mesh")
-        enable_prox = (ablation_mode != "static_a_star")
-        enable_lock = (ablation_mode != "static_a_star")
-        enable_safety = (ablation_mode != "static_a_star")
-        static_route = (ablation_mode == "static_a_star")
+        # Ablation mode flags.
+        #
+        # "static_a_star" reproduces the manuscript's MATCHED-CONTROLLER baseline,
+        # whose whole purpose is to differ from the proposed method in routing
+        # policy ONLY. It therefore keeps the safety envelope (identical vehicle
+        # dynamics) and drops the mesh (no peer information):
+        #
+        #     enable_mesh=False, enable_prox=False, enable_lock=False,
+        #     enable_safety=True, static_route=True, enable_yield=False
+        #
+        # An earlier version of this demo had two of those backwards -- it left the
+        # mesh ENABLED and switched the safety envelope OFF -- so the baseline shown
+        # here was neither the published arm nor a fair comparison: it was a socially
+        # blind planner that also drove differently. Kept in sync with
+        # run_experiments.py::run_baseline_comparison.
+        is_matched = (ablation_mode == "static_a_star")
+        enable_mesh = (ablation_mode != "no_mesh") and not is_matched
+        enable_prox = not is_matched
+        enable_lock = not is_matched
+        enable_safety = True
+        static_route = is_matched
+        enable_yield = not is_matched
 
         for cfg in cfgs:
             agent = TrolleyAgent(
@@ -136,7 +152,8 @@ class PySimEngine:
                 enable_lock=enable_lock,
                 enable_prox=enable_prox,
                 enable_safety=enable_safety,
-                static_route=static_route
+                static_route=static_route,
+                enable_yield=enable_yield
             )
             self.agents.append(agent)
 

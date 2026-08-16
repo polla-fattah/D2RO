@@ -26,6 +26,13 @@ jobs:
       - name: Run test suite
         run: PYTHONDONTWRITEBYTECODE=1 python -m pytest d2ro/tests/ -q
 
+      # The browser demo executes a snapshot of d2ro/ embedded in
+      # docs/python_bundle.js. Nothing about editing the package refreshes it, so
+      # without this the published demo drifts away from the code the paper
+      # describes, silently and indefinitely.
+      - name: Web demo bundle must match the Python sources
+        run: python scripts/check_web_bundle.py
+
   provenance:
     name: Data provenance and manuscript claims
     runs-on: ubuntu-latest
