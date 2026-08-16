@@ -46,7 +46,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended \
-            texlive-publishers poppler-utils
+            texlive-publishers texlive-science poppler-utils
 
       - name: Unit tests
         run: PYTHONDONTWRITEBYTECODE=1 python -m pytest d2ro/tests/ -q
