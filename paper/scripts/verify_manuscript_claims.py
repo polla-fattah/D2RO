@@ -29,83 +29,66 @@ W = d["weight_sensitivity"]["groups"]
 R = d["comm_robustness"]["groups"]
 M = d["mesh_anticipation"]
 L = d["corridor_lock"]
+Y = d["route_yield_factorial"]["groups"]
+DG = d["mesh_degradation"]["groups"]
 
 D2 = "D2RO (SW-DGO Proposed)"
 MATCHED = "Static A* (matched controller)"
+LOCAL = "Local Social D* Lite"
 APF = "Reactive Avoidance (Potential Field)"
 
 CHECKS = [
-    # --- benchmark / matched controller -------------------------------------
+    # --- benchmark ------------------------------------------------------------
     ("D2RO success",              99.0,   B[D2]["success_rate"], 1),
     ("D2RO makespan",             47.18,  B[D2]["makespan_successful"]["mean"], 2),
     ("D2RO makespan sd",          13.40,  B[D2]["makespan_successful"]["sd"], 2),
+    ("D2RO exposure person-s",    0.00,   B[D2]["exposure_person_s"]["median"], 2),
+    ("local social success",     100.0,   B[LOCAL]["success_rate"], 1),
+    ("local social makespan",     39.06,  B[LOCAL]["makespan_successful"]["mean"], 2),
+    ("local social makespan sd",  15.12,  B[LOCAL]["makespan_successful"]["sd"], 2),
+    ("local social exposure",      0.00,  B[LOCAL]["exposure_person_s"]["median"], 2),
     ("matched A* makespan",       19.20,  B[MATCHED]["makespan_successful"]["mean"], 2),
     ("unmatched A* makespan",     18.00,  B["Static A*"]["makespan_successful"]["mean"], 2),
-    ("matched A* exposure med",   128,    B[MATCHED]["intimate_exposure"]["median"], 0),
-    ("unmatched A* exposure med", 128,    B["Static A*"]["intimate_exposure"]["median"], 0),
-    ("D2RO exposure median",      0,      B[D2]["intimate_exposure"]["median"], 0),
+    ("matched A* exposure",        6.40,  B[MATCHED]["exposure_person_s"]["median"], 2),
+    ("APF exposure",              10.18,  B[APF]["exposure_person_s"]["median"], 2),
     ("APF makespan",              34.54,  B[APF]["makespan_successful"]["mean"], 2),
-    ("APF exposure median",       204,    B[APF]["intimate_exposure"]["median"], 0),
-    # --- timing (the corrected quantities) ----------------------------------
-    ("repair median ms",          0.005,  B[D2]["repair_median_ms"]["mean"], 3),
-    ("repair p95 ms",             0.19,   B[D2]["repair_p95_ms"]["mean"], 2),
-    ("controller step ms",        0.227,  B[D2]["step_compute_ms"]["mean"], 3),
-    # --- ablation ------------------------------------------------------------
-    ("ablation full makespan",    47.38,  A["Full D2RO Framework"]["makespan"]["mean"], 2),
-    ("ablation no-mesh makespan", 38.23,  A["w/o V2V Mesh Telemetry"]["makespan"]["mean"], 2),
-    ("ablation no-lock makespan", 37.86,  A["w/o Corridor Mutex Lock"]["makespan"]["mean"], 2),
+    # --- timing ---------------------------------------------------------------
+    ("repair median ms",          0.002,  B[D2]["repair_median_ms"]["mean"], 3),
+    ("repair p95 ms",             0.09,   B[D2]["repair_p95_ms"]["mean"], 2),
+    ("controller step ms",        0.119,  B[D2]["step_compute_ms"]["mean"], 3),
+    # --- factorial (the attribution experiment) -------------------------------
+    ("factorial A makespan",      19.20,  Y["A_frozen_noyield"]["makespan"]["mean"], 2),
+    ("factorial A exposure",       6.43,  Y["A_frozen_noyield"]["exposure_person_s"]["mean"], 2),
+    ("factorial B success",       12.0,   Y["B_frozen_yield"]["success_rate"], 1),
+    ("factorial B makespan",     173.89,  Y["B_frozen_yield"]["makespan"]["mean"], 2),
+    ("factorial C exposure",       0.03,  Y["C_social_noyield"]["exposure_person_s"]["mean"], 2),
+    ("factorial C makespan",      49.14,  Y["C_social_noyield"]["makespan"]["mean"], 2),
+    ("factorial D exposure",       0.62,  Y["D_social_yield"]["exposure_person_s"]["mean"], 2),
+    # --- ablation with the safety split ---------------------------------------
+    ("ablation full contacts",       3,   A["Full D2RO Framework"]["shelf_contact_events"]["median"], 0),
+    ("ablation cost-only contacts",  5,   A["w/o S_trolley cost only"]["shelf_contact_events"]["median"], 0),
+    ("ablation ctl-only contacts",  48,   A["w/o safety controller only"]["shelf_contact_events"]["median"], 0),
+    ("ablation fullstack contacts", 93.5, A["w/o safety (full stack)"]["shelf_contact_events"]["median"], 1),
     ("ablation no-prox success",  11.0,   A["w/o Human Gaussian Proxemics"]["success_rate"], 1),
-    ("contacts full",             5.71,   A["Full D2RO Framework"]["shelf_contact_events"]["mean"], 2),
-    ("contacts no-safety",        95.14,  A["w/o Trolley Kinetic Safety Bubble"]["shelf_contact_events"]["mean"], 2),
-    ("contacts no-prox",          59.18,  A["w/o Human Gaussian Proxemics"]["shelf_contact_events"]["mean"], 2),
-    ("ticks full",                193.05, A["Full D2RO Framework"]["shelf_contact_ticks"]["mean"], 2),
-    ("ticks no-safety",           271.71, A["w/o Trolley Kinetic Safety Bubble"]["shelf_contact_ticks"]["mean"], 2),
-    # Medians now carry the ablation argument in both the table and the prose, so
-    # they are checked as first-class claims rather than left to the table alone.
-    ("contacts full median",      3,      A["Full D2RO Framework"]["shelf_contact_events"]["median"], 0),
-    ("contacts no-safety median", 93.5,   A["w/o Trolley Kinetic Safety Bubble"]["shelf_contact_events"]["median"], 1),
-    ("contacts no-prox median",   56,     A["w/o Human Gaussian Proxemics"]["shelf_contact_events"]["median"], 0),
-    ("ticks full median",         154,    round(A["Full D2RO Framework"]["shelf_contact_ticks"]["median"]), 0),
-    ("ticks no-safety median",    244,    A["w/o Trolley Kinetic Safety Bubble"]["shelf_contact_ticks"]["median"], 0),
-    ("discomfort no-prox median", 13.5,   A["w/o Human Gaussian Proxemics"]["discomfort"]["median"], 1),
-    ("discomfort full median",    0,      A["Full D2RO Framework"]["discomfort"]["median"], 1),
-    # --- cross-domain --------------------------------------------------------
+    ("ablation no-mesh makespan", 38.23,  A["w/o V2V Mesh Telemetry"]["makespan"]["mean"], 2),
+    # --- cross-domain ----------------------------------------------------------
     ("cross supermarket success", 99.0,   X["Retail Supermarket"]["success_rate"], 1),
-    ("cross hospital success",    100.0,  X["Clinical Hospital"]["success_rate"], 1),
+    ("cross hospital success",   100.0,   X["Clinical Hospital"]["success_rate"], 1),
     ("cross airport success",     95.0,   X["Airport Terminal"]["success_rate"], 1),
-    ("cross hospital replans",    351.9,  X["Clinical Hospital"]["replans"]["mean"], 1),
-    ("cross airport replans",     989.4,  X["Airport Terminal"]["replans"]["mean"], 1),
-    ("cross supermkt replans",    502.3,  X["Retail Supermarket"]["replans"]["mean"], 1),
-    # --- scalability ---------------------------------------------------------
-    ("crowd step ms @2",          0.093,  C["2"]["replan_latency_ms"]["mean"], 3),
-    ("crowd step ms @30",         0.175,  C["30"]["replan_latency_ms"]["mean"], 3),
-    ("crowd makespan @2",         30.10,  C["2"]["makespan"]["mean"], 2),
-    ("crowd makespan @30",        56.30,  C["30"]["makespan"]["mean"], 2),
-    ("fleet success @10",         85.0,   F["10"]["success_rate"], 1),
+    # --- scalability ------------------------------------------------------------
     ("fleet success @12",         78.0,   F["12"]["success_rate"], 1),
-    ("fleet makespan @2",         50.99,  F["2"]["makespan"]["mean"], 2),
-    ("fleet makespan @12",        110.17, F["12"]["makespan"]["mean"], 2),
-    ("fleet packets @2",          8.50,   F["2"]["mesh_packets"]["mean"], 2),
-    ("fleet packets @12",         1158.60, F["12"]["mesh_packets"]["mean"], 2),
-    # --- weight sensitivity --------------------------------------------------
-    ("w_D x0.5 makespan",         63.8,   W["w_Dx0.5"]["makespan"]["mean"], 1),
-    ("w_D x1.5 makespan",         39.1,   W["w_Dx1.5"]["makespan"]["mean"], 1),
+    ("crowd step ms @2",          0.092,  C["2"]["replan_latency_ms"]["mean"], 3),
+    ("crowd step ms @30",         0.171,  C["30"]["replan_latency_ms"]["mean"], 3),
+    # --- sensitivity (post heuristic fix) --------------------------------------
     ("w_H x0.5 makespan",         37.5,   W["w_Hx0.5"]["makespan"]["mean"], 1),
     ("w_H x1.5 makespan",         47.1,   W["w_Hx1.5"]["makespan"]["mean"], 1),
-    # --- mechanism experiments ----------------------------------------------
+    ("w_D x0.5 makespan",         52.7,   W["w_Dx0.5"]["makespan"]["mean"], 1),
+    ("w_D x1.5 makespan",         40.7,   W["w_Dx1.5"]["makespan"]["mean"], 1),
+    # --- mechanisms -------------------------------------------------------------
     ("mechA lead ON",             10.70,  M["conditions"]["on"]["anticipation_lead_time_s"]["mean"], 2),
-    ("mechA backtrack ON",        1.08,   M["conditions"]["on"]["backtrack_distance_m"]["mean"], 2),
-    ("mechA backtrack OFF",       2.73,   M["conditions"]["off"]["backtrack_distance_m"]["mean"], 2),
     ("mechB success ON",          88.0,   L["conditions"]["on"]["success_rate"], 1),
     ("mechB success OFF",         36.0,   L["conditions"]["off"]["success_rate"], 1),
-    ("mechB corridor ON",         40.01,  L["conditions"]["on"]["corridor_time_s"]["mean"], 2),
-    ("mechB corridor OFF",        89.41,  L["conditions"]["off"]["corridor_time_s"]["mean"], 2),
-    ("mechB headon ON",           1.08,   L["conditions"]["on"]["head_on_events"]["mean"], 2),
-    ("mechB outside ON",          2.16,   L["conditions"]["on"]["nodes_outside_corridor"]["mean"], 2),
-    ("mechB outside OFF",         0.00,   L["conditions"]["off"]["nodes_outside_corridor"]["mean"], 2),
-    ("mechB replans ON",          25.18,  L["conditions"]["on"]["replans"]["mean"], 2),
-    ("mechB replans OFF",         10.16,  L["conditions"]["off"]["replans"]["mean"], 2),
-    ("mechB total wait ON",       0.030,  L["conditions"]["on"]["total_lock_wait_s"]["mean"], 3),
+    ("mechB outside ON",           2.16,  L["conditions"]["on"]["nodes_outside_corridor"]["mean"], 2),
 ]
 
 
@@ -118,30 +101,26 @@ def main() -> int:
     print(f"{len(CHECKS) - bad}/{len(CHECKS)} prose claims match analysis_results.json")
 
     # derived statements made in the text
-    # Two different gaps, easily confused. The manuscript quotes the gap to the
-    # UNMATCHED shortest path (29.18 s) and then attributes 1.20 s of it to the
-    # controller, leaving ~28 s to routing -- which is the gap to the MATCHED arm.
     gap_unmatched = (B[D2]["makespan_successful"]["mean"]
                      - B["Static A*"]["makespan_successful"]["mean"])
-    gap = (B[D2]["makespan_successful"]["mean"]
-           - B[MATCHED]["makespan_successful"]["mean"])
     ctrl = (B[MATCHED]["makespan_successful"]["mean"]
             - B["Static A*"]["makespan_successful"]["mean"])
-    print(f"\n  derived: D2RO - unmatched gap    = {gap_unmatched:.2f} s   (paper: 29.18)")
-    ratio = (A["w/o Trolley Kinetic Safety Bubble"]["shelf_contact_events"]["mean"]
-             / A["Full D2RO Framework"]["shelf_contact_events"]["mean"])
-    ratio_med = (A["w/o Trolley Kinetic Safety Bubble"]["shelf_contact_events"]["median"]
-                 / A["Full D2RO Framework"]["shelf_contact_events"]["median"])
+    routing = (Y["C_social_noyield"]["makespan"]["mean"]
+               - Y["A_frozen_noyield"]["makespan"]["mean"])
+    ls_delta = (B[D2]["makespan_successful"]["mean"]
+                - B[LOCAL]["makespan_successful"]["mean"])
     succ = [g["success_rate"] for g in W.values()]
-    print(f"  derived: D2RO - matched gap      = {gap:.2f} s   (paper: ~28, the routing share)")
+    print(f"\n  derived: D2RO - unmatched gap    = {gap_unmatched:.2f} s   (paper: 29.18)")
     print(f"  derived: controller share        = {ctrl:.2f} s   (paper: 1.20)")
-    print(f"  derived: contact-event ratio     = {ratio:.1f}x   (paper: 16.7, by mean)")
-    print(f"  derived: contact-event ratio med = {ratio_med:.1f}x   (paper: ~31, by median)")
+    print(f"  derived: routing cost (factorial)= {routing:.2f} s   (paper: 29.94)")
+    print(f"  derived: D2RO minus local social = {ls_delta:.2f} s   (paper: ~8)")
     print(f"  derived: sensitivity success rng = {min(succ):.0f}-{max(succ):.0f}%  (paper: 97-100)")
-    rs = [g["success_rate"] for g in R.values()]
-    mk = [g["makespan"]["mean"] for g in R.values()]
-    print(f"  derived: comm success range      = {min(rs):.0f}-{max(rs):.0f}%   (paper: 100)")
-    print(f"  derived: comm makespan range     = {min(mk):.1f}-{max(mk):.1f} s (paper: 43.6-47.2)")
+    on_clean = DG.get("loss00_lat000ms", {}).get("lead_time_s", {}).get("mean")
+    on_bad = DG.get("loss20_lat200ms", {}).get("lead_time_s", {}).get("mean")
+    if on_clean and on_bad:
+        print(f"  derived: pooled lead clean/20%   = {on_clean:.2f} / {on_bad:.2f} s "
+              f"(prose quotes the mesh-ON arm only)")
+
     return 1 if bad else 0
 
 

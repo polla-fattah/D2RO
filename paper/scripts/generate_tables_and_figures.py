@@ -565,6 +565,41 @@ def commit_stamp() -> None:
 # --------------------------------------------------------------------------- #
 # Supplementary + Phase-B experiments
 # --------------------------------------------------------------------------- #
+FACTORIAL_LABEL = {
+    "A_frozen_noyield": "Frozen route, no yielding",
+    "B_frozen_yield":   "Frozen route, yielding",
+    "C_social_noyield": "Social route, no yielding",
+    "D_social_yield":   "Social route, yielding (\textbf{$\text{D}^2\text{RO}$})",
+}
+
+
+def table_factorial(res):
+    """Route x yield factorial: the attribution experiment."""
+    if not _usable(res.get("status")) or not res.get("groups"):
+        _placeholder("table_factorial",
+                     f"route_yield_factorial dataset {res.get('status', 'missing')}")
+        return False
+    g = res["groups"]
+    order = [k for k in FACTORIAL_LABEL if k in g]
+    n = g[order[0]].get("n", 0)
+    L = _header(
+        f"Routing versus reactive yielding ($N={n}$ paired trials per cell, identical "
+        f"kinematics, collision geometry and arrival criterion throughout). Exposure "
+        f"is person-seconds inside the intimate boundary: the counter increments once "
+        f"per human per control step, so it is a person-time, not a robot-time.",
+        "tab:factorial", "lcccc",
+        "\textbf{Configuration} & \textbf{Success (95\% CI)} & "
+        "\textbf{Makespan (s)} & \textbf{Exposure (person-s)} & "
+        "\textbf{Encounters} \\\\",
+        wide=True, resize=True)
+    for k in order:
+        e = g[k]
+        L.append(f"{FACTORIAL_LABEL[k]} & {_pct(e)} & {_f(e['makespan'])} & "
+                 f"{_f(e['exposure_person_s'])} & {_f(e['encounters'], 1)} \\\\")
+    L += _footer(wide=True, resize=True)
+    return _emit("table_factorial", L)
+
+
 def figure_weight_sensitivity(res):
     """One panel per outcome; one line per weight, across the multiplier grid."""
     if not _usable(res.get("status")) or not res.get("groups"):
@@ -641,6 +676,7 @@ def main() -> None:
     table_corridor_lock(results.get("corridor_lock", {}))
     figure_crowd_density(results.get("crowd_density", {}))
     figure_fleet_size(results.get("fleet_size", {}))
+    table_factorial(results.get("route_yield_factorial", {}))
     figure_weight_sensitivity(results.get("weight_sensitivity", {}))
 
     # fig1_note.tex exists only to explain an ABSENT Figure 1. Once the benchmark
