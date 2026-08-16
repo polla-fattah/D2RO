@@ -89,13 +89,7 @@ seamlessly unifying incremental heuristic graph repair ($\text{D}^*$ Lite) \cite
 
 \subsection{Research Aims \& Key Contributions}
 \label{sec:aims}
-The framework is designed against three explicit aims, and we return to each of them in the discussion and conclusion:
-\begin{description}
-    \item[A1 --- Social compliance:] route service fleets so that pedestrians' intimate space is not entered, accepting bounded additional travel time as the price. Evaluated in Section~\ref{sec:tradeoff}.
-    \item[A2 --- Distributed coordination without a central server:] resolve congestion and single-file conflicts using only peer-to-peer information within a bounded sensing radius. Evaluated in Section~\ref{sec:mechanism}.
-    \item[A3 --- Architectural generality and real-time feasibility:] operate unchanged across dissimilar public topologies within a $50\text{ ms}$ control budget. Evaluated in Sections~\ref{sec:cross_domain_failure} and~\ref{sec:scalability}.
-    \item[A4 --- Attributable evaluation:] measure the contribution of the routing policy \emph{itself}, separately from the vehicle controller that executes it, and establish whether the result depends on the particular weights chosen. Evaluated in Sections~\ref{sec:tradeoff} and~\ref{sec:sensitivity}.
-\end{description}
+The framework is designed against four explicit aims, and we return to each of them in the discussion and conclusion. \textbf{A1, social compliance:} route service fleets so that pedestrians' intimate space is not entered, accepting bounded additional travel time as the price (Section~\ref{sec:tradeoff}). \textbf{A2, distributed coordination without a central server:} resolve congestion and single-file conflicts using only peer-to-peer information within a bounded sensing radius (Section~\ref{sec:mechanism}). \textbf{A3, architectural generality and real-time feasibility:} operate unchanged across dissimilar public topologies within a $50\text{ ms}$ control budget (Sections~\ref{sec:cross_domain_failure} and~\ref{sec:scalability}). \textbf{A4, attributable evaluation:} measure the contribution of the routing policy \emph{itself}, separately from the vehicle controller that executes it, and establish whether the result depends on the particular weights chosen (Sections~\ref{sec:tradeoff} and~\ref{sec:sensitivity}).
 
 The primary scientific contributions of this research are:
 \begin{enumerate}
