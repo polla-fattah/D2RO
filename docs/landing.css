@@ -1,108 +1,114 @@
 /* ---------------------------------------------------------------------------
    SW-DGO project page.
 
-   Two failed attempts bracket this one. The first borrowed the simulator's
-   accent palette, gradients and hover lifts, which read as a product launch.
-   The correction stripped everything to bare default HTML, which read as 1993.
+   Three attempts sit behind this one, and each missed in a nameable way:
+   accent palette with gradients and hover lifts (product launch), browser
+   defaults (1993), serif with letterspaced uppercase rules (journal offprint).
 
-   The target is the middle: a page that is obviously typeset rather than
-   styled. Restraint here means spending the effort on measure, rhythm and
-   hierarchy instead of on ornament -- no cards, no buttons, no tiles, no
-   colour carrying meaning it does not have, but not the browser defaults
-   either.
+   What is wanted is contemporary and quiet. That comes from type and space,
+   not from ornament: a sans stack with real weight contrast, a comfortable
+   measure, generous vertical rhythm, hairline dividers, and interaction that
+   acknowledges the cursor without animating at it.
 
-   Serif body text on a warm off-white, one accent-free grey scale, and a
-   vertical rhythm that stays consistent from the title to the footnote.
+   Still no gradients, shadows, tiles, buttons or accent colours. The scale is
+   neutral throughout -- modern does not require a brand hue, and one here
+   would imply a product that does not exist.
    --------------------------------------------------------------------------- */
 
 :root {
-  --ink:        #17171a;
-  --ink-soft:   #3d3d42;
-  --ink-mute:   #6e6e75;
-  --ink-faint:  #93939a;
-  --rule:       #e2e0dc;
-  --rule-soft:  #edebe7;
-  --paper:      #fcfbf9;
-  --paper-alt:  #f5f3ef;
+  --ink:       #0f1012;
+  --ink-2:     #46484d;
+  --ink-3:     #6f727a;
+  --ink-4:     #9b9ea6;
+  --rule:      #e6e7e9;
+  --rule-2:    #f0f1f2;
+  --bg:        #ffffff;
+  --bg-2:      #fafafa;
+  --bg-hover:  #f6f6f7;
 
-  --serif: "Charter", "Bitstream Charter", "Sitka Text", Cambria, Georgia,
-           "Times New Roman", serif;
-  --sans:  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-           Arial, sans-serif;
-  --mono:  ui-monospace, SFMono-Regular, "SF Mono", Consolas,
-           "Liberation Mono", Menlo, monospace;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text",
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Mono", Consolas,
+          "Liberation Mono", Menlo, monospace;
 }
 
+* { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 
 body {
-  max-width: 38rem;
+  max-width: 44rem;
   margin: 0 auto;
-  padding: 5.5rem 1.75rem 7rem;
-  background: var(--paper);
-  color: var(--ink-soft);
-  font-family: var(--serif);
-  font-size: 1.0625rem;      /* 17px: comfortable for sustained serif reading */
-  line-height: 1.72;
-  font-kerning: normal;
-  text-rendering: optimizeLegibility;
+  padding: 6rem 1.75rem 8rem;
+  background: var(--bg);
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.68;
+  letter-spacing: -0.001em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ------------------------------------------------------------------ head -- */
 .eyebrow {
-  margin: 0 0 1.1rem;
+  display: inline-block;
+  margin: 0 0 1.4rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 100px;
   font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
 }
 
 h1 {
-  margin: 0 0 0.85rem;
-  font-size: 1.85rem;
-  font-weight: 600;
-  line-height: 1.24;
-  letter-spacing: -0.011em;
+  margin: 0 0 1rem;
+  font-size: 2.15rem;
+  font-weight: 620;
+  line-height: 1.16;
+  letter-spacing: -0.028em;
   color: var(--ink);
   text-wrap: balance;
 }
 
 .sub {
-  margin: 0 0 1.6rem;
-  font-size: 1.0625rem;
-  color: var(--ink-mute);
+  margin: 0 0 1.75rem;
+  max-width: 34rem;
+  font-size: 1.075rem;
+  line-height: 1.6;
+  color: var(--ink-3);
 }
 
 .repo {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.55rem;
   font-family: var(--mono);
-  font-size: 0.845rem;
-  letter-spacing: -0.01em;
+  font-size: 0.83rem;
+  color: var(--ink-4);
 }
-.repo a { font-weight: 500; border-bottom-color: var(--ink-faint); }
+.repo a {
+  color: var(--ink);
+  font-weight: 500;
+  border-bottom: 1px solid var(--rule);
+}
+.repo a:hover { border-bottom-color: var(--ink-3); }
 
 .meta {
   margin: 0;
-  font-family: var(--sans);
-  font-size: 0.8rem;
-  color: var(--ink-faint);
+  font-size: 0.83rem;
+  color: var(--ink-4);
 }
 
 /* --------------------------------------------------------------- headings -- */
 h2 {
-  margin: 3.1rem 0 1.1rem;
-  padding-bottom: 0.45rem;
-  border-bottom: 1px solid var(--rule);
-  font-size: 0.79rem;
+  margin: 3.5rem 0 1.15rem;
+  font-size: 1.0625rem;
   font-weight: 600;
-  font-family: var(--sans);
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
+  letter-spacing: -0.012em;
+  color: var(--ink);
 }
 
-p { margin: 0 0 1.15rem; }
+p { margin: 0 0 1.1rem; }
 p:last-child { margin-bottom: 0; }
 
 /* ------------------------------------------------------------------ links -- */
@@ -110,116 +116,138 @@ a {
   color: var(--ink);
   text-decoration: none;
   border-bottom: 1px solid var(--rule);
-  transition: border-color 0.12s ease;
+  transition: border-color 0.15s ease, color 0.15s ease;
 }
-a:hover { border-bottom-color: var(--ink); }
+a:hover { border-bottom-color: var(--ink-3); }
+.meta a { color: var(--ink-3); }
 
 /* --------------------------------------------------------------- contents -- */
-dl { margin: 0; }
+/* Rows rather than cards: the hover surface is the only affordance needed, and
+   it costs no border, shadow or lift. */
+dl {
+  margin: 0;
+  border-top: 1px solid var(--rule-2);
+}
 
 dt {
-  margin: 1.35rem 0 0.2rem;
-  font-size: 1.0625rem;
-  font-weight: 600;
+  margin: 0;
+  padding: 1rem 0.9rem 0.1rem;
+  font-size: 0.985rem;
+  font-weight: 550;
   color: var(--ink);
 }
-dt:first-child { margin-top: 0; }
-dt a { border-bottom-width: 1px; }
+dt a { border-bottom: none; }
+dt a::after {
+  content: "→";
+  margin-left: 0.4rem;
+  color: var(--ink-4);
+  font-size: 0.9em;
+  transition: transform 0.15s ease;
+  display: inline-block;
+}
 
 dd {
   margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.62;
-  color: var(--ink-mute);
+  padding: 0 0.9rem 1rem;
+  border-bottom: 1px solid var(--rule-2);
+  font-size: 0.925rem;
+  line-height: 1.6;
+  color: var(--ink-3);
 }
 
+/* Light up the whole row, not just the label the cursor happens to be over. */
+dt:hover, dt:hover + dd { background: var(--bg-hover); }
+dt:hover a::after { transform: translateX(2px); }
+
 /* ------------------------------------------------------------------ lists -- */
-ul { margin: 0 0 1.15rem; padding-left: 1.15rem; }
-li { margin-bottom: 0.5rem; }
-li::marker { color: var(--ink-faint); }
+ul { margin: 0 0 1.1rem; padding-left: 1.1rem; }
+li { margin-bottom: 0.55rem; padding-left: 0.15rem; }
+li::marker { color: var(--ink-4); }
 
 /* ------------------------------------------------------------------- code -- */
 pre {
   margin: 0 0 1.3rem;
-  padding: 1.15rem 1.25rem;
-  background: var(--paper-alt);
-  border: 1px solid var(--rule-soft);
-  border-radius: 3px;
+  padding: 1.2rem 1.3rem;
+  background: var(--bg-2);
+  border: 1px solid var(--rule-2);
+  border-radius: 8px;
   overflow-x: auto;                 /* long lines scroll; the page never does */
   font-family: var(--mono);
-  font-size: 0.795rem;
-  line-height: 1.78;
+  font-size: 0.79rem;
+  line-height: 1.8;
   color: var(--ink);
+  tab-size: 2;
 }
 
 code {
   font-family: var(--mono);
-  font-size: 0.88em;
+  font-size: 0.875em;
+  color: var(--ink);
 }
+dt code { font-weight: 500; }
 
 /* ------------------------------------------------------------------ table -- */
 table {
   width: 100%;
   margin: 0 0 1.3rem;
   border-collapse: collapse;
-  font-family: var(--sans);
   font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
 }
 
 th {
-  padding: 0 0.7rem 0.5rem 0;
-  border-bottom: 1px solid var(--ink-faint);
-  font-weight: 600;
-  font-size: 0.76rem;
-  letter-spacing: 0.02em;
-  color: var(--ink-mute);
+  padding: 0 0.75rem 0.6rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-weight: 550;
+  font-size: 0.78rem;
+  color: var(--ink-4);
   text-align: left;
+  white-space: nowrap;
 }
 
 td {
-  padding: 0.52rem 0.7rem 0.52rem 0;
-  border-bottom: 1px solid var(--rule-soft);
-  text-align: left;
-  color: var(--ink-soft);
+  padding: 0.6rem 0.75rem 0.6rem 0;
+  border-bottom: 1px solid var(--rule-2);
+  color: var(--ink-2);
 }
 
-tbody tr:first-child td { color: var(--ink); font-weight: 600; }
+tbody tr:first-child td { color: var(--ink); font-weight: 550; }
 tbody tr:last-child td  { border-bottom: none; }
-
 th + th, td + td { text-align: right; padding-right: 0; }
-
-/* The closing note sits below the final rule, quieter than body text. */
-.colophon {
-  margin: 1.6rem 0 0;
-  font-family: var(--sans);
-  font-size: 0.8rem;
-  color: var(--ink-faint);
-}
 
 /* ----------------------------------------------------------------- rules -- */
 hr {
-  margin: 3rem 0 0;
+  margin: 3.25rem 0 0;
   border: 0;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--rule-2);
 }
-hr + h2 { margin-top: 2.4rem; }
+hr + h2 { margin-top: 2.75rem; }
+
+.colophon {
+  margin: 1.75rem 0 0;
+  font-size: 0.83rem;
+  color: var(--ink-4);
+}
 
 /* ------------------------------------------------------------------ dark -- */
 @media (prefers-color-scheme: dark) {
   :root {
-    --ink:       #eceae6;
-    --ink-soft:  #c6c3bd;
-    --ink-mute:  #99958e;
-    --ink-faint: #74716b;
-    --rule:      #33322f;
-    --rule-soft: #262523;
-    --paper:     #161514;
-    --paper-alt: #1d1c1a;
+    --ink:      #f4f4f5;
+    --ink-2:    #b9bbc0;
+    --ink-3:    #8b8e95;
+    --ink-4:    #64676e;
+    --rule:     #2a2b2f;
+    --rule-2:   #1f2023;
+    --bg:       #0c0c0e;
+    --bg-2:     #141416;
+    --bg-hover: #151517;
   }
 }
 
 @media (max-width: 34rem) {
-  body { padding: 3.25rem 1.35rem 4.5rem; font-size: 1.02rem; }
-  h1   { font-size: 1.55rem; }
+  body    { padding: 3.5rem 1.25rem 5rem; }
+  h1      { font-size: 1.7rem; }
+  .sub    { font-size: 1rem; }
+  dt, dd  { padding-left: 0; padding-right: 0; }
+  dt:hover, dt:hover + dd { background: transparent; }
 }
