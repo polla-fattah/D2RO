@@ -541,18 +541,47 @@ def commit_stamp() -> None:
 
     The reviewer's first required revision was that the submitted PDF and the
     repository must be the same, verifiable thing. Writing the SHA by hand is how
-    that guarantee decays, so it is derived from git at generation time. A dirty
-    working tree is reported as such: a manuscript generated from uncommitted code
-    is not reproducible and should say so rather than cite a commit it does not
-    match.
+    that guarantee decays, so it is derived from git at generation time.
+
+    Uncommitted SOURCE changes are reported with a `-dirty` suffix: a manuscript
+    generated from uncommitted code is not reproducible and should say so rather
+    than cite a commit it does not match. Regenerated artefacts are excluded from
+    that test, because this function runs after the pipeline has rewritten them and
+    would otherwise mark every build dirty, including a clean checkout from a tag.
     """
     import subprocess
+
+    # Paths that this pipeline itself produces. They are OUTPUTS of the very command
+    # that writes this stamp, so they are always modified by the time we look, and
+    # counting them would make every build report "-dirty" including a clean CI
+    # checkout from a tag. What the stamp asserts is that the SOURCES match the named
+    # commit; regenerated artefacts are the consequence of that source, not evidence
+    # against it.
+    GENERATED_PREFIXES = (
+        "paper/generated/",
+        "paper/figures/",
+        "paper/paper.pdf",
+        "paper/paper.aux", "paper/paper.bbl", "paper/paper.blg",
+        "paper/paper.log", "paper/paper.out",
+        "experiments/data/analysis_results.json",
+        "experiments/data/analysis_report.md",
+    )
+
     try:
         sha = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"],
                                       cwd=PROJECT_ROOT, text=True).strip()
-        dirty = subprocess.check_output(["git", "status", "--porcelain"],
-                                        cwd=PROJECT_ROOT, text=True).strip()
-        stamp = f"{sha}-dirty" if dirty else sha
+        porcelain = subprocess.check_output(["git", "status", "--porcelain"],
+                                            cwd=PROJECT_ROOT, text=True).splitlines()
+        # `git status --porcelain` lines look like "XY path" or "XY old -> new".
+        changed = []
+        for line in porcelain:
+            path = line[3:].strip().split(" -> ")[-1].strip('"')
+            if not path.startswith(GENERATED_PREFIXES):
+                changed.append(path)
+        stamp = f"{sha}-dirty" if changed else sha
+        if changed:
+            print(f"         source changes present: {', '.join(changed[:4])}"
+                  + (" ..." if len(changed) > 4 else ""))
     except Exception:
         stamp = "unknown"
     with open(os.path.join(TAB_DIR, "commit.tex"), "w", encoding="utf-8") as f:

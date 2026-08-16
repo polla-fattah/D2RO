@@ -89,26 +89,40 @@ def current_code_fingerprint() -> str:
     """SHA-256 over the simulation source tree (must match run_experiments.py)."""
     import hashlib
     pkg = os.path.join(PROJECT_ROOT, "d2ro")
-    h = hashlib.sha256()
+
+    # Collect every source file first, then hash them in a GLOBALLY SORTED order
+    # keyed on the POSIX-style relative path.
+    #
+    # Two platform dependencies previously made this fingerprint differ between an
+    # identical Windows and Linux checkout, so every dataset reported STALE on the
+    # other operating system:
+    #
+    #   1. Line endings. A Windows checkout stores CRLF and a Linux one LF, so the
+    #      same source hashed to different values. Normalised below.
+    #   2. Traversal order. os.walk yields subdirectories in whatever order the
+    #      filesystem returns them -- alphabetical on NTFS, arbitrary on ext4 --
+    #      which changes the order file contents are fed to the digest. Sorting the
+    #      full path list removes it.
+    #
+    # The relative path is hashed alongside the content so that renaming a file is
+    # a change, not a no-op.
+    paths = []
     for root, _dirs, files in os.walk(pkg):
         if "__pycache__" in root:
             continue
-        for fn in sorted(files):
+        for fn in files:
             if fn.endswith(".py"):
-                with open(os.path.join(root, fn), "rb") as f:
-                    blob = f.read()
-                # Normalise line endings before hashing. Hashing raw bytes made the
-                # fingerprint PLATFORM-DEPENDENT: a Windows checkout stores CRLF and
-                # a Linux one LF, so identical source produced different hashes and
-                # every dataset read STALE on the other operating system. CI caught
-                # this the first time it ran on Linux -- until then every "all
-                # datasets ok" had been verified on one OS only, and a reviewer
-                # attempting clean-room reproduction would have seen nothing but
-                # STALE. Normalising here makes the fingerprint a property of the
-                # source, which is what it always claimed to be.
-                h.update(blob.replace(b"\r\n", b"\n"))
-    return h.hexdigest()[:16]
+                full = os.path.join(root, fn)
+                rel = os.path.relpath(full, PROJECT_ROOT).replace(os.sep, "/")
+                paths.append((rel, full))
 
+    h = hashlib.sha256()
+    for rel, full in sorted(paths):
+        with open(full, "rb") as f:
+            blob = f.read()
+        h.update(rel.encode("utf-8"))
+        h.update(blob.replace(b"\r\n", b"\n"))
+    return h.hexdigest()[:16]
 
 def load(name: str) -> Tuple[Optional[List[Dict[str, str]]], str]:
     """
