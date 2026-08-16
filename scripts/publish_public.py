@@ -27,6 +27,7 @@ Usage:
     python scripts/publish_public.py                 # stage and report
     python scripts/publish_public.py --out DIR       # stage somewhere specific
     python scripts/publish_public.py --git           # also init a single commit
+    python scripts/publish_public.py --git --push    # stage, commit and publish
 
 Pushing is left to you on purpose: it is the irreversible step, and it should be
 a deliberate act rather than a side effect of running a script.
@@ -53,6 +54,7 @@ def _force_remove(func, path, _exc):
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_OUT = os.path.join(os.path.dirname(ROOT), "SW-DGO-public")
+DEFAULT_REMOTE = "https://github.com/polla-fattah/SW-DGO.git"
 
 # (source path relative to repo root, destination path in the public tree)
 # A destination of None keeps the same relative path.
@@ -122,6 +124,10 @@ def main() -> int:
     ap.add_argument("--out", default=DEFAULT_OUT)
     ap.add_argument("--git", action="store_true",
                     help="initialise a git repo with a single commit")
+    ap.add_argument("--remote", default=DEFAULT_REMOTE,
+                    help="remote URL to attach (default: %(default)s)")
+    ap.add_argument("--push", action="store_true",
+                    help="force-push to the remote after committing")
     args = ap.parse_args()
 
     out = os.path.abspath(args.out)
@@ -177,11 +183,29 @@ def main() -> int:
         subprocess.run(["git", "commit", "-q", "-m",
                         "SW-DGO: socially-weighted distributed graph optimization "
                         "for multi-agent service fleets"], cwd=out, check=True)
-        print("Initialised a single-commit history on branch `main`.")
-        print("\nTo publish, create the empty repo on GitHub, then:")
-        print(f"  cd {out}")
-        print("  git remote add origin git@github.com:<you>/SW-DGO.git")
-        print("  git push -u origin main")
+        # This directory is deleted and re-created on every run, so a remote added
+        # by hand does not survive -- which produced a confusing
+        # "'origin' does not appear to be a git repository" on the second publish.
+        # Attaching it here makes the staging tree push-ready every time.
+        subprocess.run(["git", "remote", "add", "origin", args.remote],
+                       cwd=out, check=True)
+        print(f"Initialised a single-commit history on `main`, remote -> {args.remote}")
+
+        if args.push:
+            # --force because the history is rebuilt from scratch each run; the
+            # public repo is a mirror of a subset, not a shared working branch.
+            r = subprocess.run(["git", "push", "--force", "-u", "origin", "main"],
+                               cwd=out)
+            if r.returncode:
+                print("\nPush failed. The tree is staged and committed, so you can "
+                      "retry with:")
+                print(f"  cd {out} && git push --force origin main")
+                return 1
+            print("Pushed. GitHub Pages takes about a minute; hard-refresh after.")
+        else:
+            print("\nTo publish:")
+            print(f"  cd {out} && git push --force origin main")
+            print("  (or re-run this script with --push)")
     return 0
 
 

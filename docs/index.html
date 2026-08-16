@@ -4,12 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SW-DGO — Socially-Weighted Distributed Graph Optimization</title>
-<meta name="description" content="Multi-agent route planning for autonomous service fleets in crowded, human-shared indoor space. Browser simulator, open datasets, full source.">
+<meta name="description" content="Autonomous service fleets—retail carts, clinical pushchairs, airport trolleys—must route continuously through crowded public space. D²RO / SW-DGO multi-agent navigation research.">
 <link rel="stylesheet" href="landing.css">
-<!-- KaTeX for crisp mathematical typesetting -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
 </head>
 <body>
 
@@ -17,70 +13,27 @@
 
   <!-- Hero Section -->
   <header class="hero">
-    <div class="eyebrow-container">
-      <span class="eyebrow">
-        <span class="pulse-dot"></span>
-        Multi-agent navigation research
-      </span>
-    </div>
-
     <h1>Socially-Weighted Distributed Graph Optimization</h1>
 
-    <p class="sub">
-      Multi-agent route planning for autonomous service fleets — shopping carts,
-      hospital pushchairs, airport trolleys — in space shared with people who are under
-      no obligation to get out of the way.
+    <div class="sub">
+      <p>
+        Autonomous service fleets—retail carts, clinical pushchairs, airport trolleys—must route continuously through crowded public space, where classical planners treat pedestrians as physical obstacles rather than people whose personal space carries a cost. We propose Distributed Dynamic Route Optimization (D²RO), powered by Socially-Weighted Distributed Graph Optimization (SW-DGO): a multi-objective cost field minimised subject to directional corridor reservations and solved via incremental D* Lite graph repair over V2V mesh telemetry.
+      </p>
+      <p>
+        Across 4,650 trials in supermarket, hospital, and airport topologies, proxemic routing eliminates intimate-space exposure (reducing median exposure to 0.00 person-seconds). Controlled experiments establish when distributed coordination is warranted: mesh telemetry and corridor reservations earn their cost under hidden blockages and single-file bottlenecks, advancing rerouting by 11.1 s and raising corridor mission success from 36% to 88%.
+      </p>
+    </div>
+
+    <p class="repo">
+      <a href="https://github.com/polla-fattah/SW-DGO" target="_blank" rel="noopener">github.com/polla-fattah/SW-DGO</a>
+      &nbsp;&mdash;&nbsp; source, datasets and tests
     </p>
 
-    <div class="hero-cta-group">
-      <a href="simulator.html" class="btn btn-primary">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="5 3 19 12 5 21 5 3"></polygon>
-        </svg>
-        Interactive Simulator
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-          <polyline points="12 5 19 12 12 19"></polyline>
-        </svg>
-      </a>
-
-      <a href="https://github.com/polla-fattah/SW-DGO" class="btn btn-secondary" target="_blank" rel="noopener">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-        </svg>
-        GitHub Repository
-      </a>
-
-      <div class="badge-group">
-        <span class="badge-pill">
-          Code: <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>
-        </span>
-        <span class="badge-pill">
-          Data: <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE-DATA" target="_blank" rel="noopener">CC BY 4.0</a>
-        </span>
-      </div>
-    </div>
+    <p class="meta">
+      Code under <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>,
+      datasets under <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE-DATA" target="_blank" rel="noopener">CC BY 4.0</a>.
+    </p>
   </header>
-
-  <!-- Key Benchmark Stat Highlights -->
-  <section class="stats-grid">
-    <div class="stat-card">
-      <span class="stat-value">4,650</span>
-      <span class="stat-label">Trial Evaluations</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-value">99.0%</span>
-      <span class="stat-label">Mission Success Rate</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-value">0.00</span>
-      <span class="stat-label">Median Exposure (p-s)</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-value">67</span>
-      <span class="stat-label">Automated Tests</span>
-    </div>
-  </section>
 
   <hr class="section-divider">
 
@@ -89,16 +42,16 @@
     <h2>Contents & Research Assets</h2>
 
     <div class="resource-grid">
-      <!-- Featured Interactive Simulator Card -->
-      <a href="simulator.html" class="resource-card featured">
+      <!-- Interactive Simulator Card -->
+      <a href="simulator.html" class="resource-card">
         <div class="resource-header">
           <div class="resource-title">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
             Interactive Simulator
           </div>
-          <span class="featured-badge">Live WASM Demo</span>
+          <span class="resource-arrow">&rarr;</span>
         </div>
         <p class="resource-desc">
           Three environments with live ablation toggles. Runs the actual Python
@@ -219,47 +172,6 @@
     </div>
   </section>
 
-  <!-- Formulation Section -->
-  <section>
-    <h2>Mathematical Formulation</h2>
-    <div class="content-box">
-      <p>
-        Each agent minimises four weighted soft terms over its own directed cost graph,
-        subject to one hard feasibility constraint, solved by D* Lite incremental repair:
-      </p>
-
-      <div class="formula-container">
-        <pre>minimise  C(u,v,t) = w_D · D(u,v)          Euclidean distance
-                   + w_M · W_mesh(u,v,t)    V2V anticipatory congestion
-                   + w_H · H_prox(v,t)      human proxemics
-                   + w_S · S_trolley(v,t)   clearance envelope
-
-subject to  (u,v) ∉ E_reserved(t)           corridor reservation</pre>
-      </div>
-
-      <div class="formula-badge-grid">
-        <div class="formula-tag">
-          <code>w_D · D(u,v)</code> Euclidean distance path cost
-        </div>
-        <div class="formula-tag">
-          <code>w_M · W_mesh(u,v,t)</code> V2V anticipatory congestion
-        </div>
-        <div class="formula-tag">
-          <code>w_H · H_prox(v,t)</code> Human proxemics cost field
-        </div>
-        <div class="formula-tag">
-          <code>w_S · S_trolley(v,t)</code> Dynamic clearance envelope
-        </div>
-      </div>
-
-      <p style="margin-top: 1.25rem;">
-        Reservation is a constraint, not a fifth weight: a reserved edge is unavailable at
-        any coefficient and an unreserved one contributes zero, so a weight on it would
-        have no operative magnitude in any reachable state.
-      </p>
-    </div>
-  </section>
-
   <!-- Results Section -->
   <section>
     <h2>Experimental Results</h2>
@@ -314,6 +226,84 @@ subject to  (u,v) ∉ E_reserved(t)           corridor reservation</pre>
 
     <div class="content-box">
       <p>
+        <strong>The table above is the broad randomized benchmark, and the proposed
+        system does not win it.</strong> Local Social D* Lite &mdash; the same proxemic
+        routing with no mesh and no reservation &mdash; matches its social compliance
+        exactly and finishes about 8&nbsp;s sooner. That 8&nbsp;s is the overhead of a
+        distributed layer whose target topologies a randomized supermarket run rarely
+        produces.
+      </p>
+      <p>
+        The two experiments below construct those topologies deliberately. Both are
+        <em>N</em>&nbsp;=&nbsp;50 seed-paired trials with the mechanism the only thing
+        switched.
+      </p>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Controlled mechanism experiment</th>
+            <th>Mechanism ON</th>
+            <th>OFF</th>
+            <th>p</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="highlight-row">
+            <td>
+              <strong>Anticipation lead time</strong> (s)
+              <span class="badge-proposed">V2V mesh</span>
+            </td>
+            <td><strong>10.70 &plusmn; 4.20</strong></td>
+            <td>&minus;0.10 &plusmn; 0.04</td>
+            <td>3.8 &times; 10<sup>&minus;9</sup></td>
+          </tr>
+          <tr>
+            <td>Backtracking distance (m)</td>
+            <td>1.08 &plusmn; 0.68</td>
+            <td>2.73 &plusmn; 0.87</td>
+            <td>3.2 &times; 10<sup>&minus;8</sup></td>
+          </tr>
+          <tr class="highlight-row">
+            <td>
+              <strong>Corridor mission success</strong>
+              <span class="badge-proposed">Reservation</span>
+            </td>
+            <td><strong>88.0%</strong></td>
+            <td>36.0%</td>
+            <td>1.7 &times; 10<sup>&minus;4</sup></td>
+          </tr>
+          <tr>
+            <td>Off-corridor vertices (diversion)</td>
+            <td>2.16 &plusmn; 1.36</td>
+            <td>0.00</td>
+            <td>2.3 &times; 10<sup>&minus;8</sup></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-box">
+      <p>
+        Read together, the two tables give the actual finding, which is conditional
+        rather than promotional: <strong>the distributed layer is not a general
+        improvement but a targeted one.</strong> A deployment whose topology routinely
+        produces blockages beyond sensing range, or single-file corridors entered from
+        both ends, should pay for the radio. One that does not should run the local
+        planner &mdash; simpler, faster, and equally well behaved around people.
+      </p>
+      <p>
+        The reservation also turns out not to work the way its name suggests. Head-on
+        encounters are statistically unchanged and total waiting is 0.03&nbsp;s: agents
+        do not queue for the corridor, they leave it. We therefore describe it as
+        cost-projected diversion rather than mutual exclusion.
+      </p>
+    </div>
+
+    <div class="content-box">
+      <p>
         A 2&times;2 factorial with the mesh and reservation disabled in every cell isolates
         the proxemic cost term: enabling it alone reduces exposure by 6.40 person-seconds
         (95% CI [&minus;6.48, &minus;6.31], <i>p</i> = 1.5 &times; 10<sup>&minus;9</sup>),
@@ -343,6 +333,21 @@ subject to  (u,v) ∉ E_reserved(t)           corridor reservation</pre>
         <li>ORCA and local MAPF are our own implementations and complete 0% of missions; no conclusion depends on them.</li>
         <li>All results are simulation. No physical fleet was deployed.</li>
         <li>We report when the distributed layer helps, not how often those conditions arise.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Future Work Section -->
+  <section>
+    <h2>Future Research Directions</h2>
+    <div class="content-box">
+      <ul class="styled-list">
+        <li><strong>Joint Weight Calibration:</strong> Multi-objective Pareto optimization over travel makespan and social exposure, or automated weight selection replacing one-at-a-time sensitivity sweeps.</li>
+        <li><strong>Mesh Traffic Suppression:</strong> Spatial scoping and relevance filtering of V2V broadcasts to scale beyond the 12-cart fleet density ceiling.</li>
+        <li><strong>Heading-Augmented Search:</strong> Incorporating turn penalties (&alpha;<sub>turn</sub>) directly into graph search over an orientation-augmented state space rather than relying solely on motion-layer kinodynamics (&omega;<sub>max</sub> = 2.5 rad/s).</li>
+        <li><strong>Hybrid Learning-Guided Search:</strong> Coupling Graph Neural Networks or deep RL (e.g., PRIMAL / Learn to Follow) for global goal allocation with the deterministic D* Lite engine.</li>
+        <li><strong>Heterogeneous Multi-Agent Ecosystems:</strong> Extending SW-DGO to mixed fleets (shopping carts, clinical pushchairs, floor scrubbers, wheelchairs) via vehicle-specific agility weights in directional corridor reservations.</li>
+        <li><strong>Physical Deployment &amp; Localization:</strong> Validating RF attenuation in real metal-gondola retail environments and fusing UWB / IMU / wheel odometry through EKF localization.</li>
       </ul>
     </div>
   </section>
