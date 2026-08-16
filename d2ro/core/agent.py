@@ -36,6 +36,8 @@ class TrolleyAgent:
                  enable_prox: bool = True, enable_safety: bool = True,
                  lock_priority: float = 1.0, static_route: bool = False,
                  enable_yield: bool = True,
+                 enable_safety_cost: Optional[bool] = None,
+                 enable_safety_controller: Optional[bool] = None,
                  weights: Optional[Dict[str, float]] = None):
         self.agent_id = agent_id
         self.graph = graph.clone()
@@ -48,6 +50,17 @@ class TrolleyAgent:
         self.enable_lock = enable_lock
         self.enable_prox = enable_prox
         self.enable_safety = enable_safety
+
+        # `enable_safety` historically switched TWO different things at once: the
+        # w_S graph-cost term, and the reactive safety controller (clearance bubble,
+        # shelf margin, following gap, inter-trolley slowing). Ablating it therefore
+        # measured planner and controller together and could not attribute the
+        # effect to either. They are now separable; both default to `enable_safety`
+        # so existing behaviour is unchanged unless a caller asks otherwise.
+        self.enable_safety_cost = (enable_safety if enable_safety_cost is None
+                                   else enable_safety_cost)
+        self.enable_safety_controller = (enable_safety if enable_safety_controller
+                                         is None else enable_safety_controller)
 
         # Freezes the high-level route: the path is solved once against the initial
         # cost field and never re-solved, no matter how edge costs subsequently move.
@@ -85,14 +98,15 @@ class TrolleyAgent:
 
         # Safety Envelopes (Physical Body Radius vs Kinetic Clearance Bubble in SI units)
         self.radius: float = ROBOT_RADIUS_PX                    # Physical chassis radius (0.40 m / 13.3 px)
-        self.safety_bubble_radius: float = 26.0 if enable_safety else 0.0 # Kinetic safety clearance envelope (0.78 m)
-        self.shelf_margin: float = SHELF_CLEARANCE_MARGIN_PX if enable_safety else 0.0 # Minimum distance maintained from shelf edges (0.54 m / 18 px)
-        self.following_gap: float = FOLLOWING_DISTANCE_GAP_PX if enable_safety else 0.0 # Anti-tailgating gap (1.08 m / 36 px)
+        _ctl = self.enable_safety_controller
+        self.safety_bubble_radius: float = 26.0 if _ctl else 0.0 # Kinetic safety clearance envelope (0.78 m)
+        self.shelf_margin: float = SHELF_CLEARANCE_MARGIN_PX if _ctl else 0.0 # Minimum distance maintained from shelf edges (0.54 m / 18 px)
+        self.following_gap: float = FOLLOWING_DISTANCE_GAP_PX if _ctl else 0.0 # Anti-tailgating gap (1.08 m / 36 px)
 
         # Ablating S_trolley must remove the term from the graph objective as well as
         # from reactive motion correction; otherwise the "w/o safety" arm is not a true
         # ablation of the w_S component of Eq. (3).
-        if not enable_safety:
+        if not self.enable_safety_cost:
             for edge in self.graph.edges.values():
                 edge.s_clearance = 0.0
                 edge.s_trolley = 0.0
@@ -436,7 +450,7 @@ class TrolleyAgent:
         - Prevents tailgating and inter-agent crowding.
         - Maintains smooth kinetic spacing without freezing.
         """
-        if not peer_agents or not self.enable_safety:
+        if not peer_agents or not self.enable_safety_controller:
             return False
 
         must_slow_down = False
@@ -569,7 +583,7 @@ class TrolleyAgent:
         # 1. Process V2V Mesh, Proxemics & Kinetic Safety Envelope
         mesh_changed = self.process_inbound_mesh(current_sim_time) if self.enable_mesh else False
         prox_changed = self.update_human_proxemics(humans, prox_field) if self.enable_prox else False
-        safety_changed = self.update_trolley_safety_costs(peer_agents) if self.enable_safety else False
+        safety_changed = self.update_trolley_safety_costs(peer_agents) if self.enable_safety_cost else False
 
         # 1b. Temporal forgetting of remembered congestion.
         # This MUST operate on the agent's own cloned graph: that is the graph D* Lite
@@ -617,7 +631,7 @@ class TrolleyAgent:
             return
 
         # 5. Check Inter-Trolley Kinetic Safety Clearance (Anti-Tailgating)
-        if self.enable_safety:
+        if self.enable_safety_controller:
             self.check_inter_trolley_safety(peer_agents, dt)
 
         # 6. Waypoint & Corridor Lock Verification
@@ -689,7 +703,7 @@ class TrolleyAgent:
         self.wait_timer = 0.0
 
         # Track shelf scrapes if safety envelopes are ablated
-        if not self.enable_safety and shelves:
+        if not self.enable_safety_controller and shelves:
             contact_now = set()
             for idx, (min_sx, min_sy, max_sx, max_sy) in enumerate(shelves):
                 cx = max(min_sx, min(max_sx, self.x))

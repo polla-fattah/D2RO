@@ -180,7 +180,11 @@ class ExperimentRunner:
             # D* Lite repair latency proper, measured around compute_shortest_path()
             # alone and recorded only on ticks where a repair actually happened.
             "repair_n", "repair_median_ms", "repair_mean_ms",
-            "repair_p95_ms", "repair_max_ms"
+            "repair_p95_ms", "repair_max_ms",
+            # proxemic_violations counts once per human per tick, so it is
+            # person-ticks, not control ticks. These two are the interpretable
+            # quantities and were computed but never exported.
+            "intimate_exposure_person_s", "intimate_encounters"
         ]
 
         prox_field = ProxemicsField()
@@ -234,7 +238,11 @@ class ExperimentRunner:
                     "mesh_packets": mesh.total_packets_transmitted,
                     "replan_cycles": sum(a.replan_count for a in d2ro_agents),
                     "avg_replan_latency_ms": round(sum(replan_times) / max(1, len(replan_times)), 3),
-                    **_latency_stats(d2ro_agents)
+                    **_latency_stats(d2ro_agents),
+                    "intimate_exposure_person_s": round(
+                        sum(getattr(a, "intimate_exposure_s", 0.0) for a in d2ro_agents), 3),
+                    "intimate_encounters": sum(
+                        getattr(a, "intimate_encounters", 0) for a in d2ro_agents)
                 })
 
                 # 1.1b Static A* with a MATCHED low-level controller.
@@ -284,7 +292,63 @@ class ExperimentRunner:
                     "replan_cycles": sum(a.replan_count for a in matched_agents),
                     "avg_replan_latency_ms": round(
                         sum(replan_times_matched) / max(1, len(replan_times_matched)), 3),
-                    **_latency_stats(matched_agents)
+                    **_latency_stats(matched_agents),
+                    "intimate_exposure_person_s": round(
+                        sum(getattr(a, "intimate_exposure_s", 0.0) for a in matched_agents), 3),
+                    "intimate_encounters": sum(
+                        getattr(a, "intimate_encounters", 0) for a in matched_agents)
+                })
+
+                # 1.1c Local Social D* Lite: ordinary human-aware navigation.
+                #
+                # Proxemics, yielding, safety and dynamic replanning are all ON; the
+                # V2V mesh and the corridor reservation are OFF. This is what a
+                # competent single-agent social planner does without any distributed
+                # layer, and it is the comparator that answers the question a reader
+                # actually has -- what does the DISTRIBUTED part contribute beyond
+                # ordinary human-aware navigation? Comparing only against planners
+                # that ignore personal space makes the social result unsurprising.
+                random.seed(seed_val)
+                layout = SupermarketLayout()
+                shelf_boxes = [s.bounds for s in layout.shelves]
+                trolley_cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
+                mesh_ls = MeshNetwork(comm_radius=350.0)
+                local_agents = [
+                    TrolleyAgent(c["id"], layout.graph, c["start"], c["goal"], mesh_ls,
+                                 enable_mesh=False, enable_lock=False,
+                                 enable_prox=True, enable_safety=True,
+                                 enable_yield=True)
+                    for c in trolley_cfgs
+                ]
+
+                sim_time = 0.0
+                replan_times_local = []
+                while sim_time < max_time and not all(a.is_docked for a in local_agents):
+                    for h in humans:
+                        h.update(dt, layout.bounds, shelf_boxes)
+                    for a in local_agents:
+                        a.step(dt, humans, prox_field, current_sim_time=sim_time,
+                               shelves=shelf_boxes, peer_agents=local_agents)
+                        replan_times_local.append(a.last_compute_time_ms)
+                    layout.graph.decay_mesh_penalties(dt, decay_rate=0.1386294)
+                    sim_time += dt
+
+                writer.writerow({
+                    "trial_id": trial,
+                    "method": "Local Social D* Lite",
+                    "success": 1 if all(a.is_docked for a in local_agents) else 0,
+                    "travel_time_s": round(sim_time, 2),
+                    "deadlocks": sum(a.deadlock_count for a in local_agents),
+                    "proxemic_violations": sum(a.proxemic_violations for a in local_agents),
+                    "mesh_packets": mesh_ls.total_packets_transmitted,
+                    "replan_cycles": sum(a.replan_count for a in local_agents),
+                    "avg_replan_latency_ms": round(
+                        sum(replan_times_local) / max(1, len(replan_times_local)), 3),
+                    **_latency_stats(local_agents),
+                    "intimate_exposure_person_s": round(
+                        sum(getattr(a, "intimate_exposure_s", 0.0) for a in local_agents), 3),
+                    "intimate_encounters": sum(
+                        getattr(a, "intimate_encounters", 0) for a in local_agents)
                 })
 
                 # 1.2 Static A*
@@ -316,7 +380,11 @@ class ExperimentRunner:
                     "mesh_packets": 0,
                     "replan_cycles": 0,
                     "avg_replan_latency_ms": round(sum(replan_times_astar) / max(1, len(replan_times_astar)), 3),
-                    **_latency_stats(astar_agents)
+                    **_latency_stats(astar_agents),
+                    "intimate_exposure_person_s": round(
+                        sum(getattr(a, "intimate_exposure_s", 0.0) for a in astar_agents), 3),
+                    "intimate_encounters": sum(
+                        getattr(a, "intimate_encounters", 0) for a in astar_agents)
                 })
 
                 # 1.3 Artificial Potential Fields (APF)
@@ -353,7 +421,11 @@ class ExperimentRunner:
                     "mesh_packets": 0,
                     "replan_cycles": 0,
                     "avg_replan_latency_ms": round(sum(replan_times_apf) / max(1, len(replan_times_apf)), 3),
-                    **_latency_stats(apf_agents)
+                    **_latency_stats(apf_agents),
+                    "intimate_exposure_person_s": round(
+                        sum(getattr(a, "intimate_exposure_s", 0.0) for a in apf_agents), 3),
+                    "intimate_encounters": sum(
+                        getattr(a, "intimate_encounters", 0) for a in apf_agents)
                 })
 
                 # 1.4 Reactive ORCA (Velocity Obstacles)
@@ -389,7 +461,11 @@ class ExperimentRunner:
                     "mesh_packets": 0,
                     "replan_cycles": 0,
                     "avg_replan_latency_ms": round(sum(replan_times_orca) / max(1, len(replan_times_orca)), 3),
-                    **_latency_stats(orca_agents)
+                    **_latency_stats(orca_agents),
+                    "intimate_exposure_person_s": round(
+                        sum(getattr(a, "intimate_exposure_s", 0.0) for a in orca_agents), 3),
+                    "intimate_encounters": sum(
+                        getattr(a, "intimate_encounters", 0) for a in orca_agents)
                 })
 
                 # 1.5 Decentralized Local MAPF
@@ -422,7 +498,11 @@ class ExperimentRunner:
                     "mesh_packets": 0,
                     "replan_cycles": sum(a.replan_count for a in mapf_agents),
                     "avg_replan_latency_ms": round(sum(replan_times_mapf) / max(1, len(replan_times_mapf)), 3),
-                    **_latency_stats(mapf_agents)
+                    **_latency_stats(mapf_agents),
+                    "intimate_exposure_person_s": round(
+                        sum(getattr(a, "intimate_exposure_s", 0.0) for a in mapf_agents), 3),
+                    "intimate_encounters": sum(
+                        getattr(a, "intimate_encounters", 0) for a in mapf_agents)
                 })
                 f.flush()
 
@@ -442,19 +522,27 @@ class ExperimentRunner:
             "shelf_contact_events", "min_shelf_clearance_m", "inter_cart_crowding"
         ]
 
+        # (name, omitted term, mesh, lock, prox, safety_cost, safety_controller)
+        #
+        # The safety term is ablated THREE ways, because switching one flag used to
+        # remove both the w_S graph cost and the reactive safety controller at once,
+        # so the resulting effect could not be attributed to either. Splitting them
+        # separates "the planner priced clearance" from "the controller enforced it".
         configs = [
-            ("Full D2RO Framework", "None (Complete Equation)", True, True, True, True),
-            ("w/o V2V Mesh Telemetry", "W_mesh = 0", False, True, True, True),
-            ("w/o Corridor Mutex Lock", "R_lock = 0", True, False, True, True),
-            ("w/o Human Gaussian Proxemics", "H_prox = 0", True, True, False, True),
-            ("w/o Trolley Kinetic Safety Bubble", "S_trolley = 0", True, True, True, False)
+            ("Full D2RO Framework", "None (Complete Equation)", True, True, True, True, True),
+            ("w/o V2V Mesh Telemetry", "W_mesh = 0", False, True, True, True, True),
+            ("w/o Corridor Reservation", "R_lock constraint lifted", True, False, True, True, True),
+            ("w/o Human Gaussian Proxemics", "H_prox = 0", True, True, False, True, True),
+            ("w/o S_trolley cost only", "w_S = 0, controller kept", True, True, True, False, True),
+            ("w/o safety controller only", "controller off, w_S kept", True, True, True, True, False),
+            ("w/o safety (full stack)", "S_trolley = 0 and controller off", True, True, True, False, False),
         ]
 
         prox_field = ProxemicsField()
         dt = 0.05
         max_time = T_MAX_MISSION
         rows = []
-        print(f"\n[Experiment 2] Running Genuine Component Ablation Study (N={num_trials} trials across 5 configurations)...")
+        print(f"\n[Experiment 2] Running Component Ablation Study (N={num_trials} trials across {len(configs)} configurations)...")
 
         # Datasets are ALWAYS regenerated from scratch. The previous resume-and-append
         # scheme treated a stale file as "already complete" and silently skipped the
@@ -470,7 +558,7 @@ class ExperimentRunner:
             for trial in range(start_trial, num_trials + 1):
                 seed_val = 2000 + trial
 
-                for cfg_name, omitted, en_mesh, en_lock, en_prox, en_safe in configs:
+                for cfg_name, omitted, en_mesh, en_lock, en_prox, en_cost, en_ctl in configs:
                     random.seed(seed_val)
                     layout = SupermarketLayout()
                     shelf_boxes = [s.bounds for s in layout.shelves]
@@ -479,7 +567,9 @@ class ExperimentRunner:
                     agents = [
                         TrolleyAgent(c["id"], layout.graph, c["start"], c["goal"], mesh,
                                      enable_mesh=en_mesh, enable_lock=en_lock,
-                                     enable_prox=en_prox, enable_safety=en_safe)
+                                     enable_prox=en_prox,
+                                     enable_safety_cost=en_cost,
+                                     enable_safety_controller=en_ctl)
                         for c in trolley_cfgs
                     ]
 
@@ -913,6 +1003,174 @@ class ExperimentRunner:
     # --------------------------------------------------------------------------
     # 5. Weight Sensitivity (reviewer: "calibrated" weights were never calibrated)
     # --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
+    # 7. Route x Yield factorial (reviewer: the matched arm was not matched on
+    #    human yielding, so the routing attribution was not established)
+    # --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
+    # 8. Mechanism A under communication degradation (reviewer: test robustness
+    #    where communication is causally responsible for the result)
+    # --------------------------------------------------------------------------
+    def run_mesh_degradation(self, num_trials: int = 20) -> str:
+        r"""
+        Repeats Mechanism A across a packet-loss x latency grid.
+
+        The broad communication sweep is weak evidence by our own admission: the
+        general supermarket scenario barely uses the mesh, so observing no
+        degradation there says little. This experiment degrades the channel in the
+        one setting where the mesh demonstrably causes the effect -- the controlled
+        leader/follower topology in which the follower cannot perceive the blockage
+        and can only learn of it by radio.
+
+        If the anticipation advantage survives loss and delay here, the robustness
+        claim is earned. If it decays, that decay is the interesting result and the
+        abstract must be trimmed accordingly.
+        """
+        csv_path = os.path.join(self.output_dir, "mesh_degradation.csv")
+        fieldnames = ["channel", "packet_loss_rate", "latency_s", "trial_id",
+                      "mesh_enabled", "anticipation_lead_time_s",
+                      "backtrack_distance_m", "path_length_m", "makespan_s", "success"]
+
+        losses = [0.0, 0.10, 0.20]
+        latencies = [0.0, 0.10, 0.20]
+
+        print(f"\n[Experiment F] Mechanism A under degradation "
+              f"({len(losses)}x{len(latencies)} channels x N={num_trials})...")
+
+        all_rows = []
+        for loss in losses:
+            for lat in latencies:
+                tmp_name = f"_mesh_deg_{int(loss*100):02d}_{int(lat*1000):03d}.csv"
+                self.run_mesh_anticipation_experiment(
+                    num_trials=num_trials, packet_loss=loss, latency_s=lat,
+                    csv_name=tmp_name)
+                tmp_path = os.path.join(self.output_dir, tmp_name)
+                with open(tmp_path, newline="", encoding="utf-8") as f:
+                    for r in csv.DictReader(f):
+                        all_rows.append({
+                            "channel": f"loss{int(loss*100):02d}_lat{int(lat*1000):03d}ms",
+                            "packet_loss_rate": loss,
+                            "latency_s": lat,
+                            "trial_id": r.get("trial_id"),
+                            "mesh_enabled": r.get("mesh_enabled"),
+                            "anticipation_lead_time_s": r.get("anticipation_lead_time_s"),
+                            "backtrack_distance_m": r.get("backtrack_distance_m"),
+                            "path_length_m": r.get("path_length_m"),
+                            "makespan_s": r.get("makespan_s"),
+                            "success": r.get("success"),
+                        })
+                for leftover in (tmp_path, tmp_path + ".provenance.json"):
+                    if os.path.exists(leftover):
+                        os.remove(leftover)
+                print(f"  -> loss={loss:.2f} latency={lat:.2f}s done", flush=True)
+
+        _atomic_write_csv(csv_path, fieldnames, all_rows)
+        print(f"  -> Exported: {csv_path} ({len(all_rows)} rows)")
+        return csv_path
+
+    def run_route_yield_factorial(self, num_trials: int = 50) -> str:
+        r"""
+        Separates social ROUTING from reactive HUMAN YIELDING.
+
+        The matched-controller baseline shares D2RO's kinematics but differs in two
+        ways at once: its route is frozen AND its reactive human response is off.
+        The difference between them therefore bundles social graph routing, dynamic
+        replanning and low-level yielding, so it cannot be attributed to routing.
+
+        This is a 2x2 factorial with identical kinematics, collision geometry and
+        arrival criterion in every cell:
+
+            A  frozen route,  yield OFF     (the previous "matched A*")
+            B  frozen route,  yield ON
+            C  social route,  yield OFF
+            D  social route,  yield ON      (full D2RO)
+
+        which yields
+            routing effect  = C - A  (yield off)   and  D - B  (yield on)
+            yielding effect = B - A  (frozen)      and  D - C  (social)
+            interaction     = (D - C) - (B - A)
+
+        Cell B is expected to perform poorly: an agent that stops for a pedestrian
+        but cannot re-plan has no recourse when its only route is occupied. That is
+        a result, not a defect in the design -- it is the measured form of the
+        reason the matched arm was given yield OFF in the first place, and it is
+        reported rather than assumed.
+
+        Social exposure is recorded per cell as well as makespan, because the
+        attribution question applies to it too: if cell C already achieves near-zero
+        exposure then the proxemic cost term is responsible, and if it does not then
+        part of the credit belongs to the low-level push-back.
+        """
+        csv_path = os.path.join(self.output_dir, "route_yield_factorial.csv")
+        fieldnames = [
+            "trial_id", "cell", "social_routing", "yielding",
+            "success", "timeout", "makespan_s",
+            "intimate_exposure_person_ticks", "intimate_exposure_person_s",
+            "intimate_encounters", "replans"
+        ]
+
+        # (cell, social routing, yielding)
+        CELLS = [
+            ("A_frozen_noyield", False, False),
+            ("B_frozen_yield",   False, True),
+            ("C_social_noyield", True,  False),
+            ("D_social_yield",   True,  True),
+        ]
+
+        dt = 0.05
+        max_time = T_MAX_MISSION
+        prox_field = ProxemicsField()
+        print(f"\n[Experiment E] Route x Yield factorial "
+              f"(4 cells x N={num_trials} paired trials)...")
+
+        rows = []
+        for cell, social, yielding in CELLS:
+            for trial in range(1, num_trials + 1):
+                seed_val = 9000 + trial          # disjoint seed set
+                random.seed(seed_val)
+                layout = SupermarketLayout()
+                shelf_boxes = [sh.bounds for sh in layout.shelves]
+                cfgs, humans, _ = SupermarketScenarios.get_scenario("A", layout)
+                mesh = MeshNetwork(comm_radius=350.0, seed=seed_val)
+
+                agents = [
+                    TrolleyAgent(c["id"], layout.graph, c["start"], c["goal"], mesh,
+                                 enable_mesh=social, enable_prox=social,
+                                 enable_lock=social, enable_safety=True,
+                                 static_route=(not social), enable_yield=yielding)
+                    for c in cfgs
+                ]
+
+                sim_time = 0.0
+                while sim_time < max_time and not all(a.is_docked for a in agents):
+                    for h in humans:
+                        h.update(dt, layout.bounds, shelf_boxes)
+                    for a in agents:
+                        a.step(dt, humans, prox_field, current_sim_time=sim_time,
+                               shelves=shelf_boxes, peer_agents=agents)
+                    sim_time += dt
+
+                done = all(a.is_docked for a in agents)
+                rows.append({
+                    "trial_id": trial,
+                    "cell": cell,
+                    "social_routing": int(social),
+                    "yielding": int(yielding),
+                    "success": 1 if done else 0,
+                    "timeout": 0 if done else 1,
+                    "makespan_s": round(sim_time, 2),
+                    "intimate_exposure_person_ticks": sum(a.proxemic_violations for a in agents),
+                    "intimate_exposure_person_s": round(
+                        sum(a.intimate_exposure_s for a in agents), 3),
+                    "intimate_encounters": sum(a.intimate_encounters for a in agents),
+                    "replans": sum(a.replan_count for a in agents),
+                })
+            print(f"  -> {cell:18s} done ({num_trials} trials)", flush=True)
+
+        _atomic_write_csv(csv_path, fieldnames, rows)
+        print(f"  -> Exported: {csv_path} ({len(rows)} rows)")
+        return csv_path
+
     def run_weight_sensitivity(self, num_trials: int = 30) -> str:
         r"""
         Perturbs each of the five cost weights in turn and measures the effect.
@@ -949,7 +1207,10 @@ class ExperimentRunner:
         multipliers = [0.5, 0.75, 1.25, 1.5]
 
         configs = [("nominal", "none", 1.0, dict(nominal))]
-        for key in ("w_D", "w_M", "w_H", "w_R", "w_S"):
+        # w_R is deliberately absent. Reservation is a hard feasibility constraint,
+        # not a weighted soft term, so it has no magnitude to perturb; it is tested
+        # by the ON/OFF mechanism experiment instead.
+        for key in ("w_D", "w_M", "w_H", "w_S"):
             for m in multipliers:
                 w = dict(nominal)
                 w[key] = nominal[key] * m
@@ -1078,7 +1339,10 @@ class ExperimentRunner:
         print(f"  -> Exported: {csv_path} ({len(rows)} rows)")
         return csv_path
 
-    def run_mesh_anticipation_experiment(self, num_trials: int = 50) -> str:
+    def run_mesh_anticipation_experiment(self, num_trials: int = 50,
+                                        packet_loss: float = 0.0,
+                                        latency_s: float = 0.0,
+                                        csv_name: str = "mesh_anticipation_experiment.csv") -> str:
         r"""
         Mechanism Experiment A: V2V anticipatory horizon extension.
 
@@ -1101,7 +1365,7 @@ class ExperimentRunner:
           backtrack_distance_m = distance travelled AWAY from the goal, measured
               identically under both conditions.
         """
-        csv_path = os.path.join(self.output_dir, "mesh_anticipation_experiment.csv")
+        csv_path = os.path.join(self.output_dir, csv_name)
         fieldnames = [
             "trial_id", "mesh_enabled", "separation_m", "local_detection_time_s",
             "reroute_time_s", "anticipation_lead_time_s", "backtrack_distance_m",
@@ -1142,7 +1406,8 @@ class ExperimentRunner:
             if separation_m <= SENSING_RADIUS_M:
                 return None
 
-            mesh = MeshNetwork(comm_radius=350.0, seed=seed_val)
+            mesh = MeshNetwork(comm_radius=350.0, seed=seed_val,
+                               packet_loss_rate=packet_loss, latency_s=latency_s)
             leader = TrolleyAgent(1, g, "N_mid_1", "N_front_1", mesh,
                                   enable_mesh=mesh_on)
             follower = TrolleyAgent(2, g, "N_back_1", "N_front_1", mesh,

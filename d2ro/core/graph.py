@@ -54,6 +54,9 @@ class Edge:
     weight_d: float = WEIGHT_DISTANCE_WD
     weight_m: float = WEIGHT_MESH_WM
     weight_h: float = WEIGHT_PROXEMIC_WH
+    # DEPRECATED and unused: reservation is a feasibility constraint, not a weighted
+    # term (see `cost`). Retained only so that existing constructor calls do not
+    # break; it has no effect on any cost and must not be reported as a weight.
     weight_r: float = WEIGHT_MUTEX_LOCK_WR
     weight_s: float = WEIGHT_TROLLEY_WS
 
@@ -63,7 +66,22 @@ class Edge:
 
     @property
     def cost(self) -> float:
-        """Returns total calibrated composite traversal cost."""
+        r"""
+        Composite traversal cost: four weighted soft terms, subject to one hard
+        feasibility constraint.
+
+            minimise  w_D*d + w_M*w_mesh + w_H*h_prox + w_S*s_trolley
+            subject to e not in E_reserved(t)
+
+        The reservation is a CONSTRAINT, not a weighted objective term. An earlier
+        formulation wrote it as w_R * r_lock and described w_R as the fifth tunable
+        weight, but r_lock only ever takes the values 0 or infinity: when it is
+        infinity the edge is unavailable and no finite multiplier changes that, and
+        when it is 0 the product is 0 for every w_R. The coefficient was therefore
+        inert in every reachable state, which is why perturbing it moved no measured
+        quantity. Modelling reservation as feasibility rather than as cost states
+        what the code has always done.
+        """
         if self.r_lock == math.inf:
             return math.inf
         try:
@@ -71,7 +89,6 @@ class Edge:
                 float(self.weight_d) * float(self.d) +
                 float(self.weight_m) * float(self.w_mesh) +
                 float(self.weight_h) * float(self.h_prox) +
-                float(self.weight_r) * float(self.r_lock) +
                 float(self.weight_s) * float(self.s_trolley)
             )
             return max(0.001, total_cost)

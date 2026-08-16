@@ -75,11 +75,47 @@ class DStarLite:
         self.km: float = 0.0
         self.queue = PriorityQueue()
 
+        # Smallest distance weight anywhere in this agent's graph. See _heuristic.
+        self._w_d_min = self._min_distance_weight()
+
         self._initialize()
 
+    def _min_distance_weight(self) -> float:
+        """
+        The smallest w_D present on any edge of this graph.
+
+        Cached at construction because the weights are set once, before the first
+        solve, and never varied during a run. If that ever changes, this must be
+        recomputed whenever a weight changes.
+        """
+        weights = [float(getattr(e, "weight_d", 1.0))
+                   for e in getattr(self.graph, "edges", {}).values()]
+        w = min(weights) if weights else 1.0
+        # A non-positive distance weight would make the heuristic useless (and a
+        # zero-cost path arbitrarily long), so clamp to a small positive value.
+        return w if w > 0.0 else 1.0
+
     def _heuristic(self, u: str, v: str) -> float:
-        """Euclidean distance heuristic."""
-        return self.graph.distance(u, v)
+        r"""
+        Admissible lower bound on the true cost between two vertices.
+
+        The traversal cost of an edge is
+
+            w_D*d + w_M*w_mesh + w_H*h_prox + w_S*s_trolley
+
+        with every term after the first non-negative. A lower bound on any path is
+        therefore obtained by keeping only the distance term at its smallest
+        possible coefficient, giving
+
+            h(u,v) = min(w_D) * ||p_u - p_v||.
+
+        Scaling by min(w_D) is not cosmetic. Plain Euclidean distance is admissible
+        only while w_D >= 1: at w_D = 0.5 an unobstructed edge costs 0.5*d while the
+        heuristic claims d, so h > c* and the search may return a suboptimal path.
+        The weight-sensitivity study evaluates w_D at 0.5 and 0.75, so the unscaled
+        heuristic was inadmissible for exactly those configurations.
+        """
+        return self._w_d_min * self.graph.distance(u, v)
 
     def _get_g(self, u: str) -> float:
         return self.g.get(u, math.inf)

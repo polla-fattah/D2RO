@@ -66,15 +66,17 @@ BOOTSTRAP_SEED = 20260815
 
 # Expected row counts; a dataset that does not match is treated as incomplete.
 EXPECTED_ROWS = {
-    "benchmark_comparison.csv": 600,   # 6 planners x 100 paired trials
-    "ablation_study.csv": 500,
+    "benchmark_comparison.csv": 700,   # 7 planners x 100 paired trials
+    "ablation_study.csv": 700,   # 7 configurations x 100 trials
     "cross_domain_benchmark.csv": 300,
     "scalability_crowd_density.csv": 600,
     "scalability_fleet_size.csv": 600,
     "mesh_anticipation_experiment.csv": 100,
     "corridor_lock_experiment.csv": 100,
-    "weight_sensitivity.csv": 630,
+    "weight_sensitivity.csv": 510,
     "comm_robustness.csv": 480,
+    "route_yield_factorial.csv": 200,
+    "mesh_degradation.csv": 360,
 }
 
 D2RO_LABEL = "D2RO (SW-DGO Proposed)"
@@ -586,6 +588,15 @@ def main() -> None:
             {"makespan": "makespan_s",
              "intimate_exposure": "intimate_exposure_ticks",
              "mesh_packets": "mesh_packets", "replans": "replans"}),
+        # Route x Yield factorial: one group per cell. The cells are compared in
+        # the manuscript rather than here, because the quantities of interest are
+        # differences and an interaction, not per-cell descriptives alone.
+        "route_yield_factorial": analyse_grouped(
+            "route_yield_factorial.csv", "cell",
+            {"makespan": "makespan_s",
+             "exposure_person_s": "intimate_exposure_person_s",
+             "exposure_person_ticks": "intimate_exposure_person_ticks",
+             "encounters": "intimate_encounters", "replans": "replans"}),
         "mesh_anticipation": analyse_paired_mechanism(
             "mesh_anticipation_experiment.csv", "mesh_enabled", "1",
             ["anticipation_lead_time_s", "backtrack_distance_m",

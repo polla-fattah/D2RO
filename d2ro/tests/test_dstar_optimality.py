@@ -144,5 +144,84 @@ class TestDStarLiteOptimality(unittest.TestCase):
                                dijkstra_cost(g, "n0_0", "n3_3"), delta=1e-6)
 
 
+class TestAdmissibilityUnderDistanceWeight(unittest.TestCase):
+    """
+    Optimality must hold across the whole weight grid the sensitivity study uses,
+    not merely at nominal weights.
+
+    The previous suite compared against Dijkstra over many randomised scenarios but
+    always at w_D = 1, so it could not detect a heuristic that only becomes
+    inadmissible below 1. Plain Euclidean distance overestimates the true cost as
+    soon as w_D < 1 -- an unobstructed edge costs w_D*d while the heuristic claims
+    d -- and an overestimating heuristic silently returns suboptimal paths rather
+    than failing loudly.
+    """
+
+    W_D_GRID = [0.5, 0.75, 1.0, 1.25, 1.5]
+
+    def _apply_distance_weight(self, graph, w_d):
+        for e in graph.edges.values():
+            e.weight_d = w_d
+
+    def test_optimal_for_every_distance_weight_in_the_sensitivity_grid(self):
+        rng = random.Random(20260816)
+        for w_d in self.W_D_GRID:
+            for trial in range(30):
+                g = random_grid(rng)
+                self._apply_distance_weight(g, w_d)
+                start, goal = "n0_0", "n3_3"
+
+                planner = DStarLite(g, start, goal)
+                planner.compute_shortest_path()
+
+                got = planner.g.get(start, math.inf)
+                want = dijkstra_cost(g, start, goal)
+                self.assertAlmostEqual(
+                    got, want, places=6,
+                    msg=(f"w_D={w_d} trial={trial}: D* Lite returned {got}, "
+                         f"Dijkstra optimum is {want}"))
+
+    def test_optimal_after_cost_changes_at_low_distance_weight(self):
+        """The failure mode needs repair cycles, not just a first solve."""
+        rng = random.Random(7771)
+        for w_d in (0.5, 0.75):
+            for trial in range(25):
+                g = random_grid(rng)
+                self._apply_distance_weight(g, w_d)
+                planner = DStarLite(g, "n0_0", "n3_3")
+                planner.compute_shortest_path()
+
+                for _ in range(4):
+                    for (u, v), e in list(g.edges.items()):
+                        if rng.random() < 0.25:
+                            e.h_prox = rng.uniform(0.0, 4.0)
+                            planner.notify_edge_cost_change(u, v)
+                    planner.compute_shortest_path()
+
+                    got = planner.g.get(planner.s_start, math.inf)
+                    want = dijkstra_cost(g, planner.s_start, "n3_3")
+                    self.assertAlmostEqual(
+                        got, want, places=6,
+                        msg=f"w_D={w_d} trial={trial}: {got} vs Dijkstra {want}")
+
+    def test_heuristic_never_exceeds_true_cost(self):
+        """Admissibility directly: h(u,goal) <= c*(u,goal) for every vertex."""
+        rng = random.Random(31337)
+        for w_d in self.W_D_GRID:
+            g = random_grid(rng)
+            self._apply_distance_weight(g, w_d)
+            planner = DStarLite(g, "n0_0", "n3_3")
+            planner.compute_shortest_path()
+            for u in g.nodes:
+                h = planner._heuristic(u, "n3_3")
+                c_star = dijkstra_cost(g, u, "n3_3")
+                if c_star == math.inf:
+                    continue
+                self.assertLessEqual(
+                    h, c_star + 1e-9,
+                    msg=(f"w_D={w_d}: heuristic {h:.6f} exceeds true cost "
+                         f"{c_star:.6f} from {u} -- heuristic is inadmissible"))
+
+
 if __name__ == "__main__":
     unittest.main()

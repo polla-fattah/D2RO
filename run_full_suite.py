@@ -42,16 +42,18 @@ MAX_ATTEMPTS = 5
 
 # key -> (human-readable name, runner method, trial count, expected row count)
 EXPERIMENTS = {
-    "1":  ("Benchmark comparison",      "run_baseline_comparison",        100, 600),
-    "2":  ("Component ablation",        "run_ablation_study",             100, 500),
+    "1":  ("Benchmark comparison",      "run_baseline_comparison",        100, 700),
+    "2":  ("Component ablation",        "run_ablation_study",             100, 700),
     "3":  ("Cross-domain benchmark",    "run_cross_domain_benchmark",     100, 300),
     "4A": ("Crowd-density scalability", "run_crowd_density_scalability",  100, 600),
     "4B": ("Fleet-size scalability",    "run_fleet_size_scalability",     100, 600),
     "A":  ("Mesh anticipation",         "run_mesh_anticipation_experiment", 50, 100),
     "B":  ("Corridor mutex lock",       "run_corridor_lock_experiment",     50, 100),
     # 21 weight configurations x 30 trials; 16 channel conditions x 30 trials.
-    "C":  ("Weight sensitivity",        "run_weight_sensitivity",           30, 630),
+    "C":  ("Weight sensitivity",        "run_weight_sensitivity",           30, 510),
     "D":  ("Communication robustness",  "run_comm_robustness",              30, 480),
+    "E":  ("Route x Yield factorial",   "run_route_yield_factorial",        50, 200),
+    "F":  ("Mesh under degradation",    "run_mesh_degradation",             20, 360),
 }
 
 
@@ -137,6 +139,8 @@ def main() -> None:
             "B": "corridor_lock_experiment.csv",
             "C": "weight_sensitivity.csv",
             "D": "comm_robustness.csv",
+            "E": "route_yield_factorial.csv",
+            "F": "mesh_degradation.csv",
         }[key]
         rows = _row_count(os.path.join(OUT, fname))
         complete = (code == 0 and rows == expected)
