@@ -12,7 +12,7 @@ class WebSimulator {
     this.currentEnv = "supermarket";
     this.currentScenario = "A";
     this.currentAblation = "d2ro";
-    this.isRunning = false;
+    this.isRunning = true; // Auto-start running on load once ready
     this.speedMultiplier = 1.0;
     this.dt = 0.05;
 
@@ -224,7 +224,7 @@ class PySimEngine:
                 "id": a.agent_id,
                 "x": a.x, "y": a.y,
                 "heading": a.heading,
-                "velocity": a.current_speed,
+                "velocity": a.speed,
                 "state": a.state,
                 "is_docked": a.is_docked,
                 "bubble_radius": a.safety_bubble_radius,
@@ -264,6 +264,7 @@ py_engine.load_scenario("supermarket", "A", "d2ro")
 
       this.bindEvents();
       this.loadScenario("supermarket", "A", "d2ro");
+      this.dom.playBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause`;
       this.startLoop();
     } catch (err) {
       console.error(err);
@@ -308,7 +309,7 @@ py_engine.load_scenario("supermarket", "A", "d2ro")
     this.canvas.height = height * dpr;
     this.canvas.style.width = width + "px";
     this.canvas.style.height = height + "px";
-    this.ctx.scale(dpr, dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
   bindEvents() {
@@ -385,16 +386,15 @@ py_engine.load_scenario("supermarket", "A", "d2ro")
     const effectiveDt = this.dt * this.speedMultiplier;
     this.pyodide.runPython(`py_engine.step(${effectiveDt})`);
     this.fetchState();
-    this.render();
   }
 
   startLoop() {
-    let lastTime = performance.now();
     const loop = (now) => {
       if (this.isRunning) {
         this.stepSim();
       }
       this.updateRipples();
+      this.render();
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
