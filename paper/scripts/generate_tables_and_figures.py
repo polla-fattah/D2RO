@@ -588,9 +588,9 @@ def table_factorial(res):
         f"is person-seconds inside the intimate boundary: the counter increments once "
         f"per human per control step, so it is a person-time, not a robot-time.",
         "tab:factorial", "lcccc",
-        "\textbf{Configuration} & \textbf{Success (95\% CI)} & "
-        "\textbf{Makespan (s)} & \textbf{Exposure (person-s)} & "
-        "\textbf{Encounters} \\\\",
+        r"\textbf{Configuration} & \textbf{Success (95\% CI)} & "
+        r"\textbf{Makespan (s)} & \textbf{Exposure (person-s)} & "
+        r"\textbf{Encounters} \\",
         wide=True, resize=True)
     for k in order:
         e = g[k]

@@ -90,7 +90,17 @@ def _code_fingerprint() -> str:
         for fn in sorted(files):
             if fn.endswith(".py"):
                 with open(os.path.join(root, fn), "rb") as f:
-                    h.update(f.read())
+                    blob = f.read()
+                # Normalise line endings before hashing. Hashing raw bytes made the
+                # fingerprint PLATFORM-DEPENDENT: a Windows checkout stores CRLF and
+                # a Linux one LF, so identical source produced different hashes and
+                # every dataset read STALE on the other operating system. CI caught
+                # this the first time it ran on Linux -- until then every "all
+                # datasets ok" had been verified on one OS only, and a reviewer
+                # attempting clean-room reproduction would have seen nothing but
+                # STALE. Normalising here makes the fingerprint a property of the
+                # source, which is what it always claimed to be.
+                h.update(blob.replace(b"\r\n", b"\n"))
     return h.hexdigest()[:16]
 
 

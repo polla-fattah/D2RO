@@ -1,0 +1,24 @@
+# Canonical line endings.
+#
+# The dataset provenance fingerprint is a hash over the simulation source. It now
+# normalises line endings before hashing, but the repository should also be
+# consistent so that the hash is not the only thing standing between a Windows
+# checkout and a Linux one reporting every dataset STALE.
+#
+# CI caught that failure the first time it ran on Linux; before then every
+# "all datasets ok" had been verified on a single operating system.
+
+* text=auto eol=lf
+
+*.py    text eol=lf
+*.tex   text eol=lf
+*.bib   text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.json  text eol=lf
+*.csv   text eol=lf
+
+# Binary artefacts must never be line-ending converted.
+*.pdf   binary
+*.png   binary
+*.docx  binary
