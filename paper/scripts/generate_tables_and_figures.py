@@ -595,10 +595,14 @@ def commit_stamp() -> None:
 # Supplementary + Phase-B experiments
 # --------------------------------------------------------------------------- #
 FACTORIAL_LABEL = {
-    "A_frozen_noyield": "Frozen route, no yielding",
-    "B_frozen_yield":   "Frozen route, yielding",
-    "C_social_noyield": "Social route, no yielding",
-    "D_social_yield":   "Social route, yielding (\textbf{$\text{D}^2\text{RO}$})",
+    "A_prox_off_yield_off": "$H_{\\text{prox}}$ OFF, yield OFF",
+    "B_prox_off_yield_on":  "$H_{\\text{prox}}$ OFF, yield ON",
+    "C_prox_on_yield_off":  "$H_{\\text{prox}}$ ON, yield OFF",
+    "D_prox_on_yield_on":   "$H_{\\text{prox}}$ ON, yield ON (\\textbf{$\\text{D}^2\\text{RO}$})",
+    "A_frozen_noyield":     "Frozen route, no yielding",
+    "B_frozen_yield":       "Frozen route, yielding",
+    "C_social_noyield":     "Social route, no yielding",
+    "D_social_yield":       "Social route, yielding (\\textbf{$\\text{D}^2\\text{RO}$})",
 }
 
 
@@ -612,10 +616,9 @@ def table_factorial(res):
     order = [k for k in FACTORIAL_LABEL if k in g]
     n = g[order[0]].get("n", 0)
     L = _header(
-        f"Routing versus reactive yielding ($N={n}$ paired trials per cell, identical "
-        f"kinematics, collision geometry and arrival criterion throughout). Exposure "
-        f"is person-seconds inside the intimate boundary: the counter increments once "
-        f"per human per control step, so it is a person-time, not a robot-time.",
+        f"Social routing ($H_{{\\text{{prox}}}}$) versus reactive human yielding ($N={n}$ paired trials per cell, "
+        f"dynamic $\\text{{D}}^*$ Lite search active in all cells). Exposure is reported in person-seconds "
+        f"inside the intimate boundary.",
         "tab:factorial", "lcccc",
         r"\textbf{Configuration} & \textbf{Success (95\% CI)} & "
         r"\textbf{Makespan (s)} & \textbf{Exposure (person-s)} & "
@@ -640,7 +643,7 @@ def figure_weight_sensitivity(res):
         _placeholder("fig_weight_sensitivity", "nominal configuration missing")
         return False
 
-    weights = ["w_D", "w_M", "w_H", "w_R", "w_S"]
+    weights = ["w_D", "w_M", "w_H", "w_S"]
     mults = [0.5, 0.75, 1.0, 1.25, 1.5]
     panels = [("success_rate", "Mission success (%)", "(a) Success"),
               ("makespan", "Makespan (s)", "(b) Makespan"),
@@ -681,11 +684,10 @@ def figure_weight_sensitivity(res):
         r"% GENERATED FILE - do not edit by hand.",
         r"\begin{figure*}[t]", r"\centering",
         r"\includegraphics[width=\textwidth]{fig_weight_sensitivity.pdf}",
-        r"\caption{Sensitivity of the five cost weights. Each weight is scaled in turn "
-        r"while the other four are held at nominal; the $\times 1.0$ point is the shared "
-        r"nominal configuration. Evaluated on a seed set disjoint from every other "
-        r"experiment, so the operating point is not assessed on the seeds used to "
-        r"select it.}",
+        r"\caption{Sensitivity of the four soft cost weights ($w_D, w_M, w_H, w_S$). Each weight is scaled in turn "
+        r"while the other three are held at nominal; the $\times 1.0$ point is the shared "
+        r"nominal configuration. Corridor reservation is a hard feasibility constraint and is evaluated separately. "
+        r"Evaluated on a seed set disjoint from every other experiment.}",
         r"\label{fig:weight_sensitivity}", r"\end{figure*}", "",
     ])
 

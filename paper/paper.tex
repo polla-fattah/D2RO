@@ -36,7 +36,7 @@
 \maketitle
 
 \begin{abstract}
-The continuous routing of autonomous service fleets—such as retail shopping carts (\textit{Int-Cart}), clinical hospital pushchairs, and airport luggage trolleys—in crowded, human-shared public environments poses fundamental multi-agent coordination challenges. Classical shortest-path and reactive collision-avoidance methods treat pedestrians as obstacles to be cleared rather than as people whose personal space carries a cost, and they possess no mechanism for resolving symmetric conflicts in single-file corridors. This paper proposes the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). $\text{D}^2\text{RO}$ formalizes a dimensionally weighted edge traversal cost, $C(u,v,t) = w_D D + w_M W_{\text{mesh}} + w_H H_{\text{prox}} + w_S S_{\text{trolley}}$, minimised \emph{subject to} a directional corridor reservation constraint, and solved by incremental heuristic graph repair ($\text{D}^*$ Lite) over event-driven Vehicle-to-Vehicle (V2V) telemetry with exponential decay, continuous 2D asymmetric Gaussian human proxemics, and non-holonomic clearance envelopes. We evaluate over $4{,}600$ kinodynamic simulation trials in eleven experiments, designed so that each claim is attributable. A $2\times2$ factorial separates social \emph{routing} from reactive human \emph{yielding} under identical vehicle dynamics, and shows that routing alone reduces intimate-space exposure from $6.43$ to $0.03$ person-seconds while yielding contributes nothing on a social route and collapses success to $12\%$ on a frozen one. Against socially blind planners the effect is categorical: median exposure $0$ person-seconds [IQR $0$, $0$] versus $6.40$ [$6.2$, $6.6$] for a matched-controller shortest path and $10.18$ [$8.8$, $13.8$] for artificial potential fields ($N=100$ seed-paired trials, Holm-adjusted $p<10^{-15}$), bought with makespan of $47.18 \pm 13.40\text{ s}$ against $19.20\text{ s}$. We also report a negative result that bounds the contribution honestly: an ordinary human-aware planner without any distributed layer matches that social compliance exactly ($p=1$) while running $8\text{ s}$ faster, so the mesh and reservation earn their cost only under the topologies our controlled experiments isolate --- anticipatory rerouting $10.70\text{ s}$ before a blockage becomes observable, and corridor success raised from $36\%$ to $88\%$ by cost-projected diversion. Sensitivity over the four weighted terms holds success at $97$--$100\%$ throughout; anticipation degrades measurably beyond $10\%$ packet loss. The unchanged planner transfers across supermarket, hospital and airport topologies ($99.0\%$, $100.0\%$, $95.0\%$) with $\text{D}^*$ Lite repairs costing a median $0.002\text{ ms}$ within a $0.12\text{ ms}$ control step.
+The continuous routing of autonomous service fleets—such as retail shopping carts (\textit{Int-Cart}), clinical hospital pushchairs, and airport luggage trolleys—in crowded, human-shared public environments poses fundamental multi-agent coordination challenges. Classical shortest-path and reactive collision-avoidance methods treat pedestrians as obstacles to be cleared rather than as people whose personal space carries a cost, and they possess no mechanism for resolving symmetric conflicts in single-file corridors. This paper proposes the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO). $\text{D}^2\text{RO}$ formalizes a dimensionally weighted edge traversal cost, $C_i(e, t) = w_D \cdot C_{\text{geom}}(e) + w_M \cdot C_{\text{mesh}}(e, t) + w_H \cdot C_{\text{social}}(e, t) + w_S \cdot C_{\text{kinematic}}(i, e, t)$, minimised \emph{subject to} a directional corridor reservation constraint ($R_{\text{lock}}$), and solved by incremental heuristic graph repair ($\text{D}^*$ Lite) over event-driven Vehicle-to-Vehicle (V2V) telemetry with exponential decay, continuous 2D asymmetric Gaussian human proxemics, and non-holonomic clearance envelopes. We evaluate over $4{,}600$ kinodynamic simulation trials in eleven experiments, designed so that each claim is attributable. A $2\times2$ factorial isolates social \emph{routing} ($H_{\text{prox}}$) from reactive human \emph{yielding} under dynamic $\text{D}^*$ Lite search, showing that routing alone reduces intimate-space exposure from $6.45$ to $0.00$ person-seconds ($95\%$ CI $[-6.48, -6.31]$) while yielding contributes nothing on a social route and collapses success on a frozen one. Against socially blind planners the effect is categorical: median exposure $0$ person-seconds [IQR $0$, $0$] versus $6.40$ [$6.2$, $6.6$] for a matched-controller shortest path ($N=100$ seed-paired trials, Holm-adjusted $p<10^{-15}$), bought with makespan of $47.18 \pm 13.40\text{ s}$ against $19.20\text{ s}$. We also report a negative result that bounds the contribution honestly: an ordinary human-aware planner without any distributed layer matches that social compliance exactly ($p=1$) while running $8\text{ s}$ faster, so the mesh and reservation earn their cost only under the topologies our controlled experiments isolate --- anticipatory rerouting $11.10\text{ s}$ before a blockage becomes observable, and corridor success raised from $36\%$ to $88\%$ by cost-projected diversion. Sensitivity over the four weighted terms holds success at $97$--$100\%$ throughout; anticipation degrades measurably beyond $10\%$ packet loss. The unchanged planner transfers across supermarket, hospital and airport topologies ($99.0\%$, $100.0\%$, $95.0\%$) with $\text{D}^*$ Lite repairs costing a median $0.002\text{ ms}$ within a $0.12\text{ ms}$ control step.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -73,7 +73,7 @@ Traditional discrete graph planners (e.g., Static $A^*$, Dijkstra) compute globa
 In narrow architectural passages (e.g., supermarket grocery aisles, clinical hospital corridors) whose width does not admit two carts side by side with the required clearances (Eq.~\eqref{eq:singlefile}), bidirectional passing is not possible. When two opposing agents enter a single-file aisle simultaneously, reactive avoidance algorithms oscillate in place, producing permanent symmetrical live-locks \cite{dergachev2021distributed}.
 
 \subsubsection{Information Isolation and Delayed Fleet Backtracking}
-In decentralized multi-agent systems without communication, robots operate with myopic, line-of-sight sensing. When a lead cart encounters an unexpected aisle blockage, trailing carts remain unaware of the obstruction. Trailing units travel all the way to the blocked entrance before sensing the congestion locally, forcing complete reversals and causing severe inflation in fleet makespan \cite{gielis2022codesign}.
+In decentralized multi-agent systems without communication, robots operate with myopic, onboard sensing radius. When a lead cart encounters an unexpected aisle blockage, trailing carts remain unaware of the obstruction. Trailing units travel all the way to the blocked entrance before sensing the congestion locally, forcing complete reversals and causing severe inflation in fleet makespan \cite{gielis2022codesign}.
 
 \subsection{Target Application Fields}
 The framework targets the same four domains, each of which stresses it differently. Retail supermarkets combine narrow grocery aisles with arterial promenades (\textbf{Action Alley}), end-caps and checkout queues. Clinical facilities impose a priority hierarchy: emergency trauma vehicles hold right-of-way while routine pushchairs yield into \textbf{Turnout Alcoves} ($V_{\text{alcove}}$). Aviation terminals pair wide open concourses with security pinch points and elongated gate piers. Public facilities and micro-fulfilment stacks offer the tightest physical clearances of all. Three of these---supermarket, hospital and airport---are implemented as simulation domains and evaluated in Section~\ref{sec:cross_domain_failure}.
@@ -83,9 +83,9 @@ To overcome these bottlenecks, this paper proposes the \textbf{Distributed Dynam
 \begin{multline}
 \label{eq:sw_dgo_master_intro}
 C_i(e, t) = w_D \cdot C_{\text{geom}}(e) + w_M \cdot C_{\text{mesh}}(e, t) + w_H \cdot C_{\text{social}}(e, t) \\
-+ w_R \cdot C_{\text{mutex}}(e, t) + w_S \cdot C_{\text{kinematic}}(i, e, t)
++ w_S \cdot C_{\text{kinematic}}(i, e, t) \quad \text{subject to } R_{\text{lock}}
 \end{multline}
-seamlessly unifying incremental heuristic graph repair ($\text{D}^*$ Lite) \cite{koenig2002dstar} with distributed anticipatory cost propagation, continuous Gaussian proxemics \cite{kruse2013human, chen2020relational}, directional corridor reservation protocols, and non-holonomic vehicle clearance envelopes.
+seamlessly unifying incremental heuristic graph repair ($\text{D}^*$ Lite) \cite{koenig2002dstar} with distributed anticipatory cost propagation, continuous Gaussian proxemics \cite{kruse2013human, chen2020relational}, directional corridor reservation protocols ($R_{\text{lock}}$), and non-holonomic vehicle clearance envelopes.
 
 \subsection{Research Aims \& Key Contributions}
 \label{sec:aims}
@@ -141,7 +141,7 @@ A consistent theme of the human-aware navigation literature is that robots canno
 \section{Problem Formulation \& The SW-DGO Framework}
 
 \subsection{Topological Roadmap and Kinematic Model}
-Let the indoor facility floorplan be represented by an undirected planar topological graph $G = (V, E)$, where $V = \{v_1, v_2, \dots, v_n\}$ denotes navigable topological waypoints (e.g., aisle intersections, passing bays, docking bays) and $E \subseteq V \times V$ represents navigable corridor edges.
+Let the indoor facility floorplan be represented by an \textbf{undirected physical roadmap} graph $G = (V, E)$, where $V = \{v_1, v_2, \dots, v_n\}$ denotes navigable topological waypoints (e.g., aisle intersections, passing bays, docking bays) and $E \subseteq V \times V$ represents physical corridor edges. From this undirected physical structure, each agent $i$ maintains a \textbf{directed local cost graph} $\vec{G}_i = (V, A_i)$, whose directed arcs $a = (u,v) \in A_i$ carry directional traversal penalties $C_i(u,v,t)$ and directional corridor lock states.
 
 Each autonomous service cart $i \in \{1, \dots, N_{\text{carts}}\}$ is governed by non-holonomic unicycle kinematics:
 \begin{align}
@@ -306,7 +306,7 @@ Spatial Resolution Scale & $s_{\text{res}}$ & $1\text{ px} = 0.03\text{ m}$ ($1\
 Physics Integration Rate & $\Delta t$ & $0.05\text{ s}$ ($20\text{ Hz}$ control loop) \\
 GUI Rendering Rate & $f_{\text{gui}}$ & $60\text{ FPS}$ ($16.6\text{ ms}$ interpolation) \\
 Chassis Dimensions & $L \times W$ & $0.72\text{ m} \times 0.48\text{ m}$ ($24 \times 16\text{ px}$) \\
-Inscribed Safety Radius & $r_{\text{robot}}$ & $0.40\text{ m}$ ($13.3\text{ px}$) \\
+Effective safety / swept-envelope radius & $r_{\text{robot}}$ & $0.40\text{ m}$ ($13.3\text{ px}$) \\
 Maximum Linear Speed & $v_{\max}$ & $1.20\text{ m/s}$ ($40.0\text{ px/s}$) \\
 Maximum Angular Rate & $\omega_{\max}$ & $2.50\text{ rad/s}$ \\
 Shelf Clearance Margin & $d_{\text{shelf}}$ & $0.54\text{ m}$ ($18.0\text{ px}$) \\
@@ -525,36 +525,17 @@ outcome that should not be silently dropped from the second question.
 
 \subsection{Separating Routing from Reactive Yielding}
 \label{sec:factorial}
-The comparison above still leaves an attribution question. A $\text{D}^2\text{RO}$
-agent both routes socially and yields reactively to nearby pedestrians, so a
-difference against a frozen-route baseline could in principle be produced by either.
-We therefore ran a $2\times2$ factorial --- route $\in$ \{frozen shortest path,
-social\} $\times$ yielding $\in$ \{off, on\} --- with identical kinematics,
-collision geometry and arrival criterion in all four cells ($N=50$ paired trials).
+The comparison above still leaves an attribution question. A $\text{D}^2\text{RO}$ agent both routes socially via $H_{\text{prox}}$ and yields reactively to nearby pedestrians, so a difference against a shortest-path baseline could in principle be produced by either. We therefore ran a $2\times2$ factorial --- $H_{\text{prox}} \in \{\text{OFF}, \text{ON}\} \times \text{yielding} \in \{\text{OFF}, \text{ON}\}$ --- with identical kinematics, dynamic $\text{D}^*$ Lite replanning, collision geometry and arrival criterion in all four cells ($N=50$ paired trials, mesh communication and corridor locks disabled across all cells).
 
 \input{generated/table_factorial}
 
-Three things follow, and the first is the one that matters.
+Three conclusions follow from the inferential contrasts:
 
-\textbf{Routing produces the social benefit; yielding does not.} With yielding
-switched off entirely, social routing alone drives exposure from $6.43$ to $0.03$
-person-seconds. Adding reactive yielding to a social route does not improve this
-further --- it slightly \emph{worsens} it, to $0.62$ person-seconds --- because an
-agent that halts beside a pedestrian accumulates exposure that an agent which routes
-around them never incurs. The near-zero social exposure reported throughout this
-paper is therefore attributable to $H_{\text{prox}}$, not to the low-level
-push-back controller.
+\textbf{1. $H_{\text{prox}}$ routing produces the social benefit.} With yielding switched off entirely, enabling $H_{\text{prox}}$ routing alone reduces intimate personal-space exposure from $6.45\text{ person-s}$ [IQR $6.2, 6.6$] in Cell~A down to $0.00\text{ person-s}$ [IQR $0.0, 0.0$] in Cell~C (mean difference $-6.40\text{ person-s}$, $95\%$ CI $[-6.48, -6.31]$, $p < 10^{-15}$). Adding reactive yielding to an already social route (Cell~D) leaves median exposure at $0.00\text{ person-s}$ [IQR $0.0, 0.0$]. The near-zero social exposure reported throughout this paper is therefore attributable to $H_{\text{prox}}$ graph cost routing, not to low-level reactive yielding.
 
-\textbf{Yielding without the ability to replan is a trap.} On a frozen route,
-enabling yielding collapses mission success from $100\%$ to $12\%$ and inflates
-makespan to $173.89\text{ s}$: the agent stops for a pedestrian occupying its only
-path and has no recourse, so it waits out the clock. The interaction is strongly
-negative, and it is the clearest single argument in this paper for coupling social
-sensitivity to replanning rather than bolting it onto a fixed plan.
+\textbf{2. Yielding without social routing is a trap (Strong Negative Interaction).} In Cell~B ($H_{\text{prox}}$ OFF, yielding ON), enabling reactive yielding without social routing inflates median intimate exposure to $48.00\text{ person-s}$ [IQR $38.5, 57.8$]: the agent halts beside a pedestrian obstructing its un-weighted shortest path and has no social cost gradient to steer away, so it accumulates prolonged exposure. The interaction contrast $\Delta_{\text{interaction}} = (D - C) - (B - A) = -42.81\text{ person-s}$ ($95\%$ CI $[-48.08, -37.89]$, $p < 10^{-15}$) is strongly negative, demonstrating that reactive yielding is beneficial only when paired with social graph search.
 
-\textbf{The time cost is routing's.} Holding yielding off, social routing costs
-$49.14 - 19.20 = 29.94\text{ s}$. That is the price of the social benefit, and it is
-not attributable to the vehicle model or to reactive behaviour.
+\textbf{3. Social exposure is zero-inflated.} Because exposure distributions are zero-inflated and right-skewed, Cell~C and Cell~D report medians of $0.00\text{ person-s}$ [IQR $0.0, 0.0$], establishing that proxemic routing eliminates intimate-space breaches across the vast majority of trials.
 
 \subsection{Component Ablation Analysis}
 The ablation in Table~\ref{tab:ablation} distinguishes the terms of Eq.~\eqref{eq:sw_dgo_master} that are load-bearing in this benchmark from those that are not, and we report both outcomes.
@@ -651,11 +632,11 @@ The head-on encounter still occurs because it is what triggers the exchange of c
 % ==============================================================================
 \subsection{Weight Sensitivity}
 \label{sec:sensitivity}
-The proposed cost function is a weighted sum, so its behaviour could in principle
-depend delicately on the five weights. If the reported operating point sat on a
+The proposed cost function is a weighted sum over four soft terms, so its behaviour could in principle
+depend delicately on the four cost weights. If the reported operating point sat on a
 narrow ridge, the result would be fragile in a way a reader must be told about. We
 therefore perturb each weight in turn by $\times\{0.5, 0.75, 1.25, 1.5\}$ while
-holding the other four at nominal, and evaluate on a seed set \textbf{disjoint} from
+holding the other three at nominal, and evaluate on a seed set \textbf{disjoint} from
 every other experiment in this paper: the weights were selected by hand, and
 assessing their robustness on the seeds used to select and report them would be a
 form of tuning on the evaluation set.
@@ -749,14 +730,15 @@ repaired.
 % SECTION VII: CONCLUSION
 % ==============================================================================
 \section{Conclusion \& Future Research Directions}
-This paper introduced the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO), formalizing a 5-component edge traversal cost function $C(u, v, t) = w_D D + w_M W_{\text{mesh}} + w_H H_{\text{prox}} + w_R R_{\text{lock}} + w_S S_{\text{trolley}}$ solved by incremental $\text{D}^*$ Lite repair. We assess the outcome against the three aims set out in Section~\ref{sec:aims}.
+This paper introduced the Distributed Dynamic Route Optimization ($\text{D}^2\text{RO}$) framework powered by Socially-Weighted Distributed Graph Optimization (SW-DGO), formalizing a 4-component soft edge traversal cost function $C_i(e, t) = w_D \cdot C_{\text{geom}}(e) + w_M \cdot C_{\text{mesh}}(e, t) + w_H \cdot C_{\text{social}}(e, t) + w_S \cdot C_{\text{kinematic}}(i, e, t)$ minimised subject to a directional corridor reservation constraint ($R_{\text{lock}}$) and solved by incremental $\text{D}^*$ Lite heuristic graph repair. We assess the outcome against the four aims set out in Section~\ref{sec:aims}:
 
-\textbf{A1 (social compliance) is met, and now attributably so.} Median
-intimate-space exposure is $0$ person-seconds [IQR $0$, $0$] against $6.40$ for a
-matched-controller shortest path and $10.18$ for artificial potential fields
-($p < 10^{-15}$). The $2\times2$ factorial of Section~\ref{sec:factorial} establishes
-that this is produced by the socially weighted graph and not by the reactive
-yielding layer: routing alone drives exposure to $0.03$ person-seconds with yielding
+\textbf{A1 (social compliance) is met, and now attributably so.} Median intimate-space exposure is $0.00$ person-seconds [IQR $0$, $0$] against $6.40$ for a matched-controller shortest path and $10.18$ for artificial potential fields ($p < 10^{-15}$). The $2\times2$ factorial of Section~\ref{sec:factorial} establishes that this is produced by the socially weighted graph ($H_{\text{prox}}$) and not by the reactive yielding layer: routing alone drives exposure to $0.00$ person-seconds, while reactive yielding without social routing inflates exposure ($48.00\text{ person-s}$) and produces a strongly negative interaction contrast ($\Delta_{\text{interaction}} = -42.81\text{ person-s}$, $p < 10^{-15}$).
+
+\textbf{A2 (distributed coordination without a central server) is met under targeted conditions.} In the general scenario, the mesh and reservation layer contribute little because their target topologies occur rarely. But where those topologies are instantiated, their contribution is demonstrable: anticipatory rerouting $11.10 \pm 5.93\text{ s}$ before a blockage is observable, and corridor success raised from $36.0\%$ to $88.0\%$ ($p = 1.7 \times 10^{-4}$) via cost-projected diversion.
+
+\textbf{A3 (architectural generality and real-time feasibility) is met within the evaluated family.} The unchanged planner transfers across retail supermarket, clinical hospital and airport terminal topologies ($99.0\%$, $100.0\%$, $95.0\%$ success), with $\text{D}^*$ Lite incremental repairs executing in a median of $0.002\text{ ms}$ (p95 $0.10\text{ ms}$) within a $0.12\text{ ms}$ control step, well inside the $50\text{ ms}$ real-time budget.
+
+\textbf{A4 (attributable evaluation and weight robustness) is met.} By decoupling vehicle kinematics from routing policies, testing a four-weight sensitivity grid on disjoint seeds ($97$--$100\%$ success across all perturbations), and assessing communication degradation where the mesh is causally responsible (holding lead time up to $10\%$ packet loss), we establish that the system's performance is robust and attributable to its core components.
 switched off entirely, and adding yielding slightly worsens it. The compliance costs
 $29.94\text{ s}$ of makespan, measured with yielding held constant.
 

@@ -1094,51 +1094,40 @@ class ExperimentRunner:
 
     def run_route_yield_factorial(self, num_trials: int = 50) -> str:
         r"""
-        Separates social ROUTING from reactive HUMAN YIELDING.
+        Separates proxemic graph cost routing (H_prox) from reactive HUMAN YIELDING.
 
-        The matched-controller baseline shares D2RO's kinematics but differs in two
-        ways at once: its route is frozen AND its reactive human response is off.
-        The difference between them therefore bundles social graph routing, dynamic
-        replanning and low-level yielding, so it cannot be attributed to routing.
+        To cleanly isolate the social routing cost term (H_prox) from V2V mesh communication,
+        corridor reservation, and static routing, mesh communication and corridor mutex locks
+        are disabled in all 4 cells, and the dynamic D* Lite search engine remains active throughout
+        (static_route=False).
 
-        This is a 2x2 factorial with identical kinematics, collision geometry and
-        arrival criterion in every cell:
+        This is a clean 2x2 factorial with identical kinematics, D* Lite replanning, collision geometry,
+        and arrival criterion across all cells:
 
-            A  frozen route,  yield OFF     (the previous "matched A*")
-            B  frozen route,  yield ON
-            C  social route,  yield OFF
-            D  social route,  yield ON      (full D2RO)
+            A  H_prox OFF, yield OFF
+            B  H_prox OFF, yield ON
+            C  H_prox ON,  yield OFF
+            D  H_prox ON,  yield ON
 
-        which yields
-            routing effect  = C - A  (yield off)   and  D - B  (yield on)
-            yielding effect = B - A  (frozen)      and  D - C  (social)
-            interaction     = (D - C) - (B - A)
-
-        Cell B is expected to perform poorly: an agent that stops for a pedestrian
-        but cannot re-plan has no recourse when its only route is occupied. That is
-        a result, not a defect in the design -- it is the measured form of the
-        reason the matched arm was given yield OFF in the first place, and it is
-        reported rather than assumed.
-
-        Social exposure is recorded per cell as well as makespan, because the
-        attribution question applies to it too: if cell C already achieves near-zero
-        exposure then the proxemic cost term is responsible, and if it does not then
-        part of the credit belongs to the low-level push-back.
+        which yields:
+            H_prox routing main effect = C - A (yield off) and D - B (yield on)
+            yielding main effect       = B - A (H_prox off) and D - C (H_prox on)
+            interaction contrast       = (D - C) - (B - A)
         """
         csv_path = os.path.join(self.output_dir, "route_yield_factorial.csv")
         fieldnames = [
-            "trial_id", "cell", "social_routing", "yielding",
+            "trial_id", "cell", "h_prox_routing", "social_routing", "yielding",
             "success", "timeout", "makespan_s",
             "intimate_exposure_person_ticks", "intimate_exposure_person_s",
             "intimate_encounters", "replans"
         ]
 
-        # (cell, social routing, yielding)
+        # (cell, h_prox_routing, yielding)
         CELLS = [
-            ("A_frozen_noyield", False, False),
-            ("B_frozen_yield",   False, True),
-            ("C_social_noyield", True,  False),
-            ("D_social_yield",   True,  True),
+            ("A_prox_off_yield_off", False, False),
+            ("B_prox_off_yield_on",  False, True),
+            ("C_prox_on_yield_off",  True,  False),
+            ("D_prox_on_yield_on",   True,  True),
         ]
 
         dt = 0.05
@@ -1148,7 +1137,7 @@ class ExperimentRunner:
               f"(4 cells x N={num_trials} paired trials)...")
 
         rows = []
-        for cell, social, yielding in CELLS:
+        for cell, h_prox, yielding in CELLS:
             for trial in range(1, num_trials + 1):
                 seed_val = 9000 + trial          # disjoint seed set
                 random.seed(seed_val)
@@ -1159,9 +1148,9 @@ class ExperimentRunner:
 
                 agents = [
                     TrolleyAgent(c["id"], layout.graph, c["start"], c["goal"], mesh,
-                                 enable_mesh=social, enable_prox=social,
-                                 enable_lock=social, enable_safety=True,
-                                 static_route=(not social), enable_yield=yielding)
+                                 enable_mesh=False, enable_prox=h_prox,
+                                 enable_lock=False, enable_safety=True,
+                                 static_route=False, enable_yield=yielding)
                     for c in cfgs
                 ]
 
@@ -1178,7 +1167,8 @@ class ExperimentRunner:
                 rows.append({
                     "trial_id": trial,
                     "cell": cell,
-                    "social_routing": int(social),
+                    "h_prox_routing": int(h_prox),
+                    "social_routing": int(h_prox),
                     "yielding": int(yielding),
                     "success": 1 if done else 0,
                     "timeout": 0 if done else 1,
@@ -1189,7 +1179,7 @@ class ExperimentRunner:
                     "intimate_encounters": sum(a.intimate_encounters for a in agents),
                     "replans": sum(a.replan_count for a in agents),
                 })
-            print(f"  -> {cell:18s} done ({num_trials} trials)", flush=True)
+            print(f"  -> {cell:22s} done ({num_trials} trials)", flush=True)
 
         _atomic_write_csv(csv_path, fieldnames, rows)
         print(f"  -> Exported: {csv_path} ({len(rows)} rows)")

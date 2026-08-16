@@ -453,6 +453,146 @@ def analyse_paired_mechanism(fname: str, cond_key: str, on_value: str,
     return out
 
 
+def analyse_factorial() -> Dict[str, Any]:
+    r"""
+    Analyses the 2x2 Route x Yield Factorial Experiment (H_prox x Yielding).
+    Calculates cell descriptives (median [IQR], mean +- SD) and inferential contrasts:
+      * H_prox routing main effect (yield OFF: C - A, yield ON: D - B)
+      * Yielding main effect (H_prox OFF: B - A, H_prox ON: D - C)
+      * Interaction contrast: (D - C) - (B - A)
+    """
+    rows, ver = load("route_yield_factorial.csv")
+    out: Dict[str, Any] = {"dataset": "route_yield_factorial.csv", "status": ver}
+
+    if not rows:
+        return out
+
+    by_cell: Dict[str, Dict[int, Dict[str, Any]]] = defaultdict(dict)
+    for r in rows:
+        c = r["cell"]
+        tid = int(r["trial_id"])
+        by_cell[c][tid] = r
+
+    cells = ["A_prox_off_yield_off", "B_prox_off_yield_on",
+             "C_prox_on_yield_off", "D_prox_on_yield_on"]
+    
+    # Fallback to legacy cell names if existing dataset is loaded
+    if not any(c in by_cell for c in cells):
+        cells = ["A_frozen_noyield", "B_frozen_yield", "C_social_noyield", "D_social_yield"]
+
+    groups: Dict[str, Dict[str, Any]] = {}
+    for c in cells:
+        cell_rows = list(by_cell.get(c, {}).values())
+        if not cell_rows:
+            continue
+        n = len(cell_rows)
+        succ = [int(r["success"]) for r in cell_rows]
+        makespan = [fnum(r, "makespan_s") for r in cell_rows]
+        exp_s = [fnum(r, "intimate_exposure_person_s") if "intimate_exposure_person_s" in r else fnum(r, "intimate_exposure_person_ticks") * 0.05 for r in cell_rows]
+        encount = [fnum(r, "intimate_encounters") for r in cell_rows]
+
+        groups[c] = {
+            "n": n,
+            "success_rate": sum(succ) / n * 100.0,
+            "makespan": describe(makespan),
+            "exposure_person_s": describe(exp_s),
+            "encounters": describe(encount),
+        }
+
+    out["groups"] = groups
+
+    # Paired inferential contrasts across trial_ids
+    if len(cells) == 4 and all(c in by_cell for c in cells):
+        trials = sorted(list(by_cell[cells[0]].keys()))
+        if all(all(t in by_cell[c] for t in trials) for c in cells):
+            a_exp = [fnum(by_cell[cells[0]][t], "intimate_exposure_person_s") if "intimate_exposure_person_s" in by_cell[cells[0]][t] else fnum(by_cell[cells[0]][t], "intimate_exposure_person_ticks") * 0.05 for t in trials]
+            b_exp = [fnum(by_cell[cells[1]][t], "intimate_exposure_person_s") if "intimate_exposure_person_s" in by_cell[cells[1]][t] else fnum(by_cell[cells[1]][t], "intimate_exposure_person_ticks") * 0.05 for t in trials]
+            c_exp = [fnum(by_cell[cells[2]][t], "intimate_exposure_person_s") if "intimate_exposure_person_s" in by_cell[cells[2]][t] else fnum(by_cell[cells[2]][t], "intimate_exposure_person_ticks") * 0.05 for t in trials]
+            d_exp = [fnum(by_cell[cells[3]][t], "intimate_exposure_person_s") if "intimate_exposure_person_s" in by_cell[cells[3]][t] else fnum(by_cell[cells[3]][t], "intimate_exposure_person_ticks") * 0.05 for t in trials]
+
+            a_mks = [fnum(by_cell[cells[0]][t], "makespan_s") for t in trials]
+            b_mks = [fnum(by_cell[cells[1]][t], "makespan_s") for t in trials]
+            c_mks = [fnum(by_cell[cells[2]][t], "makespan_s") for t in trials]
+            d_mks = [fnum(by_cell[cells[3]][t], "makespan_s") for t in trials]
+
+            interaction_exp = [(d - c) - (b - a) for a, b, c, d in zip(a_exp, b_exp, c_exp, d_exp)]
+            interaction_mks = [(d - c) - (b - a) for a, b, c, d in zip(a_mks, b_mks, c_mks, d_mks)]
+
+            routing_off_exp = [c - a for a, c in zip(a_exp, c_exp)]
+            routing_on_exp = [d - b for b, d in zip(b_exp, d_exp)]
+
+            yielding_off_exp = [b - a for a, b in zip(a_exp, b_exp)]
+            yielding_on_exp = [d - c for c, d in zip(c_exp, d_exp)]
+
+            out["contrasts"] = {
+                "interaction_exposure": {**describe(interaction_exp), "bootstrap": paired_bootstrap(interaction_exp, [0.0]*len(interaction_exp))},
+                "interaction_makespan": {**describe(interaction_mks), "bootstrap": paired_bootstrap(interaction_mks, [0.0]*len(interaction_mks))},
+                "routing_effect_yield_off_exposure": {**describe(routing_off_exp), "bootstrap": paired_bootstrap(routing_off_exp, [0.0]*len(routing_off_exp))},
+                "routing_effect_yield_on_exposure": {**describe(routing_on_exp), "bootstrap": paired_bootstrap(routing_on_exp, [0.0]*len(routing_on_exp))},
+                "yielding_effect_prox_off_exposure": {**describe(yielding_off_exp), "bootstrap": paired_bootstrap(yielding_off_exp, [0.0]*len(yielding_off_exp))},
+                "yielding_effect_prox_on_exposure": {**describe(yielding_on_exp), "bootstrap": paired_bootstrap(yielding_on_exp, [0.0]*len(yielding_on_exp))},
+            }
+
+    return out
+
+
+def analyse_degradation_paired() -> Dict[str, Any]:
+    r"""
+    Analyses Mechanism A under communication degradation by pairing Mesh ON and Mesh OFF
+    trials at each channel condition (loss rate x latency).
+    Calculates paired deltas:
+      delta_lead_time_s = T_Mesh_ON - T_Mesh_OFF
+      delta_backtrack_m = Backtrack_Mesh_OFF - Backtrack_Mesh_ON
+      delta_makespan_s = Makespan_Mesh_OFF - Makespan_Mesh_ON
+    along with 95% CIs and p-values.
+    """
+    rows, ver = load("mesh_degradation.csv")
+    out: Dict[str, Any] = {"dataset": "mesh_degradation.csv", "status": ver}
+
+    if not rows:
+        return out
+
+    by_chan: Dict[str, Dict[Tuple[int, str], Dict[str, Any]]] = defaultdict(dict)
+    for r in rows:
+        chan = r["channel"]
+        tid = int(r["trial_id"])
+        arm = str(r["mesh_enabled"])
+        by_chan[chan][(tid, arm)] = r
+
+    channels: Dict[str, Dict[str, Any]] = {}
+    for chan, records in by_chan.items():
+        trials = sorted(list(set(t for t, a in records.keys())))
+        paired_records = []
+        for t in trials:
+            if (t, "1") in records and (t, "0") in records:
+                paired_records.append((records[(t, "1")], records[(t, "0")]))
+
+        if not paired_records:
+            continue
+
+        n_pairs = len(paired_records)
+        delta_lead = [fnum(on, "anticipation_lead_time_s") - fnum(off, "anticipation_lead_time_s") for on, off in paired_records]
+        delta_backtrack = [fnum(off, "backtrack_distance_m") - fnum(on, "backtrack_distance_m") for on, off in paired_records]
+        delta_makespan = [fnum(off, "makespan_s") - fnum(on, "makespan_s") for on, off in paired_records]
+
+        on_lead = [fnum(on, "anticipation_lead_time_s") for on, _ in paired_records]
+        off_lead = [fnum(off, "anticipation_lead_time_s") for _, off in paired_records]
+
+        channels[chan] = {
+            "n_pairs": n_pairs,
+            "loss_rate": float(paired_records[0][0].get("packet_loss_rate", 0)),
+            "latency_s": float(paired_records[0][0].get("latency_s", 0)),
+            "on_lead_time": describe(on_lead),
+            "off_lead_time": describe(off_lead),
+            "delta_lead_time": {**describe(delta_lead), "bootstrap": paired_bootstrap(delta_lead, [0.0]*len(delta_lead))},
+            "delta_backtrack": {**describe(delta_backtrack), "bootstrap": paired_bootstrap(delta_backtrack, [0.0]*len(delta_backtrack))},
+            "delta_makespan": {**describe(delta_makespan), "bootstrap": paired_bootstrap(delta_makespan, [0.0]*len(delta_makespan))},
+        }
+
+    out["channels"] = channels
+    return out
+
+
 # --------------------------------------------------------------------------- #
 # Report
 # --------------------------------------------------------------------------- #
@@ -598,11 +738,13 @@ def main() -> None:
         "crowd_density": analyse_grouped(
             "scalability_crowd_density.csv", "crowd_density_humans",
             {"makespan": "makespan_s", "replan_latency_ms": "mean_replan_latency_ms",
-             "discomfort": "discomfort_integral", "mesh_packets": "v2v_mesh_packets"}),
+             "corridor_mutex_wait_s": "corridor_mutex_wait_s",
+             "mesh_packets": "v2v_mesh_packets"}),
         "fleet_size": analyse_grouped(
             "scalability_fleet_size.csv", "fleet_size_carts",
             {"makespan": "makespan_s", "replan_latency_ms": "mean_replan_latency_ms",
-             "mutex_wait_s": "corridor_mutex_wait_s", "mesh_packets": "v2v_mesh_packets"}),
+             "corridor_mutex_wait_s": "corridor_mutex_wait_s",
+             "mesh_packets": "v2v_mesh_packets"}),
         # Weight sensitivity: one group per configuration. Grouping by `config`
         # keeps each perturbed weight identifiable; the nominal row serves as the
         # x1.0 point shared by all five curves.
@@ -620,19 +762,10 @@ def main() -> None:
         # Route x Yield factorial: one group per cell. The cells are compared in
         # the manuscript rather than here, because the quantities of interest are
         # differences and an interaction, not per-cell descriptives alone.
-        "route_yield_factorial": analyse_grouped(
-            "route_yield_factorial.csv", "cell",
-            {"makespan": "makespan_s",
-             "exposure_person_s": "intimate_exposure_person_s",
-             "exposure_person_ticks": "intimate_exposure_person_ticks",
-             "encounters": "intimate_encounters", "replans": "replans"}),
+        "route_yield_factorial": analyse_factorial(),
         # Mechanism A repeated per channel condition. Grouped by channel AND arm so
         # the anticipation advantage can be tracked as the link degrades.
-        "mesh_degradation": analyse_grouped(
-            "mesh_degradation.csv", "channel",
-            {"lead_time_s": "anticipation_lead_time_s",
-             "backtrack_m": "backtrack_distance_m",
-             "makespan": "makespan_s"}),
+        "mesh_degradation": analyse_degradation_paired(),
         "mesh_anticipation": analyse_paired_mechanism(
             "mesh_anticipation_experiment.csv", "mesh_enabled", "1",
             ["anticipation_lead_time_s", "backtrack_distance_m",

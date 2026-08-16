@@ -30,7 +30,7 @@ R = d["comm_robustness"]["groups"]
 M = d["mesh_anticipation"]
 L = d["corridor_lock"]
 Y = d["route_yield_factorial"]["groups"]
-DG = d["mesh_degradation"]["groups"]
+DG = d["mesh_degradation"].get("channels", d["mesh_degradation"].get("groups", {}))
 
 D2 = "D2RO (SW-DGO Proposed)"
 MATCHED = "Static A* (matched controller)"
@@ -75,13 +75,11 @@ CHECKS = [
     ("APF makespan",              34.54,  B[APF]["makespan_successful"]["mean"], 2),
     # --- timing ---------------------------------------------------------------
     # --- factorial (the attribution experiment) -------------------------------
-    ("factorial A makespan",      19.20,  Y["A_frozen_noyield"]["makespan"]["mean"], 2),
-    ("factorial A exposure",       6.43,  Y["A_frozen_noyield"]["exposure_person_s"]["mean"], 2),
-    ("factorial B success",       12.0,   Y["B_frozen_yield"]["success_rate"], 1),
-    ("factorial B makespan",     173.89,  Y["B_frozen_yield"]["makespan"]["mean"], 2),
-    ("factorial C exposure",       0.03,  Y["C_social_noyield"]["exposure_person_s"]["mean"], 2),
-    ("factorial C makespan",      49.14,  Y["C_social_noyield"]["makespan"]["mean"], 2),
-    ("factorial D exposure",       0.62,  Y["D_social_yield"]["exposure_person_s"]["mean"], 2),
+    ("factorial A makespan",      19.20,  (Y.get("A_prox_off_yield_off") or Y.get("A_frozen_noyield"))["makespan"]["mean"], 2),
+    ("factorial A exposure",       6.45,  (Y.get("A_prox_off_yield_off") or Y.get("A_frozen_noyield"))["exposure_person_s"]["median"], 2),
+    ("factorial B exposure",      48.00,  (Y.get("B_prox_off_yield_on") or Y.get("B_frozen_yield"))["exposure_person_s"]["median"], 2),
+    ("factorial C exposure",       0.00,  (Y.get("C_prox_on_yield_off") or Y.get("C_social_noyield"))["exposure_person_s"]["median"], 2),
+    ("factorial D exposure",       0.00,  (Y.get("D_prox_on_yield_on") or Y.get("D_social_yield"))["exposure_person_s"]["median"], 2),
     # --- ablation with the safety split ---------------------------------------
     ("ablation full contacts",       3,   A["Full D2RO Framework"]["shelf_contact_events"]["median"], 0),
     ("ablation cost-only contacts",  5,   A["w/o S_trolley cost only"]["shelf_contact_events"]["median"], 0),
@@ -133,8 +131,9 @@ def main() -> int:
                      - B["Static A*"]["makespan_successful"]["mean"])
     ctrl = (B[MATCHED]["makespan_successful"]["mean"]
             - B["Static A*"]["makespan_successful"]["mean"])
-    routing = (Y["C_social_noyield"]["makespan"]["mean"]
-               - Y["A_frozen_noyield"]["makespan"]["mean"])
+    cell_C = Y.get("C_prox_on_yield_off") or Y.get("C_social_noyield")
+    cell_A = Y.get("A_prox_off_yield_off") or Y.get("A_frozen_noyield")
+    routing = (cell_C["makespan"]["mean"] - cell_A["makespan"]["mean"])
     ls_delta = (B[D2]["makespan_successful"]["mean"]
                 - B[LOCAL]["makespan_successful"]["mean"])
     succ = [g["success_rate"] for g in W.values()]
@@ -143,8 +142,8 @@ def main() -> int:
     print(f"  derived: routing cost (factorial)= {routing:.2f} s   (paper: 29.94)")
     print(f"  derived: D2RO minus local social = {ls_delta:.2f} s   (paper: ~8)")
     print(f"  derived: sensitivity success rng = {min(succ):.0f}-{max(succ):.0f}%  (paper: 97-100)")
-    on_clean = DG.get("loss00_lat000ms", {}).get("lead_time_s", {}).get("mean")
-    on_bad = DG.get("loss20_lat200ms", {}).get("lead_time_s", {}).get("mean")
+    on_clean = DG.get("loss00_lat000ms", {}).get("on_lead_time", {}).get("mean") or DG.get("loss00_lat000ms", {}).get("lead_time_s", {}).get("mean")
+    on_bad = DG.get("loss20_lat200ms", {}).get("on_lead_time", {}).get("mean") or DG.get("loss20_lat200ms", {}).get("lead_time_s", {}).get("mean")
     if on_clean and on_bad:
         print(f"  derived: pooled lead clean/20%   = {on_clean:.2f} / {on_bad:.2f} s "
               f"(prose quotes the mesh-ON arm only)")

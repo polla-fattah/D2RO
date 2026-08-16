@@ -158,6 +158,39 @@ def gate_references(skip_net: bool) -> None:
         print(f"         {line.strip()}")
 
 
+def gate_semantic_consistency() -> None:
+    r"""
+    Semantic consistency sweep over manuscript text (paper.tex).
+    Assures that superseded terminology (5 weights, w_R as operative weight, control ticks exposure)
+    does not accidentally survive in prose or figure captions.
+    """
+    tex_path = os.path.join(PAPER, "paper.tex")
+    if not os.path.exists(tex_path):
+        check("semantic consistency", False, "paper.tex missing")
+        return
+    text = io.open(tex_path, encoding="utf-8", errors="ignore").read()
+
+    # Remove code comments from sweep
+    clean_text = "\n".join(l for l in text.splitlines() if not l.strip().startswith("%"))
+
+    violations = []
+    
+    # 1. 5-weights / 5-component phrasing
+    if re.search(r"five weights|five-component|5-component|five cost terms", clean_text, re.IGNORECASE):
+        violations.append("Outdated 'five weights/terms' wording found")
+    
+    # 2. Inscribed safety radius = 0.40m phrasing
+    if re.search(r"inscribed safety radius.*0\.40", clean_text, re.IGNORECASE):
+        violations.append("Outdated 'inscribed safety radius = 0.40' wording found")
+
+    # 3. Control ticks as intimate exposure metric unit
+    if re.search(r"intimate exposure.*control ticks|exposure \(control ticks\)", clean_text, re.IGNORECASE):
+        violations.append("Outdated 'control ticks' exposure unit wording found")
+
+    check("semantic consistency checks pass", len(violations) == 0,
+          "; ".join(violations) if violations else "")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-net", action="store_true",
@@ -171,6 +204,7 @@ def main() -> int:
     gate_pdf_no_qq()
     gate_commit_stamp()
     gate_tag_exists()
+    gate_semantic_consistency()
     gate_references(args.no_net)
     print("=" * 62)
 

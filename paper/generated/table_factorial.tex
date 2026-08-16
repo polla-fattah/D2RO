@@ -3,17 +3,17 @@
 % Produced by paper/scripts/generate_tables_and_figures.py
 \begin{table*}[t]
 \centering
-\caption{Routing versus reactive yielding ($N=50$ paired trials per cell, identical kinematics, collision geometry and arrival criterion throughout). Exposure is person-seconds inside the intimate boundary: the counter increments once per human per control step, so it is a person-time, not a robot-time.}
+\caption{Social routing ($H_{\text{prox}}$) versus reactive human yielding ($N=50$ paired trials per cell, dynamic $\text{D}^*$ Lite search active in all cells). Exposure is reported in person-seconds inside the intimate boundary.}
 \label{tab:factorial}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Configuration} & \textbf{Success (95\% CI)} & \textbf{Makespan (s)} & \textbf{Exposure (person-s)} & \textbf{Encounters} \\
 \midrule
-Frozen route, no yielding & 100.0\% [92.9, 100.0] & $19.20 \pm 0.00$ & $6.43 \pm 0.27$ & $5.0 \pm 0.0$ \\
-Frozen route, yielding & 12.0\% [5.6, 23.8] & $173.89 \pm 17.01$ & $49.35 \pm 18.38$ & $7.6 \pm 3.6$ \\
-Social route, no yielding & 100.0\% [92.9, 100.0] & $49.14 \pm 16.23$ & $0.03 \pm 0.16$ & $0.0 \pm 0.2$ \\
-Social route, yielding (	extbf{$	ext{D}^2	ext{RO}$}) & 100.0\% [92.9, 100.0] & $48.62 \pm 15.85$ & $0.62 \pm 3.58$ & $0.1 \pm 0.3$ \\
+$H_{\text{prox}}$ OFF, yield OFF & 100.0\% [0.0, 0.0] & $19.20 \pm 0.00$ & $6.43 \pm 0.27$ & $5.0 \pm 0.0$ \\
+$H_{\text{prox}}$ OFF, yield ON & 12.0\% [0.0, 0.0] & $173.89 \pm 17.01$ & $49.35 \pm 18.38$ & $7.6 \pm 3.6$ \\
+$H_{\text{prox}}$ ON, yield OFF & 100.0\% [0.0, 0.0] & $38.23 \pm 10.90$ & $0.03 \pm 0.16$ & $0.0 \pm 0.2$ \\
+$H_{\text{prox}}$ ON, yield ON (\textbf{$\text{D}^2\text{RO}$}) & 100.0\% [0.0, 0.0] & $38.40 \pm 11.04$ & $0.14 \pm 0.80$ & $0.0 \pm 0.2$ \\
 \bottomrule
 \end{tabular}%
 }
