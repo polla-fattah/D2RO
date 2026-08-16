@@ -323,7 +323,13 @@ python paper/scripts/build_paper_docx.py
 All experiments use:
 - **Control loop:** Δt = 0.05 s (20 Hz), non-holonomic unicycle kinematics
 - **Seeds:** `seed = trial_index + 1000` (fully deterministic and reproducible)
-- **Timeout:** T_max = 35.0 s
+- **Arrival tolerance:** 0.84 m (≈ one cart length), identical for every planner
+- **Time budget:** T_max = 180 s (benchmark, ablation, cross-domain, crowd density),
+  240 s (fleet-size scaling), 120 s (two-cart mechanism experiments) — each set well
+  above the longest observed mission for its class, so a timeout means genuine
+  non-completion. An earlier revision used 35 s, inherited from an incorrectly scaled
+  kinematic model; that budget is what produced the retracted "APF achieves 0%
+  success" result, and it is superseded.
 - **Statistics:** Wilcoxon signed-rank (paired, continuous) + McNemar exact (success),
   Holm-adjusted; medians [IQR] for skewed metrics, Wilson CIs for proportions
 
