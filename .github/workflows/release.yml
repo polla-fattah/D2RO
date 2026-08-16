@@ -1,0 +1,91 @@
+name: Release
+
+# Builds the submittable manuscript from a tag.
+#
+# This exists to break a chicken-and-egg problem. The commit stamp embedded in the
+# paper is derived from git at generation time, so a PDF built locally can never
+# name its own commit: it names the parent and reports `-dirty`, because generating
+# the stamp dirties the tree. Round-3 review caught exactly that, reading `-dirty`
+# correctly as "not built from the named commit".
+#
+# The fix is to stop treating the committed paper/paper.pdf as authoritative. On a
+# tag, CI checks out that exact commit -- a clean tree by construction -- regenerates
+# the artefacts, and attaches the resulting PDF to the release. That PDF, and only
+# that PDF, is the one to submit.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      run_full_suite:
+        description: "Regenerate all datasets from scratch (~30 min)"
+        type: boolean
+        default: false
+
+jobs:
+  release:
+    name: Build and gate the release PDF
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # tags must be visible to the stamp generator
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install TeX Live
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended \
+            texlive-publishers poppler-utils
+
+      - name: Unit tests
+        run: PYTHONDONTWRITEBYTECODE=1 python -m pytest d2ro/tests/ -q
+
+      # Optional: a full clean-room regeneration. Off by default because it takes
+      # about half an hour; the committed datasets already carry provenance stamps
+      # that the analysis verifies against the source tree.
+      - name: Regenerate all datasets
+        if: ${{ inputs.run_full_suite }}
+        run: PYTHONDONTWRITEBYTECODE=1 python run_full_suite.py
+
+      - name: Statistics and artefacts
+        run: |
+          python paper/scripts/analyze_results.py
+          python paper/scripts/generate_tables_and_figures.py
+
+      - name: Compile the manuscript
+        working-directory: paper
+        run: |
+          pdflatex -interaction=nonstopmode paper.tex
+          bibtex paper || true
+          pdflatex -interaction=nonstopmode paper.tex
+          pdflatex -interaction=nonstopmode paper.tex
+
+      # The gate is the same script authors run locally, so a release cannot pass
+      # by a route a human could not reproduce.
+      - name: Release gate
+        run: python paper/scripts/release_gate.py --no-net
+
+      - name: Show the embedded provenance
+        run: cat paper/generated/commit.tex
+
+      - name: Attach the PDF to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: paper/paper.pdf
+          body: |
+            Manuscript built from this tag by CI, on a clean checkout.
+
+            The embedded provenance stamp in this PDF names the tagged commit with
+            no `-dirty` suffix. Submit **this** file, not the copy committed in the
+            repository, which is necessarily one commit behind its own stamp.

@@ -14,76 +14,79 @@ Department of Computer Science and Engineering, Koya University
 
 ---
 
-> ℹ️ **Status: all seven datasets regenerated and verified under the corrected code.**
-> The framework was substantially rebuilt following a pre-submission audit. All
-> 2,700 trials have been reproduced, the statistics and every manuscript table and
-> figure are generated from that data by a single pipeline, and the results,
-> discussion and conclusion have been rewritten around the real numbers.
+> ℹ️ **Status: round-3 revision. All 11 datasets regenerated and verified.**
+> 4,650 simulation trials across 11 experiments. Every table, figure and numeric
+> claim in the manuscript is generated or verified against the committed raw data
+> by a single pipeline; `paper/scripts/verify_manuscript_claims.py` fails the build
+> if the prose and the data disagree.
 >
-> **Read [`docs/OUTSTANDING_WORK.md`](docs/OUTSTANDING_WORK.md) before citing
-> anything here.** Work remains — notably a weight-sensitivity study and validation
-> of the ORCA baseline against a reference implementation — and that file records
-> exactly what is done and what is not.
-
-## 🌐 Live Web Simulator (GitHub Pages)
-
-> **No installation required!** Experience the interactive D²RO simulator directly in your browser powered by **WebAssembly (Pyodide)** and **HTML5 Canvas**.
-
-* **Live Demo (GitHub Pages)**: `https://polla-fattah.github.io/D2RO/` *(or open [`docs/index.html`](docs/index.html) locally)*
-* **Key Web Features**:
-  * **100% Client-Side Execution**: Runs the Python physics engine, D* Lite, mesh network, and proxemics inside browser WASM memory.
-  * **Multi-Environment Benchmark**: Switch between **Supermarket Architecture**, **Airport Concourse**, and **Hospital Corridors**.
-  * **Scenario Suite A–E**: Interactive tab switching for all 5 benchmark scenarios.
-  * **Ablation Mode Toggles**: Compare **Full D²RO** vs. **No-Mesh** vs. **Static A* Baseline**.
-  * **Interactive Canvas**: Click anywhere on the map to trigger dynamic V2V congestion alerts in real-time.
-  * **Live Research Telemetry**: Monitors $S_{\text{trolley}}$ envelope radius, V2V packet transmissions, human yielding events, and corridor mutex locks.
-
-To test the browser simulator locally:
-```bash
-# Start a local HTTP server in the repository root:
-python -m http.server 8000
-
-# Open in your browser:
-# http://localhost:8000/docs/index.html
-```
-
----
+> **Reproduce everything from a clean checkout with one command:**
+>
+> ```bash
+> pip install -r requirements.txt && python run_full_suite.py \
+>   && python paper/scripts/analyze_results.py \
+>   && python paper/scripts/generate_tables_and_figures.py
+> ```
+>
+> **Submitting or citing?** Use the PDF attached to the GitHub release, not
+> `paper/paper.pdf` in the tree. The provenance stamp inside the paper is derived
+> from git at generation time, so a locally built PDF necessarily names its parent
+> commit and reports `-dirty`. CI builds the authoritative copy from the tag on a
+> clean checkout. `python paper/scripts/release_gate.py` tells you whether a given
+> build is submittable.
+>
+> Work still open is tracked in [`docs/OUTSTANDING_WORK.md`](docs/OUTSTANDING_WORK.md)
+> and [`docs/REVISION_PLAN_R3.md`](docs/REVISION_PLAN_R3.md).
 
 ## What is D²RO?
 
 **D²RO** enables fleets of autonomous trolleys — retail shopping carts, clinical hospital pushchairs, airport luggage trolleys — to navigate crowded, human-shared environments **safely, efficiently, and socially-compliantly**.
 
-The framework formalizes a unified 5-component edge traversal cost function solved incrementally via **D\* Lite**:
+The framework formalizes **four weighted soft terms subject to one hard
+feasibility constraint**, solved incrementally via **D\* Lite**:
 
 ```
-C(u, v, t) = w_D · D(u,v)           # Euclidean distance
-           + w_M · W_mesh(u,v,t)     # V2V anticipatory congestion field
-           + w_H · H_prox(v,t)       # Human Gaussian proxemics
-           + w_R · R_lock(u,v,t)     # Directional corridor mutex lock
-           + w_S · S_trolley(v,t)    # Non-holonomic safety envelope
+minimise  C(u,v,t) = w_D · D(u,v)          # Euclidean distance
+                   + w_M · W_mesh(u,v,t)    # V2V anticipatory congestion field
+                   + w_H · H_prox(v,t)      # Human Gaussian proxemics
+                   + w_S · S_trolley(v,t)   # Non-holonomic safety envelope
+
+subject to  e ∉ E_reserved(t)               # directional corridor reservation
 ```
 
-**Key results** across 2,700 Monte Carlo simulation trials (N=100 seed-paired trials
-per benchmark condition). The headline is a deliberate trade-off, not a clean sweep:
+> Earlier versions of this README described a fifth weight `w_R` multiplying the
+> reservation term. That was not faithful to the implementation: a reserved edge has
+> infinite cost and an unreserved one contributes zero, so the coefficient had no
+> effect in any reachable state. Reservation is a constraint, not a weighted
+> objective.
 
-| Metric | D²RO | Static A\* | APF |
-|:-------|:----:|:----------:|:---:|
-| Mission success | 99.0% [94.6, 99.8] | 100.0% | 100.0% |
-| Makespan (s) | 47.18 ± 13.40 | **18.00 ± 0.00** | 34.54 ± 0.16 |
-| Intimate exposure, median [IQR] | **0 [0, 0]** | 128 [123, 131] | 204 [176, 276] |
-| Corridor deadlocks | 0.00 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 |
-| Replan latency | 0.14–0.32 ms* | n/a | n/a |
+**Key results** across 4,650 Monte Carlo trials (N=100 seed-paired trials per
+benchmark condition). The contribution is deliberately bounded rather than
+maximised:
 
-\* Replan latency is wall-clock time and is the one metric here that is *not* deterministic — it varies with machine load. Every other value reproduces bit-identically across reruns.
+| Method | Success | Makespan | Intimate exposure (person-s, median) |
+|:-------|:-------:|:--------:|:------------------------------------:|
+| D²RO | 99.0% | 47.18 ± 13.40 s | **0.00** |
+| Local Social D\* Lite | 100.0% | **39.06 ± 15.12 s** | **0.00** |
+| Static A\* (matched controller) | 100.0% | 19.20 s | 6.40 |
+| Static A\* | 100.0% | **18.00 s** | 6.40 |
+| APF | 100.0% | 34.54 s | 10.18 |
 
-D²RO pays ~2.6× the makespan of the socially blind shortest path to virtually
-eliminate intrusion into pedestrians' intimate space, and matches rather than beats
-the best baseline on raw success. Cross-domain: 99.0% (supermarket), 100.0%
-(hospital), 95.0% (airport).
+**What the evidence supports.** Socially weighted routing essentially eliminates
+intimate-space intrusion (median 0 person-seconds vs 6.40, *p* < 10⁻¹⁵). A 2×2
+factorial shows this comes from the *routing*, not from reactive yielding: routing
+alone reaches 0.03 person-seconds with yielding switched off, and yielding on a
+frozen route collapses success to 12%.
 
-> Our ORCA and Decentralized Local MAPF implementations complete 0% of missions.
-> We report these as properties of *our implementations*, pending validation against
-> a reference (e.g. RVO2); no conclusion in the paper depends on them.
+**What it does not.** An ordinary human-aware planner with no distributed layer
+matches that compliance exactly (*p* = 1) while running 8 s faster. The V2V mesh and
+the corridor reservation earn their cost only under the topologies the controlled
+experiments isolate — anticipatory rerouting 10.7 s before a blockage is observable,
+and corridor success raised from 36% to 88%. We report that negative result rather
+than omit it.
+
+> ORCA and Decentralized Local MAPF are our own implementations and complete 0% of
+> missions. They are reported as diagnostics only; no claim depends on them.
 
 ---
 
@@ -128,7 +131,7 @@ D2RO/
 │   │   └── airport.py                  # Airport terminal concourse
 │   │
 │   ├── sim/                            # Simulation runners
-│   │   ├── run_experiments.py          # Full 2,700-run experimental suite
+│   │   ├── run_experiments.py          # All 11 experiments (4,650 rows)
 │   │   ├── gui.py                      # Supermarket visual GUI
 │   │   ├── hospital_gui.py             # Hospital visual GUI
 │   │   └── airport_gui.py              # Airport visual GUI
@@ -150,13 +153,18 @@ D2RO/
 ├── experiments/
 │   └── data/                           # ← ALL RAW SIMULATION DATA (CSV)
 │       ├── README.md                   # Column descriptions & statistics
-│       ├── benchmark_comparison.csv        (500 rows: 5 algorithms × 100 trials)
-│       ├── ablation_study.csv              (500 rows: 5 configs × 100 trials)
+│       ├── benchmark_comparison.csv        (700 rows: 7 planners × 100 trials)
+│       ├── ablation_study.csv              (700 rows: 7 configs × 100 trials)
 │       ├── cross_domain_benchmark.csv      (300 rows: 3 domains × 100 trials)
-│       ├── scalability_crowd_density.csv   (600 rows: 6 densities × 100 trials)
-│       ├── scalability_fleet_size.csv      (600 rows: 6 fleet sizes × 100 trials)
-│       ├── mesh_anticipation_experiment.csv (100 rows: Exp A, N=50 controlled)
-│       └── corridor_lock_experiment.csv     (100 rows: Exp B, N=50 controlled)
+│       ├── scalability_crowd_density.csv   (600 rows)
+│       ├── scalability_fleet_size.csv      (600 rows)
+│       ├── mesh_anticipation_experiment.csv (100 rows: Exp A, N=50 paired)
+│       ├── corridor_lock_experiment.csv     (100 rows: Exp B, N=50 paired)
+│       ├── weight_sensitivity.csv           (510 rows: 17 configs, disjoint seeds)
+│       ├── comm_robustness.csv              (480 rows: 4×4 channels)
+│       ├── route_yield_factorial.csv        (200 rows: 2×2 attribution design)
+│       ├── mesh_degradation.csv             (360 rows: Mech A under 3×3 channels)
+│       └── *.provenance.json                (code fingerprint per dataset)
 │
 ├── paper/                              # Manuscript files
 │   ├── paper.tex                       # LaTeX source (IEEEtran)
@@ -211,7 +219,7 @@ pip install -r requirements.txt
 ```
 > Python 3.10+ required. Tested on Python 3.12.7.
 
-### Reproduce all 2,700 simulation trials
+### Reproduce all 4,650 simulation trials
 ```bash
 python d2ro/sim/run_experiments.py
 ```
@@ -284,16 +292,20 @@ All experiments use:
 
 ### Experiment overview
 
-| # | Name | Trials | Output |
-|:--|:-----|-------:|:-------|
-| 1 | Comparative Benchmark | 500 | `benchmark_comparison.csv` |
-| 2 | Component Ablation | 500 | `ablation_study.csv` |
-| 3 | Cross-Domain Generalization | 300 | `cross_domain_benchmark.csv` |
-| 4A | Crowd Density Scalability | 600 | `scalability_crowd_density.csv` |
-| 4B | Fleet Size Scalability | 600 | `scalability_fleet_size.csv` |
-| 5A | V2V Mesh Anticipation (controlled) | 100 | `mesh_anticipation_experiment.csv` |
-| 5B | Corridor Mutex Lock (controlled) | 100 | `corridor_lock_experiment.csv` |
-| | **Total** | **2,700** | |
+| # | Name | Rows | Output |
+|:--|:-----|-----:|:-------|
+| 1 | Comparative benchmark (7 planners) | 700 | `benchmark_comparison.csv` |
+| 2 | Component ablation (7 configurations) | 700 | `ablation_study.csv` |
+| 3 | Cross-domain generalisation | 300 | `cross_domain_benchmark.csv` |
+| 4A | Crowd-density scalability | 600 | `scalability_crowd_density.csv` |
+| 4B | Fleet-size scalability | 600 | `scalability_fleet_size.csv` |
+| A | V2V mesh anticipation (controlled) | 100 | `mesh_anticipation_experiment.csv` |
+| B | Directional corridor reservation (controlled) | 100 | `corridor_lock_experiment.csv` |
+| C | Weight sensitivity (17 configurations, disjoint seeds) | 510 | `weight_sensitivity.csv` |
+| D | Communication robustness (4×4 channels) | 480 | `comm_robustness.csv` |
+| E | Route × yield factorial | 200 | `route_yield_factorial.csv` |
+| F | Mechanism A under degradation (3×3 channels) | 360 | `mesh_degradation.csv` |
+| | **Total** | **4,650** | |
 
 ### Run individual experiments
 ```python
@@ -373,59 +385,80 @@ python scripts/demo_airport.py
 ## 8. Key Results
 
 All values below are produced by `paper/scripts/analyze_results.py` from the committed
-CSVs; none are typed by hand. See [`experiments/data/analysis_report.md`](experiments/data/analysis_report.md)
-for the full statistical report including effect sizes and Holm-adjusted p-values.
+CSVs; none are typed by hand. `paper/scripts/verify_manuscript_claims.py` fails if the
+manuscript prose disagrees with them. See
+[`experiments/data/analysis_report.md`](experiments/data/analysis_report.md) for the
+full statistical report.
 
-### Table I — Comparative Benchmark (N=100 seed-paired trials)
+### Table I — Comparative benchmark (N=100 seed-paired trials)
 
-| Algorithm | Success (95% CI) | Makespan, successful (s) | Deadlocks | Intimate exposure, median [IQR] |
-|:----------|:----------------:|:------------------------:|:---------:|:-------------------------------:|
-| **D²RO (Proposed)** | 99.0% [94.6, 99.8] | 47.18 ± 13.40 | 0.00 | **0 [0, 0]** |
-| Static A\* | 100.0% [96.3, 100.0] | **18.00 ± 0.00** | 0.00 | 128 [123, 131] |
-| APF | 100.0% [96.3, 100.0] | 34.54 ± 0.16 | 0.00 | 204 [176, 276] |
-| ORCA (our impl.) | 0.0% [0.0, 3.7] | n/a | 0.00 | 229 [0, 766] |
-| Decentralized MAPF (our impl.) | 0.0% [0.0, 3.7] | n/a | 0.00 | 128 [123, 132] |
+| Algorithm | Success (95% CI) | Makespan, successful (s) | Exposure (person-s, median [IQR]) | Encounters |
+|:----------|:----------------:|:------------------------:|:---------------------------------:|:----------:|
+| **D²RO (proposed)** | 99.0% [94.6, 99.8] | 47.18 ± 13.40 | 0.00 [0.0, 0.0] | 0 |
+| Local Social D\* Lite | 100.0% [96.3, 100.0] | 39.06 ± 15.12 | 0.00 [0.0, 0.0] | 0 |
+| Static A\* (matched controller) | 100.0% [96.3, 100.0] | 19.20 ± 0.00 | 6.40 [6.2, 6.6] | 5 |
+| Static A\* | 100.0% [96.3, 100.0] | 18.00 ± 0.00 | 6.40 [6.2, 6.5] | 5 |
+| APF | 100.0% [96.3, 100.0] | 34.54 ± 0.16 | 10.18 [8.8, 13.8] | 8 |
 
-Exposure is reported as median [IQR] because the distribution is zero-inflated and
-right-skewed. Tests are Wilcoxon signed-rank (continuous) and McNemar exact (success),
-Holm-adjusted. D²RO vs Static A\*: exposure Δ = −119.2 [−127.6, −107.0], p = 5.1e-16;
-makespan Δ = +30.51 s, p = 3.8e-17. Success difference vs A\* is one trial (p = 1).
+Exposure is **person-seconds** inside the intimate boundary: the counter increments
+once per human per control step, so it is a person-time, not a robot-time. Tests are
+Wilcoxon signed-rank (continuous) and McNemar exact (success), Holm-adjusted.
 
-### Table II — Ablation Study (N=100 trials)
+**The headline is bounded on purpose.** D²RO and Local Social D\* Lite achieve
+identical social compliance (*p* = 1); D²RO is 8.12 s slower (*p* = 2.0e-5). In this
+broad scenario the distributed layer returns nothing measurable — it pays only in
+Tables III–IV below.
 
-| Metric | Full D²RO | w/o V2V Mesh | w/o Lock | w/o Proxemics | w/o Safety |
-|:-------|:---------:|:------------:|:--------:|:-------------:|:----------:|
-| Success (%) | 100.0 | 100.0 | 100.0 | **11.0** | 100.0 |
-| Makespan (s) | 47.38±13.96 | 38.23±16.88 | 37.86±15.13 | 172.05±26.67 | 43.02±8.84 |
-| Discomfort | 0.05±0.13 | 0.09±0.43 | 0.09±0.38 | **13.14±3.57** | 0.05±0.17 |
-| Shelf scrapes | 193.05±169.90 | 191.59±182.39 | 186.13±164.45 | 244.86±154.18 | **271.71±84.16** |
+> ORCA and Decentralized Local MAPF (our implementations) complete 0% of missions and
+> are omitted here as diagnostics; no claim depends on them.
 
-The proxemic term is load-bearing. The mesh and lock terms are *not* exercised by this
-broad scenario — removing them reduces makespan — which is why the two controlled
-mechanism experiments below exist.
+### Table II — Routing vs reactive yielding (N=50 paired trials per cell)
 
-### Table III — Cross-Domain (N=100 trials each)
+| Configuration | Success | Makespan (s) | Exposure (person-s) |
+|:--------------|:-------:|:------------:|:-------------------:|
+| Frozen route, no yielding | 100.0% | 19.20 | 6.43 |
+| Frozen route, yielding | 12.0% | 173.89 | 49.35 |
+| Social route, no yielding | 100.0% | 49.14 | 0.03 |
+| Social route, yielding (**D²RO**) | 100.0% | 48.62 | 0.62 |
 
-| Domain | Success | Makespan (s) | Mean transit (s) | D\* Lite replans |
-|:-------|:-------:|:------------:|:----------------:|:----------------:|
-| Retail Supermarket | 99.0% | 49.89 ± 19.94 | 25.90 ± 5.57 | 487.9 ± 151.1 |
-| Clinical Hospital | 100.0% | 46.12 ± 10.12 | 31.78 ± 3.89 | 342.5 ± 64.9 |
-| Airport Terminal | 95.0% | 74.63 ± 35.71 | 36.84 ± 15.01 | 959.2 ± 359.8 |
+Routing, not yielding, produces the social benefit: cell C reaches 0.03 person-seconds
+with no reactive response at all, and adding yielding slightly *worsens* exposure.
+Yielding on a frozen route collapses success to 12% — an agent that stops for a
+pedestrian but cannot replan has no recourse.
 
-### Table IV — Controlled Mechanism Experiments (N=50 paired trials)
+### Table III — Component ablation (N=100 trials)
 
-| Experiment | Metric | ON | OFF | p (Holm) |
-|:-----------|:-------|:--:|:---:|:--------:|
-| A — V2V mesh | Anticipation lead (s) | 10.70 ± 4.20 | −0.10 ± 0.04 | 3.8e-9 |
-| A — V2V mesh | Backtrack (m) | 1.08 ± 0.68 | 2.73 ± 0.87 | 3.2e-8 |
-| B — corridor mutex | Mission success | **88.0%** | 36.0% | 1.5e-4 |
-| B — corridor mutex | Corridor occupancy (s) | 40.01 ± 30.87 | 89.41 ± 42.42 | 4.0e-3 |
+| Configuration | Success | Makespan (s) | Fixture contacts (median [IQR]) |
+|:--------------|:-------:|:------------:|:-------------------------------:|
+| Full D²RO | 100.0% | 47.38 | 3 [2, 6] |
+| w/o V2V mesh | 100.0% | 38.23 | 3 [3, 9] |
+| w/o corridor reservation | 100.0% | 37.86 | 3 [3, 9] |
+| w/o proxemics | 11.0% | 172.05 | 56 [39, 78] |
+| w/o *S*ₜᵣₒₗₗₑᵧ cost only | 99.0% | 53.52 | 5 [5, 8] |
+| w/o safety controller only | 100.0% | 42.34 | 48 [35, 69] |
+| w/o safety (full stack) | 100.0% | 43.02 | 94 [82, 96] |
 
-The corridor mutex works by **cost-projected diversion**, not queueing: head-on
-encounters are unchanged (p = 1) and lock wait time is 0.00 s, while agents reroute
-around the contested corridor. See `docs/OUTSTANDING_WORK.md` §4.8.
+The safety term is ablated three ways because one switch used to remove both the
+graph cost and the reactive controller. The effect is mostly the **controller**.
 
----
+### Table IV — Controlled mechanism experiments (N=50 paired trials)
+
+| Experiment | Metric | ON | OFF |
+|:-----------|:-------|:--:|:---:|
+| A — V2V mesh | Anticipation lead (s) | 10.70 | -0.10 |
+| A — V2V mesh | Backtrack (m) | 1.08 | 2.73 |
+| B — reservation | Mission success | **88%** | 36% |
+| B — reservation | Off-corridor vertices | 2.16 | 0.00 |
+
+The reservation works by **cost-projected diversion**, not mutual exclusion: head-on
+encounters are unchanged, deadlocks are zero in both arms, and total wait is 0.03 s.
+
+### Sensitivity and robustness
+
+Success stays within **97–100%** under every perturbation of every weight
+(×0.5 to ×1.5, disjoint seed set), so the operating point is a plateau, not a ridge.
+Anticipation tolerates one-hop latency to 200 ms and packet loss to ~10%, degrading
+about 44% at 20% loss.
 
 ## 9. Dependencies
 
