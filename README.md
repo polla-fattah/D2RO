@@ -40,6 +40,11 @@ Department of Computer Science and Engineering, Koya University
 > provenance stamp, so `paper/paper.pdf` built locally is submittable once the gate
 > passes; the release attachment is the same artefact built from the tag.
 >
+> **New here, or returning after a break?** Start with
+> [`docs/ENGINEERING_NOTES.md`](docs/ENGINEERING_NOTES.md) — every pipeline,
+> the reasoning behind each design decision, the file map, and the traps that
+> have bitten this project more than once.
+>
 > Point-by-point replies to the reviewers are in
 > [`docs/RESPONSE_TO_REVIEWERS_R4.md`](docs/RESPONSE_TO_REVIEWERS_R4.md).
 > Work still open is tracked in [`docs/OUTSTANDING_WORK.md`](docs/OUTSTANDING_WORK.md).
