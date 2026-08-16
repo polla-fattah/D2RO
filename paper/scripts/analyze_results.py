@@ -303,7 +303,12 @@ def analyse_benchmark() -> Dict[str, Any]:
             "makespan_all": describe(tt_all),
             "makespan_successful": describe([fnum(r, "travel_time_s") for r in tt_ok]),
             "deadlocks": describe(series(method, "deadlocks")),
+            # person-ticks (legacy: one increment per human per tick)
             "intimate_exposure": describe(series(method, "proxemic_violations")),
+            # the interpretable units: person-seconds inside the boundary, and
+            # distinct inward boundary crossings
+            "exposure_person_s": describe(series(method, "intimate_exposure_person_s")),
+            "intimate_encounters": describe(series(method, "intimate_encounters")),
             # Whole control step: mesh, proxemics, safety, yielding, motion --
             # averaged over EVERY tick, including ticks with no repair. This is
             # controller-step compute time, NOT D* Lite repair latency.
@@ -597,6 +602,13 @@ def main() -> None:
              "exposure_person_s": "intimate_exposure_person_s",
              "exposure_person_ticks": "intimate_exposure_person_ticks",
              "encounters": "intimate_encounters", "replans": "replans"}),
+        # Mechanism A repeated per channel condition. Grouped by channel AND arm so
+        # the anticipation advantage can be tracked as the link degrades.
+        "mesh_degradation": analyse_grouped(
+            "mesh_degradation.csv", "channel",
+            {"lead_time_s": "anticipation_lead_time_s",
+             "backtrack_m": "backtrack_distance_m",
+             "makespan": "makespan_s"}),
         "mesh_anticipation": analyse_paired_mechanism(
             "mesh_anticipation_experiment.csv", "mesh_enabled", "1",
             ["anticipation_lead_time_s", "backtrack_distance_m",

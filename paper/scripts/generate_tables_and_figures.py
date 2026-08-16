@@ -54,6 +54,7 @@ GRID = "#d8d8d8"
 # at publication width; the full algorithm names live in the table and caption.
 SHORT = {
     "D2RO (SW-DGO Proposed)": "D²RO",
+    "Local Social D* Lite": "Local social",
     "Static A* (matched controller)": "A* matched",
     "Static A*": "Static A*",
     "Reactive Avoidance (Potential Field)": "APF",
@@ -72,8 +73,14 @@ SHORT = {
 # as diagnostic. SUPPLEMENTARY is retained so that list stays documented.
 ORDER = [
     "D2RO (SW-DGO Proposed)",
-    # The matched-controller arm sits immediately beside D2RO: it is the comparison
-    # that isolates SW-DGO, and the reader should meet it before the unmatched one.
+    # Local Social D* Lite is the comparator a reader most wants: ordinary
+    # human-aware navigation (proxemics, yielding, safety, replanning) WITHOUT the
+    # distributed layer. It sits second so that the question "what does the
+    # distributed part add?" is put to the reader immediately rather than deferred
+    # to an ablation, where it would read as an internal component study.
+    "Local Social D* Lite",
+    # The matched-controller arm sits next: it is the comparison that isolates
+    # routing from the vehicle model, and should be met before the unmatched one.
     "Static A* (matched controller)",
     "Static A*",
     "Reactive Avoidance (Potential Field)",
