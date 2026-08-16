@@ -160,35 +160,129 @@ def gate_references(skip_net: bool) -> None:
 
 def gate_semantic_consistency() -> None:
     r"""
-    Semantic consistency sweep over manuscript text (paper.tex).
-    Assures that superseded terminology (5 weights, w_R as operative weight, control ticks exposure)
-    does not accidentally survive in prose or figure captions.
-    """
-    tex_path = os.path.join(PAPER, "paper.tex")
-    if not os.path.exists(tex_path):
-        check("semantic consistency", False, "paper.tex missing")
-        return
-    text = io.open(tex_path, encoding="utf-8", errors="ignore").read()
+    Semantic sweep over everything that reaches the reader.
 
-    # Remove code comments from sweep
-    clean_text = "\n".join(l for l in text.splitlines() if not l.strip().startswith("%"))
+    The claim checker validates NUMBERS. Round-3 review showed that is not enough:
+    the manuscript simultaneously carried a four-term objective in the abstract and
+    a five-term one in the introduction, a sensitivity figure plotting a weight the
+    method section had just explained was not a weight, a three-row table whose
+    caption claimed to ablate five terms, and four research aims summarised as
+    "three aims". Every one of those is a semantic contradiction between parts of
+    the paper, and none of them is a wrong number.
+
+    Two properties matter here. First, the sweep must cover paper/generated/ as well
+    as paper.tex -- "five cost terms" survived an earlier pass precisely because it
+    lived in a generated caption rather than the prose. Second, a violation names
+    the file and line, because a gate that says only "inconsistent" is a gate people
+    learn to ignore.
+    """
+    targets = [os.path.join(PAPER, "paper.tex")]
+    gen = os.path.join(PAPER, "generated")
+    if os.path.isdir(gen):
+        targets += [os.path.join(gen, f) for f in sorted(os.listdir(gen))
+                    if f.endswith(".tex")]
+    missing = [t for t in targets if not os.path.exists(t)]
+    if missing:
+        check("semantic consistency", False, f"missing: {missing}")
+        return
+
+    # (regex, what it means, exemption) -- exemption is a pattern that makes an
+    # occurrence legitimate, checked on the same line.
+    RULES = [
+        (r"five weights|five-component|5-component|five cost terms|five soft|"
+         r"five weighted",
+         "superseded five-term objective wording", None),
+        (r"inscribed safety radius[^.]{0,40}0\.40",
+         "0.40 m described as the inscribed rather than effective radius", None),
+        (r"exposure \(control ticks\)|intimate exposure[^.]{0,30}control ticks",
+         "exposure reported in control ticks rather than person-seconds", None),
+        # w_R is legitimate where the paper EXPLAINS that it was dropped -- the
+        # method section argues at length why the coefficient was meaningless --
+        # and illegitimate where it is presented as a live weighted term. The
+        # exemption therefore keys on retrospective framing.
+        (r"w_R\s*\\cdot|w_RR_|\bfive\b[^.]{0,20}w_R",
+         "w_R presented as an operative weighted term",
+         r"correction to earlier|was not faithful|had no operative|for every \$?w_R|"
+         r"described \$w_R\$ as|previously"),
+        (r"the three aims|three research aims",
+         "aim count contradicts the four aims of Section II", None),
+        (r"line[- ]of[- ]sight",
+         "line-of-sight sensing claimed, but no occlusion ray-casting is implemented",
+         r"range-limited rather than line-of-sight|rather than line of sight"),
+    ]
 
     violations = []
-    
-    # 1. 5-weights / 5-component phrasing
-    if re.search(r"five weights|five-component|5-component|five cost terms", clean_text, re.IGNORECASE):
-        violations.append("Outdated 'five weights/terms' wording found")
-    
-    # 2. Inscribed safety radius = 0.40m phrasing
-    if re.search(r"inscribed safety radius.*0\.40", clean_text, re.IGNORECASE):
-        violations.append("Outdated 'inscribed safety radius = 0.40' wording found")
+    for path in targets:
+        rel = os.path.relpath(path, BASE).replace(os.sep, "/")
+        for n, line in enumerate(io.open(path, encoding="utf-8",
+                                         errors="ignore").read().splitlines(), 1):
+            if line.lstrip().startswith("%"):
+                continue
+            for pattern, meaning, exempt in RULES:
+                if not re.search(pattern, line, re.IGNORECASE):
+                    continue
+                if exempt and re.search(exempt, line, re.IGNORECASE):
+                    continue
+                violations.append(f"{rel}:{n} {meaning}")
 
-    # 3. Control ticks as intimate exposure metric unit
-    if re.search(r"intimate exposure.*control ticks|exposure \(control ticks\)", clean_text, re.IGNORECASE):
-        violations.append("Outdated 'control ticks' exposure unit wording found")
+    check("no superseded terminology in prose or generated artefacts",
+          not violations, "; ".join(violations[:6])
+          + (f" (+{len(violations) - 6} more)" if len(violations) > 6 else ""))
 
-    check("semantic consistency checks pass", len(violations) == 0,
-          "; ".join(violations) if violations else "")
+
+def gate_aims_consistent() -> None:
+    """The manuscript declares four aims; the conclusion must assess four."""
+    tex = os.path.join(PAPER, "paper.tex")
+    if not os.path.exists(tex):
+        check("aims consistent", False, "paper.tex missing")
+        return
+    text = io.open(tex, encoding="utf-8", errors="ignore").read()
+    declared = set(re.findall(r"\\textbf\{(A[1-9]), ", text))
+    assessed = set(re.findall(r"\\textbf\{(A[1-9]) \(", text))
+    check("every declared aim is assessed in the conclusion",
+          bool(declared) and declared == assessed,
+          f"declared {sorted(declared)} but assessed {sorted(assessed)}")
+
+
+def gate_no_invented_p_values() -> None:
+    """
+    Every p-value in the prose must exist in analysis_results.json.
+
+    A previous revision quoted `p < 10^{-15}` for two factorial contrasts that the
+    analysis pipeline never tested -- it computed bootstrap intervals and no
+    p-value at all. The figures were plausible and entirely invented, which is the
+    exact failure mode the "no hand-entered numbers" claim exists to exclude, so it
+    gets a mechanical check rather than a promise.
+    """
+    tex = os.path.join(PAPER, "paper.tex")
+    results = os.path.join(DATA, "analysis_results.json")
+    if not (os.path.exists(tex) and os.path.exists(results)):
+        warn("p-value provenance", "paper.tex or analysis_results.json missing")
+        return
+    text = io.open(tex, encoding="utf-8", errors="ignore").read()
+    blob = io.open(results, encoding="utf-8").read()
+
+    # Collect every number the analysis computed, at the precision the manuscript
+    # would round it to. Scanning all values rather than only `"p":` keys matters:
+    # the benchmark stores its Holm-adjusted family under comparison names
+    # ("Static A* (matched controller)|intimate"), not under a key called p.
+    computed = set()
+    for m in re.finditer(r"-?\d+\.?\d*(?:[eE][+-]?\d+)?", blob):
+        try:
+            v = float(m.group(0))
+        except ValueError:
+            continue
+        if v > 0:
+            computed.add(f"{v:.1e}")
+
+    unmatched = []
+    for m in re.finditer(r"\$p(?:_\{\\text\{Holm\}\})?\s*=\s*"
+                         r"([0-9.]+)\s*\\times\s*10\^\{(-?\d+)\}\$", text):
+        v = float(m.group(1)) * (10 ** int(m.group(2)))
+        if f"{v:.1e}" not in computed:
+            unmatched.append(f"p = {m.group(1)}e{m.group(2)}")
+    check("every quoted p-value appears in analysis_results.json",
+          not unmatched, ", ".join(unmatched[:5]))
 
 
 def main() -> int:
@@ -205,6 +299,8 @@ def main() -> int:
     gate_commit_stamp()
     gate_tag_exists()
     gate_semantic_consistency()
+    gate_aims_consistent()
+    gate_no_invented_p_values()
     gate_references(args.no_net)
     print("=" * 62)
 

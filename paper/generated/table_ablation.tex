@@ -3,16 +3,24 @@
 % Produced by paper/scripts/generate_tables_and_figures.py
 \begin{table*}[t]
 \centering
-\caption{Component ablation of the five cost terms in the retail supermarket domain ($N=100$ trials per configuration). Each row removes exactly one term from Eq.~(1); all other parameters are held fixed. Counts are reported as median [IQR] because they are right-skewed; makespan is mean $\pm$ SD. No configuration recorded a deadlock in any trial.}
+\caption{Component ablation in the retail supermarket domain ($N=100$ trials per configuration). The upper block removes one soft cost term at a time from Eq.~(1), or lifts the reservation feasibility constraint; the lower block separates the kinematic safety \emph{cost term} from the reactive safety \emph{controller}, which are distinct mechanisms. All other parameters are held fixed. Counts are reported as median [IQR] because they are right-skewed; makespan is mean $\pm$ SD. No configuration recorded a deadlock in any trial.}
 \label{tab:ablation}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{lccccc}
 \toprule
 \textbf{Configuration} & \textbf{Success (95\% CI)} & \textbf{Makespan (s)} & \textbf{Discomfort} & \textbf{Fixture contacts} & \textbf{Contact ticks} \\
 \midrule
+\multicolumn{6}{l}{\emph{Routing-cost ablations}} \\
 \textbf{Full $\text{D}^2\text{RO}$} & 100.0\% [96.3, 100.0] & $47.38 \pm 13.96$ & 0.0 [0.0, 0.0] & 3 [2, 6] & 154 [114, 191] \\
 w/o V2V mesh $W_{\text{mesh}}$ & 100.0\% [96.3, 100.0] & $38.23 \pm 16.88$ & 0.0 [0.0, 0.0] & 3 [3, 9] & 131 [80, 246] \\
 w/o proxemics $H_{\text{prox}}$ & 11.0\% [6.3, 18.6] & $172.05 \pm 26.67$ & 13.5 [11.2, 15.6] & 56 [39, 78] & 219 [127, 313] \\
+reservation constraint $R_{\text{lock}}$ lifted & 100.0\% [96.3, 100.0] & $37.86 \pm 15.13$ & 0.0 [0.0, 0.0] & 3 [3, 9] & 131 [80, 242] \\
+\midrule
+\multicolumn{6}{l}{\emph{Safety attribution}} \\
+\textbf{Full $\text{D}^2\text{RO}$} & 100.0\% [96.3, 100.0] & $47.38 \pm 13.96$ & 0.0 [0.0, 0.0] & 3 [2, 6] & 154 [114, 191] \\
+$w_S = 0$, reactive controller retained & 99.0\% [94.6, 99.8] & $53.52 \pm 24.71$ & 0.0 [0.0, 0.0] & 5 [5, 8] & 270 [245, 313] \\
+controller off, $w_S$ retained & 100.0\% [96.3, 100.0] & $42.34 \pm 9.84$ & 0.0 [0.0, 0.0] & 48 [35, 69] & 150 [125, 173] \\
+both off & 100.0\% [96.3, 100.0] & $43.02 \pm 8.84$ & 0.0 [0.0, 0.0] & 94 [82, 96] & 244 [224, 310] \\
 \bottomrule
 \end{tabular}%
 }

@@ -3,17 +3,17 @@
 % Produced by paper/scripts/generate_tables_and_figures.py
 \begin{table*}[t]
 \centering
-\caption{Social routing ($H_{\text{prox}}$) versus reactive human yielding ($N=50$ paired trials per cell, dynamic $\text{D}^*$ Lite search active in all cells). Exposure is reported in person-seconds inside the intimate boundary.}
+\caption{Proxemic routing ($H_{\text{prox}}$) versus reactive human yielding ($N=50$ seed-paired trials per cell). Mesh and corridor reservation are disabled in \emph{every} cell and the dynamic $\text{D}^*$ Lite search is active in every cell, so the only quantities that vary are the two named factors. Exposure is person-seconds inside the intimate boundary, reported as median [IQR] because it is zero-inflated once $H_{\text{prox}}$ is active, with mean $\pm$ SD alongside. The lower block gives the pre-specified paired contrasts: each is tested against zero across the seed-matched trials and Holm-adjusted within its outcome family.}
 \label{tab:factorial}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccc}
 \toprule
-\textbf{Configuration} & \textbf{Success (95\% CI)} & \textbf{Makespan (s)} & \textbf{Exposure (person-s)} & \textbf{Encounters} \\
+\textbf{Configuration} & \textbf{Success (95\% CI)} & \textbf{Makespan (s)} & \textbf{Exposure median [IQR]} & \textbf{Exposure mean $\pm$ SD} & \textbf{Encounters} \\
 \midrule
-$H_{\text{prox}}$ OFF, yield OFF & 100.0\% [0.0, 0.0] & $19.20 \pm 0.00$ & $6.43 \pm 0.27$ & $5.0 \pm 0.0$ \\
-$H_{\text{prox}}$ OFF, yield ON & 12.0\% [0.0, 0.0] & $173.89 \pm 17.01$ & $49.35 \pm 18.38$ & $7.6 \pm 3.6$ \\
-$H_{\text{prox}}$ ON, yield OFF & 100.0\% [0.0, 0.0] & $38.23 \pm 10.90$ & $0.03 \pm 0.16$ & $0.0 \pm 0.2$ \\
-$H_{\text{prox}}$ ON, yield ON (\textbf{$\text{D}^2\text{RO}$}) & 100.0\% [0.0, 0.0] & $38.40 \pm 11.04$ & $0.14 \pm 0.80$ & $0.0 \pm 0.2$ \\
+$H_{\text{prox}}$ OFF, yield OFF & 100.0\% [92.9, 100.0] & $19.20 \pm 0.00$ & 6.45 [6.21, 6.60] & $6.43 \pm 0.27$ & 5.0 [5.0, 5.0] \\
+$H_{\text{prox}}$ OFF, yield ON & 12.0\% [5.6, 23.8] & $173.89 \pm 17.01$ & 48.00 [38.51, 57.86] & $49.35 \pm 18.38$ & 7.0 [5.2, 9.8] \\
+$H_{\text{prox}}$ ON, yield OFF & 100.0\% [92.9, 100.0] & $38.23 \pm 10.90$ & 0.00 [0.00, 0.00] & $0.03 \pm 0.16$ & 0.0 [0.0, 0.0] \\
+$H_{\text{prox}}$ ON, yield ON (\textbf{$\text{D}^2\text{RO}$}) & 100.0\% [92.9, 100.0] & $38.40 \pm 11.04$ & 0.00 [0.00, 0.00] & $0.14 \pm 0.80$ & 0.0 [0.0, 0.0] \\
 \bottomrule
 \end{tabular}%
 }

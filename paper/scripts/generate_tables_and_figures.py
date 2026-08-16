@@ -198,7 +198,11 @@ def figure_benchmark(bench: Dict[str, Any]) -> bool:
 
     # (c) social exposure - median with IQR (skewed, zero-inflated)
     ax = axes[2]
-    ex = [groups[m]["intimate_exposure"] for m in methods]
+    # Person-seconds, not control ticks. The tick count is an artefact of the
+    # integration step (dt = 0.05 s) and is not comparable across anything that
+    # changes the step; person-seconds is the quantity the manuscript reasons about
+    # and the one every other exposure figure and table reports.
+    ex = [groups[m]["exposure_person_s"] for m in methods]
     med = [d.get("median", 0.0) for d in ex]
     q1 = [d.get("iqr", [0, 0])[0] for d in ex]
     q3 = [d.get("iqr", [0, 0])[1] for d in ex]
@@ -210,7 +214,7 @@ def figure_benchmark(bench: Dict[str, Any]) -> bool:
     top = max(q3 + [1.0])
     adj = bench.get("holm_adjusted_p", {})
     for b, v, e, m in zip(bars, med, hi, methods):
-        ax.text(b.get_x() + b.get_width() / 2, v + e + top * 0.05, f"{v:.0f}",
+        ax.text(b.get_x() + b.get_width() / 2, v + e + top * 0.05, f"{v:.1f}",
                 ha="center", va="bottom", fontsize=8, color=INK)
         # Significance against D2RO, printed beneath each bar. This previously lived
         # in a separate table that otherwise duplicated this figure; carrying it here
@@ -222,7 +226,7 @@ def figure_benchmark(bench: Dict[str, Any]) -> bool:
                 ax.text(b.get_x() + b.get_width() / 2, top * 0.03,
                         f"$p\\!<\\!10^{{{exp + 1}}}$", ha="center", va="bottom",
                         fontsize=6.5, color=MUTED)
-    ax.set_ylabel("Intimate-space exposure (control ticks)")
+    ax.set_ylabel("Intimate-space exposure (person-s)")
     ax.set_ylim(0, top * 1.34)
     ax.set_title("(c) Social compliance — median [IQR]", loc="left")
     ax.yaxis.set_major_locator(MaxNLocator(5))
@@ -313,13 +317,29 @@ def _emit(name: str, lines: List[str]) -> bool:
 # --------------------------------------------------------------------------- #
 # Component ablation
 # --------------------------------------------------------------------------- #
-ABLATION_LABEL = {
+# The ablation dataset carries seven configurations, and they answer two different
+# questions. Splitting them into blocks makes the causal structure legible: the
+# first asks what each ROUTING term contributes, the second separates the safety
+# COST TERM from the reactive safety CONTROLLER, which are distinct mechanisms that
+# the earlier single-block table conflated.
+#
+# The keys are the config strings written by run_experiments.py. They are listed
+# exhaustively on purpose: a previous revision of this table silently dropped four
+# configurations because its label map had drifted from the experiment, so
+# table_ablation now fails loudly on an unrecognised key instead of omitting a row.
+ABLATION_ROUTING = {
     "Full D2RO Framework": "\\textbf{Full $\\text{D}^2\\text{RO}$}",
     "w/o V2V Mesh Telemetry": "w/o V2V mesh $W_{\\text{mesh}}$",
-    "w/o Corridor Mutex Lock": "w/o corridor reservation $R_{\\text{lock}}$",
     "w/o Human Gaussian Proxemics": "w/o proxemics $H_{\\text{prox}}$",
-    "w/o Trolley Kinetic Safety Bubble": "w/o safety envelope $S_{\\text{trolley}}$",
+    "w/o Corridor Reservation": "reservation constraint $R_{\\text{lock}}$ lifted",
 }
+ABLATION_SAFETY = {
+    "Full D2RO Framework": "\\textbf{Full $\\text{D}^2\\text{RO}$}",
+    "w/o S_trolley cost only": "$w_S = 0$, reactive controller retained",
+    "w/o safety controller only": "controller off, $w_S$ retained",
+    "w/o safety (full stack)": "both off",
+}
+ABLATION_LABEL = {**ABLATION_ROUTING, **ABLATION_SAFETY}
 
 
 def table_ablation(res: Dict[str, Any]) -> bool:
@@ -327,29 +347,46 @@ def table_ablation(res: Dict[str, Any]) -> bool:
         _placeholder("table_ablation", f"ablation dataset {res.get('status', 'missing')}")
         return False
     groups = res["groups"]
-    order = [k for k in ABLATION_LABEL if k in groups] or list(groups)
-    n = groups[order[0]].get("n", 0)
+    unknown = [k for k in groups if k not in ABLATION_LABEL]
+    if unknown:
+        raise KeyError(
+            "ablation configurations present in the data but absent from the label "
+            f"map, which would drop them silently from Table: {unknown}")
+    n = groups[next(iter(groups))].get("n", 0)
     L = _header(
-        f"Component ablation of the five cost terms in the retail supermarket domain "
-        f"($N={n}$ trials per configuration). Each row removes exactly one term from "
-        f"Eq.~(1); all other parameters are held fixed. Counts are reported as "
-        f"median [IQR] because they are right-skewed; makespan is mean $\\pm$ SD. "
-        f"No configuration recorded a deadlock in any trial.",
+        f"Component ablation in the retail supermarket domain ($N={n}$ trials per "
+        f"configuration). The upper block removes one soft cost term at a time from "
+        f"Eq.~(1), or lifts the reservation feasibility constraint; the lower block "
+        f"separates the kinematic safety \\emph{{cost term}} from the reactive safety "
+        f"\\emph{{controller}}, which are distinct mechanisms. All other parameters "
+        f"are held fixed. Counts are reported as median [IQR] because they are "
+        f"right-skewed; makespan is mean $\\pm$ SD. No configuration recorded a "
+        f"deadlock in any trial.",
         "tab:ablation", "lccccc",
         "\\textbf{Configuration} & \\textbf{Success (95\\% CI)} & \\textbf{Makespan (s)} & "
         "\\textbf{Discomfort} & \\textbf{Fixture contacts} & "
         "\\textbf{Contact ticks} \\\\",
         wide=True, resize=True)
-    for k in order:
-        g = groups[k]
-        # Discomfort and contact counts are right-skewed and, for several arms, have
-        # a standard deviation larger than their mean -- "5.71 +/- 7.29" implies
-        # negative counts, which cannot occur. They are reported as median [IQR],
-        # the same treatment already applied to intimate exposure. Makespan stays
-        # mean +/- SD: it is continuous and roughly symmetric.
-        L.append(f"{ABLATION_LABEL.get(k, k)} & {_pct(g)} & {_f(g['makespan'])} & "
-                 f"{_med(g['discomfort'], 1)} & "
-                 f"{_med(g['shelf_contact_events'])} & {_med(g['shelf_contact_ticks'])} \\\\")
+
+    def block(title: str, labels: Dict[str, str], first: bool) -> None:
+        if not first:
+            L.append("\\midrule")
+        L.append(f"\\multicolumn{{6}}{{l}}{{\\emph{{{title}}}}} \\\\")
+        for k, lab in labels.items():
+            if k not in groups:
+                continue
+            g = groups[k]
+            # Discomfort and contact counts are right-skewed and, for several arms,
+            # have a standard deviation larger than their mean -- "5.71 +/- 7.29"
+            # implies negative counts, which cannot occur. They are reported as
+            # median [IQR], the same treatment already applied to intimate exposure.
+            # Makespan stays mean +/- SD: it is continuous and roughly symmetric.
+            L.append(f"{lab} & {_pct(g)} & {_f(g['makespan'])} & "
+                     f"{_med(g['discomfort'], 1)} & {_med(g['shelf_contact_events'])} & "
+                     f"{_med(g['shelf_contact_ticks'])} \\\\")
+
+    block("Routing-cost ablations", ABLATION_ROUTING, first=True)
+    block("Safety attribution", ABLATION_SAFETY, first=False)
     L += _footer(wide=True, resize=True)
     return _emit("table_ablation", L)
 
@@ -434,9 +471,9 @@ def _table_mechanism(res: Dict[str, Any], name: str, label: str,
 def table_mesh_anticipation(res: Dict[str, Any]) -> bool:
     return _table_mechanism(
         res, "table_mesh_anticipation", "tab:mech_mesh",
-        "Mechanism experiment A: V2V mesh anticipation. A corridor is blocked out of "
-        "line of sight; with the mesh enabled the follower learns of the obstruction "
-        "before observing it",
+        "Mechanism experiment A: V2V mesh anticipation. A corridor is blocked outside "
+        "the follower's onboard sensing radius; with the mesh enabled the follower "
+        "learns of the obstruction before observing it",
         [("anticipation_lead_time_s", "Anticipation lead time (s)", 2),
          ("backtrack_distance_m", "Backtrack distance (m)", 2),
          ("path_length_m", "Path length (m)", 2),
@@ -507,6 +544,77 @@ def _figure_scalability(res: Dict[str, Any], name: str, xlabel: str,
         f"\\includegraphics[width=\\textwidth]{{{name}.pdf}}",
         f"\\caption{{{caption}}}",
         f"\\label{{{label}}}",
+        "\\end{figure*}",
+        "",
+    ])
+
+
+def figure_degradation(res: Dict[str, Any]) -> bool:
+    """
+    The PAIRED mesh effect as the channel degrades, with bootstrap CIs.
+
+    Plotting the absolute Mesh-ON lead time would discard the controlled design:
+    every channel condition runs a Mesh-ON and a Mesh-OFF trial on the same seed,
+    so the quantity that the experiment actually estimates is the within-pair
+    difference. That is what is drawn here, one line per latency level, against
+    packet loss. A point above the zero rule means the mesh still bought
+    anticipation under that channel.
+    """
+    if not _usable(res.get("status")) or not res.get("channels"):
+        _placeholder("fig_degradation",
+                     f"mesh_degradation dataset {res.get('status', 'missing')}")
+        return False
+    chans = res["channels"]
+    losses = sorted({c["loss_rate"] for c in chans.values()})
+    lats = sorted({c["latency_s"] for c in chans.values()})
+
+    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.2))
+    for ax, (metric, ylabel, title) in zip(axes, [
+            ("delta_lead_time", "$\\Delta$ anticipation lead time (s)",
+             "(a) Anticipation advantage of the mesh"),
+            ("delta_backtrack", "$\\Delta$ backtracking avoided (m)",
+             "(b) Backtracking avoided by the mesh")]):
+        for i, lat in enumerate(lats):
+            sel = [(c["loss_rate"], c[metric]) for c in chans.values()
+                   if c["latency_s"] == lat]
+            sel.sort()
+            xs = [s[0] * 100 for s in sel]
+            ys = [s[1]["bootstrap"]["mean_difference"] for s in sel]
+            lo = [y - s[1]["bootstrap"]["ci95_difference"][0] for y, s in zip(ys, sel)]
+            hi = [s[1]["bootstrap"]["ci95_difference"][1] - y for y, s in zip(ys, sel)]
+            ax.errorbar(xs, ys, yerr=[lo, hi], marker="o", markersize=4,
+                        linewidth=1.4, elinewidth=0.9, capsize=2.5,
+                        color=PALETTE[i % len(PALETTE)], zorder=3,
+                        label=f"{lat * 1000:.0f} ms latency")
+        ax.axhline(0.0, color=MUTED, linewidth=0.8, linestyle="--", zorder=2)
+        ax.set_xlabel("Packet loss (%)")
+        ax.set_ylabel(ylabel)
+        ax.set_title(title, loc="left")
+        ax.set_xticks([l * 100 for l in losses])
+        ax.yaxis.set_major_locator(MaxNLocator(5))
+        _style(ax)
+    axes[0].legend(frameon=False, fontsize=7, loc="lower left")
+
+    fig.tight_layout()
+    for ext in ("pdf", "png"):
+        fig.savefig(os.path.join(FIG_DIR, f"fig_degradation.{ext}"))
+    plt.close(fig)
+    print("  [ok]   fig_degradation.{pdf,png}")
+
+    n = next(iter(chans.values()))["n_pairs"]
+    return _emit("fig_degradation", [
+        "% GENERATED FILE - do not edit by hand.",
+        "% Produced by paper/scripts/generate_tables_and_figures.py",
+        "\\begin{figure*}[t]",
+        "\\centering",
+        "\\includegraphics[width=\\textwidth]{fig_degradation.pdf}",
+        f"\\caption{{Paired effect of the V2V mesh on Mechanism~A as the channel "
+        f"degrades ($N={n}$ seed-matched Mesh-ON/Mesh-OFF pairs per channel "
+        f"condition). Each point is the within-pair difference, not an absolute "
+        f"arm value, so the controlled design of the mechanism experiment is "
+        f"preserved; error bars are percentile bootstrap 95\\% intervals on the "
+        f"mean difference. The dashed rule marks no mesh advantage.}}",
+        "\\label{fig:degradation}",
         "\\end{figure*}",
         "",
     ])
@@ -616,20 +724,94 @@ def table_factorial(res):
     order = [k for k in FACTORIAL_LABEL if k in g]
     n = g[order[0]].get("n", 0)
     L = _header(
-        f"Social routing ($H_{{\\text{{prox}}}}$) versus reactive human yielding ($N={n}$ paired trials per cell, "
-        f"dynamic $\\text{{D}}^*$ Lite search active in all cells). Exposure is reported in person-seconds "
-        f"inside the intimate boundary.",
-        "tab:factorial", "lcccc",
+        f"Proxemic routing ($H_{{\\text{{prox}}}}$) versus reactive human yielding "
+        f"($N={n}$ seed-paired trials per cell). Mesh and corridor reservation are "
+        f"disabled in \\emph{{every}} cell and the dynamic $\\text{{D}}^*$ Lite search "
+        f"is active in every cell, so the only quantities that vary are the two named "
+        f"factors. Exposure is person-seconds inside the intimate boundary, reported "
+        f"as median [IQR] because it is zero-inflated once $H_{{\\text{{prox}}}}$ is "
+        f"active, with mean $\\pm$ SD alongside. The lower block gives the "
+        f"pre-specified paired contrasts: each is tested against zero across the "
+        f"seed-matched trials and Holm-adjusted within its outcome family.",
+        "tab:factorial", "lccccc",
         r"\textbf{Configuration} & \textbf{Success (95\% CI)} & "
-        r"\textbf{Makespan (s)} & \textbf{Exposure (person-s)} & "
-        r"\textbf{Encounters} \\",
+        r"\textbf{Makespan (s)} & \textbf{Exposure median [IQR]} & "
+        r"\textbf{Exposure mean $\pm$ SD} & \textbf{Encounters} \\",
         wide=True, resize=True)
     for k in order:
         e = g[k]
         L.append(f"{FACTORIAL_LABEL[k]} & {_pct(e)} & {_f(e['makespan'])} & "
-                 f"{_f(e['exposure_person_s'])} & {_f(e['encounters'], 1)} \\\\")
+                 f"{_med(e['exposure_person_s'], 2)} & {_f(e['exposure_person_s'])} & "
+                 f"{_med(e['encounters'], 1)} \\\\")
+
     L += _footer(wide=True, resize=True)
     return _emit("table_factorial", L)
+
+
+# Pre-specified contrasts, in the order the manuscript argues them.
+FACTORIAL_CONTRASTS = [
+    ("routing_effect_yield_off", "$H_{\\text{prox}}$ main effect, yielding OFF",
+     "C $-$ A"),
+    ("routing_effect_yield_on",  "$H_{\\text{prox}}$ main effect, yielding ON",
+     "D $-$ B"),
+    ("yielding_effect_prox_off", "Yielding main effect, $H_{\\text{prox}}$ OFF",
+     "B $-$ A"),
+    ("yielding_effect_prox_on",  "Yielding main effect, $H_{\\text{prox}}$ ON",
+     "D $-$ C"),
+    ("interaction",              "\\textbf{Interaction}",
+     "(D $-$ C) $-$ (B $-$ A)"),
+]
+
+
+def table_factorial_contrasts(res: Dict[str, Any]) -> bool:
+    """
+    The inferential half of the factorial.
+
+    Cell summaries cannot establish a main effect or an interaction: those are
+    statements about differences, and the differences are what this table tests.
+    Every contrast is computed within seed-matched trials, so the pairing the
+    design establishes is preserved rather than discarded in favour of comparing
+    two marginal means.
+    """
+    con = res.get("contrasts")
+    if not _usable(res.get("status")) or not con:
+        _placeholder("table_factorial_contrasts",
+                     f"route_yield_factorial dataset {res.get('status', 'missing')}")
+        return False
+    succ = res.get("success_contrasts", {})
+    n = con["interaction_exposure"].get("n", 0)
+
+    def mediqr(d: Dict[str, Any]) -> str:
+        q1, q3 = d.get("iqr", [0.0, 0.0])
+        return f"${d.get('median', 0.0):.2f}$ [${q1:.2f}$, ${q3:.2f}$]"
+
+    L = _header(
+        f"Pre-specified paired contrasts for the $2\\times2$ factorial "
+        f"($N={n}$ seed-matched trials per contrast). Exposure is in person-seconds; "
+        f"a negative effect is a reduction. Each contrast is tested against zero "
+        f"across matched trials --- by paired $t$-test where the differences are "
+        f"normal by Shapiro--Wilk and Wilcoxon signed-rank otherwise, with the test "
+        f"used named in the table --- and $p$ values are Holm-adjusted within the "
+        f"outcome family. Intervals are percentile bootstrap 95\\% CIs on the mean "
+        f"difference. Binary success is compared by exact McNemar on the same "
+        f"matched trials.",
+        "tab:factorial_contrasts", "llccccc",
+        r"\textbf{Contrast} & \textbf{Cells} & \textbf{Median [IQR]} & "
+        r"\textbf{Mean (95\% CI)} & \textbf{Test} & \textbf{$p_{\text{Holm}}$} & "
+        r"\textbf{Success $p_{\text{Holm}}$} \\",
+        wide=True, resize=True)
+    for key, lab, cells in FACTORIAL_CONTRASTS:
+        c = con.get(f"{key}_exposure")
+        if not c:
+            continue
+        lo, hi = c["bootstrap"]["ci95_difference"]
+        s = succ.get(f"{key}_success")
+        sp = _p(s.get("p_holm")) if s else "--"
+        L.append(f"{lab} & {cells} & {mediqr(c)} & "
+                 f"${c['mean']:.2f}$ (${lo:.2f}$, ${hi:.2f}$) & "
+                 f"{c.get('test', '--')} & {_p(c.get('p_holm'))} & {sp} \\\\")
+    L += _footer(wide=True, resize=True)
+    return _emit("table_factorial_contrasts", L)
 
 
 def figure_weight_sensitivity(res):
@@ -708,7 +890,9 @@ def main() -> None:
     figure_crowd_density(results.get("crowd_density", {}))
     figure_fleet_size(results.get("fleet_size", {}))
     table_factorial(results.get("route_yield_factorial", {}))
+    table_factorial_contrasts(results.get("route_yield_factorial", {}))
     figure_weight_sensitivity(results.get("weight_sensitivity", {}))
+    figure_degradation(results.get("mesh_degradation", {}))
 
     # fig1_note.tex exists only to explain an ABSENT Figure 1. Once the benchmark
     # figure is produced the note is stale by definition, so it is removed rather

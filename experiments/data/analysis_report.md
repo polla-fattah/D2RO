@@ -38,22 +38,22 @@ Intimate exposure is reported as median [IQR] because the distribution is zero-i
 |:--|:--|:--|--:|--:|
 | Static A* (matched controller) | success | McNemar (exact) | 0 vs 1 discordant | 1 |
 | Static A* (matched controller) | makespan | Wilcoxon signed-rank | Δ=29.31s, dz=1.56 | 6.14e-17 |
-| Static A* (matched controller) | intimate exposure | Wilcoxon signed-rank | Δ=-119.7 [-128.3, -107.6] | 9.38e-16 |
+| Static A* (matched controller) | intimate exposure | Wilcoxon signed-rank | Δ=-6.0 [-6.4, -5.4] | 9.38e-16 |
 | Local Social D* Lite | success | McNemar (exact) | 0 vs 1 discordant | 1 |
 | Local Social D* Lite | makespan | Wilcoxon signed-rank | Δ=9.45s, dz=0.43 | 2e-05 |
-| Local Social D* Lite | intimate exposure | Wilcoxon signed-rank | Δ=7.1 [-2.3, 19.7] | 1 |
+| Local Social D* Lite | intimate exposure | Wilcoxon signed-rank | Δ=0.4 [-0.1, 1.0] | 1 |
 | Static A* | success | McNemar (exact) | 0 vs 1 discordant | 1 |
 | Static A* | makespan | Wilcoxon signed-rank | Δ=30.51s, dz=1.62 | 6.14e-17 |
-| Static A* | intimate exposure | Wilcoxon signed-rank | Δ=-119.2 [-127.6, -107.0] | 9.38e-16 |
+| Static A* | intimate exposure | Wilcoxon signed-rank | Δ=-6.0 [-6.4, -5.3] | 9.38e-16 |
 | Reactive Avoidance (Potential Field) | success | McNemar (exact) | 0 vs 1 discordant | 1 |
 | Reactive Avoidance (Potential Field) | makespan | Wilcoxon signed-rank | Δ=13.97s, dz=0.74 | 6.59e-14 |
-| Reactive Avoidance (Potential Field) | intimate exposure | Wilcoxon signed-rank | Δ=-220.7 [-239.5, -201.4] | 4.69e-16 |
+| Reactive Avoidance (Potential Field) | intimate exposure | Wilcoxon signed-rank | Δ=-11.0 [-12.0, -10.1] | 4.69e-16 |
 | Reactive ORCA (Velocity Obstacles) | success | McNemar (exact) | 99 vs 0 discordant | 5.68e-29 |
 | Reactive ORCA (Velocity Obstacles) | makespan | Wilcoxon signed-rank | Δ=-131.49s, dz=-6.99 | 6.14e-17 |
-| Reactive ORCA (Velocity Obstacles) | intimate exposure | Wilcoxon signed-rank | Δ=-487.4 [-617.7, -363.3] | 3.55e-13 |
+| Reactive ORCA (Velocity Obstacles) | intimate exposure | Wilcoxon signed-rank | Δ=-24.4 [-30.9, -18.2] | 3.55e-13 |
 | Decentralized Local MAPF | success | McNemar (exact) | 99 vs 0 discordant | 5.68e-29 |
 | Decentralized Local MAPF | makespan | Wilcoxon signed-rank | Δ=-131.49s, dz=-6.99 | 6.14e-17 |
-| Decentralized Local MAPF | intimate exposure | Wilcoxon signed-rank | Δ=-126.0 [-137.7, -112.4] | 9.38e-16 |
+| Decentralized Local MAPF | intimate exposure | Wilcoxon signed-rank | Δ=-6.3 [-6.9, -5.6] | 9.38e-16 |
 
 Each p-value belongs to one specific outcome. A single significance statement is never attached to several unrelated metrics at once.
 

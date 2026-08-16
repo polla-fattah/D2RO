@@ -360,11 +360,17 @@ def analyse_benchmark() -> Dict[str, Any]:
                 "success": mcnemar(succ(D2RO_LABEL), succ(method)),
                 "makespan": paired_continuous(series(D2RO_LABEL, "travel_time_s"),
                                               series(method, "travel_time_s")),
+                # Person-seconds, not the raw tick count in `proxemic_violations`.
+                # The Wilcoxon p is identical either way -- ranks are invariant
+                # under a positive rescale -- but the effect size and its interval
+                # then carry the unit the manuscript actually reasons in, instead
+                # of a count that only means something at dt = 0.05 s.
                 "intimate_exposure": {
-                    **paired_continuous(series(D2RO_LABEL, "proxemic_violations"),
-                                        series(method, "proxemic_violations")),
-                    "bootstrap": paired_bootstrap(series(D2RO_LABEL, "proxemic_violations"),
-                                                  series(method, "proxemic_violations")),
+                    **paired_continuous(series(D2RO_LABEL, "intimate_exposure_person_s"),
+                                        series(method, "intimate_exposure_person_s")),
+                    "bootstrap": paired_bootstrap(
+                        series(D2RO_LABEL, "intimate_exposure_person_s"),
+                        series(method, "intimate_exposure_person_s")),
                 },
             }
             comparisons[method] = c
@@ -455,11 +461,33 @@ def analyse_paired_mechanism(fname: str, cond_key: str, on_value: str,
 
 def analyse_factorial() -> Dict[str, Any]:
     r"""
-    Analyses the 2x2 Route x Yield Factorial Experiment (H_prox x Yielding).
-    Calculates cell descriptives (median [IQR], mean +- SD) and inferential contrasts:
-      * H_prox routing main effect (yield OFF: C - A, yield ON: D - B)
-      * Yielding main effect (H_prox OFF: B - A, H_prox ON: D - C)
-      * Interaction contrast: (D - C) - (B - A)
+    2x2 factorial: proxemic graph cost (H_prox) x reactive yielding.
+
+    Every cell runs the same dynamic D* Lite planner with mesh and reservation
+    disabled, so the only things that vary are the two named factors. The cells are
+
+        A  H_prox OFF, yield OFF        C  H_prox ON,  yield OFF
+        B  H_prox OFF, yield ON         D  H_prox ON,  yield ON
+
+    Cell summaries alone cannot support a claim about a main effect or an
+    interaction, so this function computes the pre-specified paired contrasts and
+    tests them. Trials are seed-paired across cells, which is what licenses the
+    pairing: trial t in cell A and trial t in cell D see the same pedestrian
+    realisation.
+
+        routing effect      C - A  (yield off)      D - B  (yield on)
+        yielding effect     B - A  (H_prox off)     D - C  (H_prox on)
+        interaction         (D - C) - (B - A)
+
+    Exposure is heavily zero-inflated once H_prox is on, so each contrast carries a
+    signed-rank test (paired_continuous falls back from t to Wilcoxon when the
+    differences are not normal, and reports which it used), a percentile bootstrap
+    CI on the mean difference, and the median [IQR] of the difference itself.
+    Binary success gets the paired treatment it needs -- exact McNemar -- rather
+    than a comparison of two independent percentages.
+
+    p-values within each outcome family are Holm-adjusted; the manuscript quotes the
+    adjusted values.
     """
     rows, ver = load("route_yield_factorial.csv")
     out: Dict[str, Any] = {"dataset": "route_yield_factorial.csv", "status": ver}
@@ -469,16 +497,20 @@ def analyse_factorial() -> Dict[str, Any]:
 
     by_cell: Dict[str, Dict[int, Dict[str, Any]]] = defaultdict(dict)
     for r in rows:
-        c = r["cell"]
-        tid = int(r["trial_id"])
-        by_cell[c][tid] = r
+        by_cell[r["cell"]][int(r["trial_id"])] = r
 
     cells = ["A_prox_off_yield_off", "B_prox_off_yield_on",
              "C_prox_on_yield_off", "D_prox_on_yield_on"]
-    
-    # Fallback to legacy cell names if existing dataset is loaded
     if not any(c in by_cell for c in cells):
-        cells = ["A_frozen_noyield", "B_frozen_yield", "C_social_noyield", "D_social_yield"]
+        # Datasets written before the factor was cleaned up used these names.
+        cells = ["A_frozen_noyield", "B_frozen_yield",
+                 "C_social_noyield", "D_social_yield"]
+
+    def exposure(row: Dict[str, str]) -> float:
+        """Person-seconds. Older datasets carry only person-ticks at dt = 0.05 s."""
+        if "intimate_exposure_person_s" in row:
+            return fnum(row, "intimate_exposure_person_s")
+        return fnum(row, "intimate_exposure_person_ticks") * 0.05
 
     groups: Dict[str, Dict[str, Any]] = {}
     for c in cells:
@@ -487,51 +519,81 @@ def analyse_factorial() -> Dict[str, Any]:
             continue
         n = len(cell_rows)
         succ = [int(r["success"]) for r in cell_rows]
-        makespan = [fnum(r, "makespan_s") for r in cell_rows]
-        exp_s = [fnum(r, "intimate_exposure_person_s") if "intimate_exposure_person_s" in r else fnum(r, "intimate_exposure_person_ticks") * 0.05 for r in cell_rows]
-        encount = [fnum(r, "intimate_encounters") for r in cell_rows]
-
+        lo, hi = wilson_interval(sum(succ), n)
         groups[c] = {
             "n": n,
             "success_rate": sum(succ) / n * 100.0,
-            "makespan": describe(makespan),
-            "exposure_person_s": describe(exp_s),
-            "encounters": describe(encount),
+            # Reported as a percentage, matching success_rate. Its absence is what
+            # previously made the generated table print a fabricated [0.0, 0.0].
+            "success_ci95": [lo * 100.0, hi * 100.0],
+            "makespan": describe([fnum(r, "makespan_s") for r in cell_rows]),
+            "exposure_person_s": describe([exposure(r) for r in cell_rows]),
+            "encounters": describe([fnum(r, "intimate_encounters") for r in cell_rows]),
         }
-
     out["groups"] = groups
 
-    # Paired inferential contrasts across trial_ids
-    if len(cells) == 4 and all(c in by_cell for c in cells):
-        trials = sorted(list(by_cell[cells[0]].keys()))
-        if all(all(t in by_cell[c] for t in trials) for c in cells):
-            a_exp = [fnum(by_cell[cells[0]][t], "intimate_exposure_person_s") if "intimate_exposure_person_s" in by_cell[cells[0]][t] else fnum(by_cell[cells[0]][t], "intimate_exposure_person_ticks") * 0.05 for t in trials]
-            b_exp = [fnum(by_cell[cells[1]][t], "intimate_exposure_person_s") if "intimate_exposure_person_s" in by_cell[cells[1]][t] else fnum(by_cell[cells[1]][t], "intimate_exposure_person_ticks") * 0.05 for t in trials]
-            c_exp = [fnum(by_cell[cells[2]][t], "intimate_exposure_person_s") if "intimate_exposure_person_s" in by_cell[cells[2]][t] else fnum(by_cell[cells[2]][t], "intimate_exposure_person_ticks") * 0.05 for t in trials]
-            d_exp = [fnum(by_cell[cells[3]][t], "intimate_exposure_person_s") if "intimate_exposure_person_s" in by_cell[cells[3]][t] else fnum(by_cell[cells[3]][t], "intimate_exposure_person_ticks") * 0.05 for t in trials]
+    if len(cells) != 4 or not all(c in by_cell for c in cells):
+        return out
+    trials = sorted(by_cell[cells[0]].keys())
+    if not all(all(t in by_cell[c] for t in trials) for c in cells):
+        # Unbalanced cells would silently break the pairing; say so rather than
+        # reporting a contrast computed over a different set of trials per cell.
+        out["contrasts_note"] = "cells are not trial-balanced; contrasts omitted"
+        return out
 
-            a_mks = [fnum(by_cell[cells[0]][t], "makespan_s") for t in trials]
-            b_mks = [fnum(by_cell[cells[1]][t], "makespan_s") for t in trials]
-            c_mks = [fnum(by_cell[cells[2]][t], "makespan_s") for t in trials]
-            d_mks = [fnum(by_cell[cells[3]][t], "makespan_s") for t in trials]
+    A, B, C, D = (by_cell[c] for c in cells)
 
-            interaction_exp = [(d - c) - (b - a) for a, b, c, d in zip(a_exp, b_exp, c_exp, d_exp)]
-            interaction_mks = [(d - c) - (b - a) for a, b, c, d in zip(a_mks, b_mks, c_mks, d_mks)]
+    def vec(cell: Dict[int, Dict[str, str]], f) -> List[float]:
+        return [f(cell[t]) for t in trials]
 
-            routing_off_exp = [c - a for a, c in zip(a_exp, c_exp)]
-            routing_on_exp = [d - b for b, d in zip(b_exp, d_exp)]
+    def contrast(diff: Sequence[float]) -> Dict[str, Any]:
+        """A paired contrast tested against zero, with a CI and a distribution."""
+        zeros = [0.0] * len(diff)
+        stat = paired_continuous(list(diff), zeros)
+        return {
+            **describe(list(diff)),
+            "test": stat.get("test"),
+            "p": stat.get("p"),
+            "cohens_dz": stat.get("cohens_dz"),
+            "bootstrap": paired_bootstrap(list(diff), zeros),
+        }
 
-            yielding_off_exp = [b - a for a, b in zip(a_exp, b_exp)]
-            yielding_on_exp = [d - c for c, d in zip(c_exp, d_exp)]
+    contrasts: Dict[str, Any] = {}
+    for outcome, getter in (("exposure", exposure),
+                            ("makespan", lambda r: fnum(r, "makespan_s"))):
+        a, b, c, d = (vec(x, getter) for x in (A, B, C, D))
+        defs = {
+            f"routing_effect_yield_off_{outcome}": [ci - ai for ai, ci in zip(a, c)],
+            f"routing_effect_yield_on_{outcome}":  [di - bi for bi, di in zip(b, d)],
+            f"yielding_effect_prox_off_{outcome}": [bi - ai for ai, bi in zip(a, b)],
+            f"yielding_effect_prox_on_{outcome}":  [di - ci for ci, di in zip(c, d)],
+            f"interaction_{outcome}": [(di - ci) - (bi - ai)
+                                       for ai, bi, ci, di in zip(a, b, c, d)],
+        }
+        computed = {k: contrast(v) for k, v in defs.items()}
+        adj = holm({k: v["p"] for k, v in computed.items() if v.get("p") is not None})
+        for k, v in computed.items():
+            if k in adj:
+                v["p_holm"] = adj[k]
+        contrasts.update(computed)
+    out["contrasts"] = contrasts
 
-            out["contrasts"] = {
-                "interaction_exposure": {**describe(interaction_exp), "bootstrap": paired_bootstrap(interaction_exp, [0.0]*len(interaction_exp))},
-                "interaction_makespan": {**describe(interaction_mks), "bootstrap": paired_bootstrap(interaction_mks, [0.0]*len(interaction_mks))},
-                "routing_effect_yield_off_exposure": {**describe(routing_off_exp), "bootstrap": paired_bootstrap(routing_off_exp, [0.0]*len(routing_off_exp))},
-                "routing_effect_yield_on_exposure": {**describe(routing_on_exp), "bootstrap": paired_bootstrap(routing_on_exp, [0.0]*len(routing_on_exp))},
-                "yielding_effect_prox_off_exposure": {**describe(yielding_off_exp), "bootstrap": paired_bootstrap(yielding_off_exp, [0.0]*len(yielding_off_exp))},
-                "yielding_effect_prox_on_exposure": {**describe(yielding_on_exp), "bootstrap": paired_bootstrap(yielding_on_exp, [0.0]*len(yielding_on_exp))},
-            }
+    # Paired binary success. The reviewer is right that comparing 100% against 12%
+    # as two independent proportions ignores the seed pairing that the design went
+    # to the trouble of establishing.
+    succ_vec = {name: [int(cell[t]["success"]) for t in trials]
+                for name, cell in zip("ABCD", (A, B, C, D))}
+    pairs = {
+        "routing_effect_yield_off_success": ("C", "A"),
+        "routing_effect_yield_on_success":  ("D", "B"),
+        "yielding_effect_prox_off_success": ("B", "A"),
+        "yielding_effect_prox_on_success":  ("D", "C"),
+    }
+    succ_tests = {k: mcnemar(succ_vec[x], succ_vec[y]) for k, (x, y) in pairs.items()}
+    adj = holm({k: v["p"] for k, v in succ_tests.items()})
+    for k, v in succ_tests.items():
+        v["p_holm"] = adj[k]
+    out["success_contrasts"] = succ_tests
 
     return out
 
@@ -590,6 +652,65 @@ def analyse_degradation_paired() -> Dict[str, Any]:
         }
 
     out["channels"] = channels
+
+    # ---------------------------------------------------------------------- #
+    # Does the mesh advantage actually change with the channel?
+    #
+    # Reporting a per-channel effect answers "is the mesh still helping here",
+    # but the manuscript wants to claim a tolerance threshold, which is a claim
+    # about the DIFFERENCE BETWEEN channels. That needs its own contrast.
+    #
+    # The design supports it: trial t at 10% loss and trial t at 0% loss share a
+    # seed and a pedestrian realisation, so the paired mesh effects can themselves
+    # be differenced across channels, pairing on (trial, other factor). A negative
+    # value means the mesh advantage shrank when the channel got worse.
+    # ---------------------------------------------------------------------- #
+    delta_at: Dict[Tuple[float, float, int], float] = {}
+    for chan, records in by_chan.items():
+        for (t, arm) in records:
+            if arm != "1" or (t, "0") not in records:
+                continue
+            on, off = records[(t, "1")], records[(t, "0")]
+            loss = float(on.get("packet_loss_rate", 0))
+            lat = float(on.get("latency_s", 0))
+            delta_at[(loss, lat, t)] = (fnum(on, "anticipation_lead_time_s")
+                                        - fnum(off, "anticipation_lead_time_s"))
+
+    losses = sorted({k[0] for k in delta_at})
+    latencies = sorted({k[1] for k in delta_at})
+
+    def across(levels: List[float], axis: int, ref: float) -> Dict[str, Any]:
+        """Each level against the best channel, pairing on trial and the other axis."""
+        res: Dict[str, Any] = {}
+        for lv in levels:
+            if lv == ref:
+                continue
+            keys = [k for k in delta_at
+                    if k[axis] == lv and (k[:axis] + (ref,) + k[axis + 1:]) in delta_at]
+            if len(keys) < 3:
+                continue
+            here = [delta_at[k] for k in sorted(keys)]
+            there = [delta_at[k[:axis] + (ref,) + k[axis + 1:]] for k in sorted(keys)]
+            diff = [x - y for x, y in zip(here, there)]
+            stat = paired_continuous(diff, [0.0] * len(diff))
+            res[f"{lv:g}"] = {
+                **describe(diff),
+                "test": stat.get("test"),
+                "p": stat.get("p"),
+                "bootstrap": paired_bootstrap(diff, [0.0] * len(diff)),
+            }
+        adj = holm({k: v["p"] for k, v in res.items() if v.get("p") is not None})
+        for k, v in res.items():
+            if k in adj:
+                v["p_holm"] = adj[k]
+        return res
+
+    if losses:
+        out["lead_time_vs_loss"] = {"reference": losses[0],
+                                    "levels": across(losses, 0, losses[0])}
+    if latencies:
+        out["lead_time_vs_latency"] = {"reference": latencies[0],
+                                       "levels": across(latencies, 1, latencies[0])}
     return out
 
 

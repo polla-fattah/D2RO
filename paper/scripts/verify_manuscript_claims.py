@@ -30,7 +30,9 @@ R = d["comm_robustness"]["groups"]
 M = d["mesh_anticipation"]
 L = d["corridor_lock"]
 Y = d["route_yield_factorial"]["groups"]
+YC = d["route_yield_factorial"]["contrasts"]
 DG = d["mesh_degradation"].get("channels", d["mesh_degradation"].get("groups", {}))
+DL = d["mesh_degradation"]["lead_time_vs_loss"]["levels"]
 
 D2 = "D2RO (SW-DGO Proposed)"
 MATCHED = "Static A* (matched controller)"
@@ -80,6 +82,26 @@ CHECKS = [
     ("factorial B exposure",      48.00,  (Y.get("B_prox_off_yield_on") or Y.get("B_frozen_yield"))["exposure_person_s"]["median"], 2),
     ("factorial C exposure",       0.00,  (Y.get("C_prox_on_yield_off") or Y.get("C_social_noyield"))["exposure_person_s"]["median"], 2),
     ("factorial D exposure",       0.00,  (Y.get("D_prox_on_yield_on") or Y.get("D_social_yield"))["exposure_person_s"]["median"], 2),
+    # The inferential contrasts the manuscript now argues from. These were quoted
+    # in prose before they were computed anywhere -- an earlier revision cited
+    # `p < 10^-15` for two of them while the pipeline produced no p-value at all --
+    # so every contrast the paper states is pinned here.
+    ("factorial routing effect",  -6.40,  YC["routing_effect_yield_off_exposure"]["mean"], 2),
+    ("factorial routing CI lo",   -6.48,  YC["routing_effect_yield_off_exposure"]["bootstrap"]["ci95_difference"][0], 2),
+    ("factorial routing CI hi",   -6.31,  YC["routing_effect_yield_off_exposure"]["bootstrap"]["ci95_difference"][1], 2),
+    ("factorial yield-on-social",  0.11,  YC["yielding_effect_prox_on_exposure"]["mean"], 2),
+    ("factorial yield-on-soc p",   0.59,  YC["yielding_effect_prox_on_exposure"]["p_holm"], 2),
+    ("factorial yield-off-soc",   42.92,  YC["yielding_effect_prox_off_exposure"]["mean"], 2),
+    ("factorial interaction",    -42.81,  YC["interaction_exposure"]["mean"], 2),
+    ("factorial interaction lo", -47.99,  YC["interaction_exposure"]["bootstrap"]["ci95_difference"][0], 2),
+    ("factorial interaction hi", -37.76,  YC["interaction_exposure"]["bootstrap"]["ci95_difference"][1], 2),
+    ("factorial routing cost",    19.03,  YC["routing_effect_yield_off_makespan"]["mean"], 2),
+    # --- communication degradation: the tolerance threshold ---------------------
+    ("degradation 10% delta",     -0.80,  DL["0.1"]["mean"], 2),
+    ("degradation 10% p",          0.16,  DL["0.1"]["p_holm"], 2),
+    ("degradation 20% delta",     -4.26,  DL["0.2"]["mean"], 2),
+    ("degradation 20% CI lo",     -5.73,  DL["0.2"]["bootstrap"]["ci95_difference"][0], 2),
+    ("degradation 20% CI hi",     -2.90,  DL["0.2"]["bootstrap"]["ci95_difference"][1], 2),
     # --- ablation with the safety split ---------------------------------------
     ("ablation full contacts",       3,   A["Full D2RO Framework"]["shelf_contact_events"]["median"], 0),
     ("ablation cost-only contacts",  5,   A["w/o S_trolley cost only"]["shelf_contact_events"]["median"], 0),
@@ -139,7 +161,7 @@ def main() -> int:
     succ = [g["success_rate"] for g in W.values()]
     print(f"\n  derived: D2RO - unmatched gap    = {gap_unmatched:.2f} s   (paper: 29.18)")
     print(f"  derived: controller share        = {ctrl:.2f} s   (paper: 1.20)")
-    print(f"  derived: routing cost (factorial)= {routing:.2f} s   (paper: 29.94)")
+    print(f"  derived: routing cost (factorial)= {routing:.2f} s   (paper: 19.03)")
     print(f"  derived: D2RO minus local social = {ls_delta:.2f} s   (paper: ~8)")
     print(f"  derived: sensitivity success rng = {min(succ):.0f}-{max(succ):.0f}%  (paper: 97-100)")
     on_clean = DG.get("loss00_lat000ms", {}).get("on_lead_time", {}).get("mean") or DG.get("loss00_lat000ms", {}).get("lead_time_s", {}).get("mean")

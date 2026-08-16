@@ -1,0 +1,21 @@
+% GENERATED FILE - do not edit by hand.
+% Source: experiments/data/analysis_results.json
+% Produced by paper/scripts/generate_tables_and_figures.py
+\begin{table*}[t]
+\centering
+\caption{Pre-specified paired contrasts for the $2\times2$ factorial ($N=50$ seed-matched trials per contrast). Exposure is in person-seconds; a negative effect is a reduction. Each contrast is tested against zero across matched trials --- by paired $t$-test where the differences are normal by Shapiro--Wilk and Wilcoxon signed-rank otherwise, with the test used named in the table --- and $p$ values are Holm-adjusted within the outcome family. Intervals are percentile bootstrap 95\% CIs on the mean difference. Binary success is compared by exact McNemar on the same matched trials.}
+\label{tab:factorial_contrasts}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llccccc}
+\toprule
+\textbf{Contrast} & \textbf{Cells} & \textbf{Median [IQR]} & \textbf{Mean (95\% CI)} & \textbf{Test} & \textbf{$p_{\text{Holm}}$} & \textbf{Success $p_{\text{Holm}}$} \\
+\midrule
+$H_{\text{prox}}$ main effect, yielding OFF & C $-$ A & $-6.45$ [$-6.60$, $-6.20$] & $-6.40$ ($-6.48$, $-6.31$) & Wilcoxon signed-rank & $1.5 \times 10^{-9}$ & $1$ \\
+$H_{\text{prox}}$ main effect, yielding ON & D $-$ B & $-48.00$ [$-57.86$, $-38.51$] & $-49.21$ ($-54.40$, $-44.16$) & paired t-test & $2.1 \times 10^{-23}$ & $4.5 \times 10^{-13}$ \\
+Yielding main effect, $H_{\text{prox}}$ OFF & B $-$ A & $41.60$ [$32.31$, $51.50$] & $42.92$ ($37.89$, $48.08$) & paired t-test & $4.7 \times 10^{-21}$ & $4.5 \times 10^{-13}$ \\
+Yielding main effect, $H_{\text{prox}}$ ON & D $-$ C & $0.00$ [$0.00$, $0.00$] & $0.11$ ($0.00$, $0.32$) & Wilcoxon signed-rank & $0.59$ & $1$ \\
+\textbf{Interaction} & (D $-$ C) $-$ (B $-$ A) & $-41.60$ [$-51.50$, $-32.31$] & $-42.81$ ($-47.99$, $-37.76$) & paired t-test & $4.7 \times 10^{-21}$ & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
