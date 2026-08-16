@@ -3,10 +3,11 @@
 > **START HERE after cloning.** What is done, what is not, and how to reproduce it.
 > Nothing required to continue lives outside this repository.
 
-**Status date:** 16 August 2026
-**Round:** 3 (second Major Revision). Reviewer correspondence in
-[`email.md`](email.md) and [`email2.md`](email2.md); the plans that answer them are
-[`REVISION_PLAN_R2.md`](REVISION_PLAN_R2.md) and
+**Status date:** 16 August 2026 (round-4 revision)
+**Round:** 4 (third Major Revision). Reviewer correspondence in
+[`email.md`](email.md), [`email2.md`](email2.md) and [`comments1.md`](comments1.md);
+the current reply is [`RESPONSE_TO_REVIEWERS_R4.md`](RESPONSE_TO_REVIEWERS_R4.md),
+and the earlier plans are [`REVISION_PLAN_R2.md`](REVISION_PLAN_R2.md) and
 [`REVISION_PLAN_R3.md`](REVISION_PLAN_R3.md).
 
 ---
@@ -17,7 +18,7 @@
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-python -m pytest d2ro/tests/ -q                     # must report 65 passed
+python -m pytest d2ro/tests/ -q                     # must report 67 passed
 PYTHONDONTWRITEBYTECODE=1 python run_full_suite.py  # ~30 min, 11 experiments, 4,650 rows
 python paper/scripts/analyze_results.py             # every dataset must read ok
 python paper/scripts/generate_tables_and_figures.py
@@ -42,18 +43,18 @@ the package, and batch code changes rather than regenerating between them.
 | Area | State |
 |:--|:--|
 | Datasets | 11 experiments, 4,650 rows, all `ok` |
-| Tests | 65 passing, including a D\* Lite optimality sweep across the weight grid |
-| Manuscript | 16 pages, 0 undefined references, 43/43 prose claims verified |
+| Tests | 67 passing, including a D\* Lite optimality sweep across the weight grid |
+| Manuscript | 18 pages, 0 undefined references, 51/51 prose claims verified |
 | Bibliography | 21 entries, DOI-verified; 16/20 clean, 4 documented deviations |
 | Licensing | MIT (code), CC BY 4.0 (data), all-rights-reserved (manuscript) |
 | CI | tests, provenance, claim verification, reference audit, paper build |
-| Release | **no tag yet — see §3** |
+| Release | `v3.0-review3` tagged; round-4 tag pending resubmission |
 
 ### The three round-3 blocking defects, and how they were fixed
 
 | # | Defect | Fix | Consequence |
 |:--|:--|:--|:--|
-| 1 | Matched baseline set `enable_yield=False`, so `D²RO − matched` bundled routing, replanning and yielding | 2×2 route×yield factorial, identical kinematics per cell | Routing, not yielding, produces the social benefit (0.03 person-s with yielding off) |
+| 1 | Matched baseline set `enable_yield=False`, so `D²RO − matched` bundled routing, replanning and yielding | 2×2 factorial; **rerun in round 4** with mesh and reservation off in every cell and D\* Lite on in every cell | The routing factor is now `H_prox` alone: −6.40 person-s (95% CI [−6.48, −6.31], *p* = 1.5 × 10⁻⁹) at a cost of 19.03 s |
 | 2 | `Edge.cost` returned `inf` before applying `weight_r`, and `r_lock` is only ever 0 or ∞, so `w_R` was inert everywhere | Reformulated as 4 soft terms + 1 hard constraint; `w_R` dropped from the sensitivity grid | The framework is no longer described as a five-weight objective |
 | 3 | D\* Lite heuristic used raw Euclidean distance, inadmissible for `w_D < 1` | `h = min(w_D)·d`, plus a test sweep over the whole grid | Previously reported `w_D < 1` results were **suboptimal paths** and are superseded |
 
@@ -69,8 +70,13 @@ returning 8.5887 where Dijkstra's optimum is 8.4758.
 - **The safety effect is mostly the reactive controller, not the `w_S` graph term.**
   Median fixture contacts: 3 (full), 5 (cost removed), 48 (controller removed),
   93.5 (both).
-- **Anticipation degrades at 20% packet loss** (lead time 11.01 → 6.20 s), so the
-  robustness claim is bounded at ~10% loss rather than stated unconditionally.
+- **Anticipation degrades at 20% packet loss.** Measured as a paired within-seed
+  effect, the mesh advantage is statistically unchanged at 10% loss (−0.80 s,
+  *p* = 0.16) and falls about 38% at 20% (−4.26 s, *p* = 6.6 × 10⁻⁶), so the
+  robustness claim is bounded at ~10% rather than stated unconditionally.
+- **Reactive yielding contributes nothing on top of social routing.** The contrast
+  is 0.11 person-s (95% CI [0.00, 0.32], *p* = 0.59) — a measured null, not an
+  effect too small to matter.
 
 ---
 
@@ -78,7 +84,8 @@ returning 8.5887 where Dijkstra's optimum is 8.4758.
 
 ### Blocking submission
 
-- [ ] **Create the release.** See §3. The manuscript must cite a tag that exists.
+- [ ] **Tag the round-4 revision** once the reply is finalised, so the manuscript
+      cites a release that exists. `v3.0-review3` already exists; see §3.
 
 ### Not blocking, but expected by the reviewer
 
@@ -108,31 +115,42 @@ returning 8.5887 where Dijkstra's optimum is 8.4758.
 
 ## 3. Making a release
 
-The manuscript embeds its own provenance, and that creates an ordering problem: the
-stamp is generated *before* the commit it would name, so a locally built PDF always
-names its parent and reports `-dirty`. Round-3 review caught exactly this and was
-right to.
+The manuscript embeds its own provenance stamp. This used to force every build
+through CI: the stamp tested `git status` *after* the pipeline had rewritten its own
+outputs, so regenerated tables and figures counted as uncommitted changes and every
+local build reported `-dirty`, including a clean checkout from a tag.
 
-**Therefore the committed `paper/paper.pdf` is never the submittable artefact.**
+**That is fixed.** The stamp now excludes generated artefacts and tests sources
+only, naming any that are uncommitted. A clean tree produces a clean stamp, so a
+locally built `paper/paper.pdf` is submittable once the gate passes, and CI is a
+safety net rather than the only path to a valid artefact.
 
 ```bash
 # 1. commit everything; the working tree must be clean
 git status --short          # must print nothing
 
-# 2. tag
-git tag -a v3.0-review3 -m "Round-3 revision submitted to <venue>"
-git push origin v3.0-review3
+# 2. regenerate so the stamp names the commit you just made
+python paper/scripts/generate_tables_and_figures.py
+
+# 3. rebuild and certify
+python paper/scripts/build_latex.py
+python paper/scripts/release_gate.py    # must print SUBMITTABLE
+
+# 4. tag
+git tag -a v4.0-review4 -m "Round-4 revision submitted to <venue>"
+git push origin v4.0-review4
 ```
 
-CI then checks out that tag on a clean tree, regenerates the artefacts (so the stamp
-names the tagged commit with no `-dirty`), rebuilds the PDF, runs
-`paper/scripts/release_gate.py`, and attaches the PDF to the GitHub release.
-**Submit that file.**
+CI performs the same sequence on the tag and attaches its PDF to the GitHub
+release. Either artefact is valid; they are built from identical sources.
 
 `release_gate.py` refuses to certify a build when any dataset is not `ok`, the prose
 disagrees with the data, the LaTeX log carries an unresolved reference, the PDF
-contains a literal `??`, the commit stamp ends in `-dirty`, or no tag exists. Every
-one of those failures has reached a reviewer of this project at least once.
+contains a literal `??`, the commit stamp ends in `-dirty`, no tag exists,
+superseded terminology survives anywhere in `paper.tex` or `paper/generated/`, the
+declared and assessed research aims disagree, or a *p*-value quoted in prose does
+not appear in `analysis_results.json`. Every one of those failures has reached a
+reviewer of this project at least once.
 
 ---
 
@@ -164,7 +182,7 @@ Recorded so they are not mistaken for oversights.
 | `run_full_suite.py` | Suite driver: subprocess isolation, retries, completeness checks |
 | `paper/scripts/analyze_results.py` | The single statistics pipeline |
 | `paper/scripts/generate_tables_and_figures.py` | Data-driven artefacts; refuses stale datasets |
-| `paper/scripts/verify_manuscript_claims.py` | Prose ↔ data check (43 claims) |
+| `paper/scripts/verify_manuscript_claims.py` | Prose ↔ data check (51 claims) |
 | `paper/scripts/audit_references.py` | DOI-first bibliography audit |
 | `paper/scripts/release_gate.py` | Submittability gate |
 | `paper/scripts/generate_topology_figures.py` | Qualitative figures (illustrative only) |

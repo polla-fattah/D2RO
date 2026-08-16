@@ -14,11 +14,11 @@ Department of Computer Science and Engineering, Koya University
 
 ---
 
-> ℹ️ **Status: round-3 revision. All 11 datasets regenerated and verified.**
+> ℹ️ **Status: round-4 revision. All 11 datasets verified against the current code.**
 > 4,650 simulation trials across 11 experiments. Every table, figure and numeric
 > claim in the manuscript is generated or verified against the committed raw data
-> by a single pipeline; `paper/scripts/verify_manuscript_claims.py` fails the build
-> if the prose and the data disagree.
+> by a single pipeline; `paper/scripts/verify_manuscript_claims.py` pins 51 exact
+> claims and fails the build if the prose and the data disagree.
 >
 > **Reproduce everything from a clean checkout with one command:**
 >
@@ -28,15 +28,21 @@ Department of Computer Science and Engineering, Koya University
 >   && python paper/scripts/generate_tables_and_figures.py
 > ```
 >
-> **Submitting or citing?** Use the PDF attached to the GitHub release, not
-> `paper/paper.pdf` in the tree. The provenance stamp inside the paper is derived
-> from git at generation time, so a locally built PDF necessarily names its parent
-> commit and reports `-dirty`. CI builds the authoritative copy from the tag on a
-> clean checkout. `python paper/scripts/release_gate.py` tells you whether a given
-> build is submittable.
+> **Submitting or citing?** Run the gate first:
 >
-> Work still open is tracked in [`docs/OUTSTANDING_WORK.md`](docs/OUTSTANDING_WORK.md)
-> and [`docs/REVISION_PLAN_R3.md`](docs/REVISION_PLAN_R3.md).
+> ```bash
+> python paper/scripts/release_gate.py
+> ```
+>
+> It refuses to certify a build with a stale dataset, a prose claim that disagrees
+> with the data, an unresolved reference, superseded terminology, or a p-value that
+> does not appear in `analysis_results.json`. A clean tree produces a clean
+> provenance stamp, so `paper/paper.pdf` built locally is submittable once the gate
+> passes; the release attachment is the same artefact built from the tag.
+>
+> Point-by-point replies to the reviewers are in
+> [`docs/RESPONSE_TO_REVIEWERS_R4.md`](docs/RESPONSE_TO_REVIEWERS_R4.md).
+> Work still open is tracked in [`docs/OUTSTANDING_WORK.md`](docs/OUTSTANDING_WORK.md).
 
 ## What is D²RO?
 
@@ -73,10 +79,13 @@ maximised:
 | APF | 100.0% | 34.54 s | 10.18 |
 
 **What the evidence supports.** Socially weighted routing essentially eliminates
-intimate-space intrusion (median 0 person-seconds vs 6.40, *p* < 10⁻¹⁵). A 2×2
-factorial shows this comes from the *routing*, not from reactive yielding: routing
-alone reaches 0.03 person-seconds with yielding switched off, and yielding on a
-frozen route collapses success to 12%.
+intimate-space intrusion (median 0 person-seconds vs 6.40, Holm-adjusted
+*p* = 9.4 × 10⁻¹⁶). A 2×2 factorial isolates the cause: with the mesh and the
+reservation disabled in every cell and D\* Lite replanning in every cell, enabling
+the proxemic cost term alone drops exposure by 6.40 person-seconds
+(95% CI [−6.48, −6.31], *p* = 1.5 × 10⁻⁹), at a cost of 19.03 s of makespan.
+Reactive yielding adds nothing on top of a social route (0.11 person-s, *p* = 0.59)
+and collapses success to 12% on a shortest-path one.
 
 **What it does not.** An ordinary human-aware planner with no distributed layer
 matches that compliance exactly (*p* = 1) while running 8 s faster. The V2V mesh and
@@ -136,13 +145,20 @@ D2RO/
 │   │   ├── hospital_gui.py             # Hospital visual GUI
 │   │   └── airport_gui.py              # Airport visual GUI
 │   │
-│   └── tests/                          # Unit & integration tests
+│   └── tests/                          # Unit & integration tests (67 tests)
 │       ├── test_baselines.py
-│       ├── test_dstar_lite.py
+│       ├── test_dstar_lite.py          # replanner correctness
+│       ├── test_dstar_optimality.py    # matches Dijkstra on the same graph
 │       ├── test_mesh.py
+│       ├── test_mesh_multihop.py
 │       ├── test_corridor_lock.py
 │       ├── test_hospital.py
-│       └── test_airport.py
+│       ├── test_airport.py
+│       ├── test_physics_kinematics.py  # non-holonomic motion
+│       ├── test_safety_envelope.py
+│       ├── test_instrumentation.py     # counters mean what they claim
+│       ├── test_metrics_semantics.py   # person-time vs robot-time
+│       └── test_provenance_fingerprint.py  # fingerprint is platform-independent
 │
 ├── scripts/                            # Ready-to-run demo entry points
 │   ├── demo_main.py                    # Full interactive demo (all environments)
@@ -170,37 +186,58 @@ D2RO/
 │   ├── paper.tex                       # LaTeX source (IEEEtran)
 │   ├── paper.pdf                       # Compiled camera-ready PDF
 │   ├── references.bib                  # BibTeX bibliography
+│   ├── generated/                      # ← ALL TABLES, written by the pipeline
+│   │   ├── table_ablation.tex          # never edit by hand; regenerate instead
+│   │   ├── table_factorial.tex
+│   │   ├── table_factorial_contrasts.tex
+│   │   ├── table_cross_domain.tex
+│   │   ├── table_mesh_anticipation.tex
+│   │   ├── table_corridor_lock.tex
+│   │   ├── fig_*.tex                   # float wrappers + captions
+│   │   └── commit.tex                  # provenance stamp
 │   ├── figures/                        # 300 DPI publication figures (PDF + PNG)
-│   │   ├── fig1_benchmark_comparison.*
-│   │   ├── fig_crowd_density.*
-│   │   ├── fig_fleet_size.*
-│   │   ├── fig5_supermarket_topology_trajectories.*
-│   │   ├── fig6_hospital_topology_trajectories.*
-│   │   ├── fig7_airport_topology_trajectories.*
-│   │   ├── fig8_social_detour_proxemic_heatmap.*
-│   │   ├── fig9_spatiotemporal_alcove_lock_diagram.*
-│   │   └── fig10_airport_crowd_density_streamlines.*
+│   │   ├── fig1_benchmark_comparison.* # data-driven
+│   │   ├── fig_crowd_density.*         # data-driven
+│   │   ├── fig_fleet_size.*            # data-driven
+│   │   ├── fig_weight_sensitivity.*    # data-driven (four soft weights)
+│   │   ├── fig_degradation.*           # data-driven (paired mesh effect vs channel)
+│   │   ├── fig5_supermarket_topology_trajectories.*   # qualitative
+│   │   ├── fig6_hospital_topology_trajectories.*      # qualitative
+│   │   ├── fig7_airport_topology_trajectories.*       # qualitative
+│   │   ├── fig8_social_detour_proxemic_heatmap.*      # qualitative
+│   │   ├── fig9_spatiotemporal_alcove_lock_diagram.*  # qualitative
+│   │   └── fig10_airport_crowd_density_streamlines.*  # qualitative
 │   ├── scripts/                        # Paper build pipeline
+│   │   ├── analyze_results.py          # THE statistics pipeline
+│   │   ├── generate_tables_and_figures.py  # DATA-DRIVEN: every table + data figures
+│   │   ├── verify_manuscript_claims.py # 51 prose claims vs analysis_results.json
+│   │   ├── release_gate.py             # refuses to certify a non-reproducible build
+│   │   ├── audit_references.py         # Crossref DOI check on every bib entry
 │   │   ├── build_latex.py              # Compiles paper.tex → paper.pdf
 │   │   ├── build_paper_docx.py         # Generates Word manuscript
-│   │   ├── generate_tables_and_figures.py  # DATA-DRIVEN: all tables + Fig 1, scalability
 │   │   ├── generate_topology_figures.py    # Qualitative: Figs 5–7
-│   │   ├── generate_heatmaps_and_trajectories.py  # Produces Figs 8–10
-│   │   └── analyze_results.py          # THE statistics pipeline
-│   └── drafts/                         # Section drafts (Markdown)
+│   │   └── generate_heatmaps_and_trajectories.py  # Qualitative: Figs 8–10
+│   ├── LICENSE                         # manuscript: all rights reserved
+│   └── drafts/                         # Section drafts (Markdown, historical)
 │       ├── abstract.md
 │       ├── introduction.md
+│       ├── Literature_Review.md
 │       ├── methodology_and_formulation.md
 │       ├── results_and_discussion.md
 │       └── conclusion_and_future_work.md
 │
-├── docs/                               # Research documentation
-│   ├── Response_to_Reviewers.md        # Point-by-point rebuttal (18 items)
-│   ├── Journal_Feedback_Round1.md      # First informal journal feedback
-│   ├── Journal_Feedback_Round2.md      # Second informal journal feedback
+├── docs/                               # Research documentation + web demo
+│   ├── RESPONSE_TO_REVIEWERS_R4.md     # ← current point-by-point reply
+│   ├── OUTSTANDING_WORK.md             # what is knowingly still open
+│   ├── REFERENCE_AUDIT.md              # Crossref DOI verification of every entry
+│   ├── REVISION_PLAN_R2.md             # round-2 plan (historical)
+│   ├── REVISION_PLAN_R3.md             # round-3 plan (historical)
+│   ├── email.md, email2.md, comments1.md   # reviewer correspondence, verbatim
 │   ├── Metrics_and_Evaluation_Guide.md # Metric definitions & formulas
+│   ├── Mathematical_Formalization.md   # Mathematical formalization notes
+│   ├── Mathematical_Notes.md
 │   ├── Algorithm_Design_Options.md     # Early design exploration notes
-│   └── Mathematical_Formalization.md   # Mathematical formalization notes
+│   └── index.html, simulator.js, …     # browser demo (Pyodide; GitHub Pages)
 │
 ├── literature/                         # Reference PDFs
 │
@@ -223,8 +260,8 @@ pip install -r requirements.txt
 ```bash
 python d2ro/sim/run_experiments.py
 ```
-All 7 CSV files written to `experiments/data/`, each with a `.provenance.json` stamp.
-Runtime: ~20 minutes.
+All 11 CSV files written to `experiments/data/`, each with a `.provenance.json`
+stamp recording the fingerprint of the code that produced it. Runtime: ~30 minutes.
 
 ### Regenerate all figures (300 DPI)
 ```bash
@@ -256,7 +293,7 @@ python paper/scripts/build_paper_docx.py
 
 | File | Class | Role |
 |:-----|:------|:-----|
-| [`agent.py`](d2ro/core/agent.py) | `TrolleyAgent` | D²RO agent: D\* Lite + all 5 cost terms, V2V mesh, mutex |
+| [`agent.py`](d2ro/core/agent.py) | `TrolleyAgent` | D²RO agent: D\* Lite + four soft cost terms, V2V mesh, directional reservation |
 | [`dstar_lite.py`](d2ro/core/dstar_lite.py) | `DStarLite` | Incremental replanner (0.18–1.23 ms per vertex repair) |
 | [`graph.py`](d2ro/core/graph.py) | `TopologicalGraph` | Weighted directed navigation graph with dynamic cost fields |
 | [`human.py`](d2ro/core/human.py) | `Human`, `ProxemicsField` | Stochastic pedestrian with 2D asymmetric Gaussian halo |
@@ -266,10 +303,10 @@ python paper/scripts/build_paper_docx.py
 
 | File | Algorithm | Failure Mode |
 |:-----|:----------|:-------------|
-| [`static_astar.py`](d2ro/baselines/static_astar.py) | Static A\* | Ignores pedestrians → 4.00 ± 0.00 intimate violations/trial |
-| [`artificial_potential_fields.py`](d2ro/baselines/artificial_potential_fields.py) | APF | Force cancellation at 90° corners → **0.0% success** |
+| [`static_astar.py`](d2ro/baselines/static_astar.py) | Static A\* | Ignores pedestrians → 6.40 person-s exposure, 5 intimate encounters/trial |
+| [`artificial_potential_fields.py`](d2ro/baselines/artificial_potential_fields.py) | APF | Completes missions, but reacts only once a pedestrian is close → highest exposure of any completing planner (10.18 person-s) |
 | [`reactive_orca.py`](d2ro/baselines/reactive_orca.py) | Reactive ORCA | Infeasible velocity half-planes in narrow aisles → **0.0% success** |
-| [`decentralized_local_mapf.py`](d2ro/baselines/decentralized_local_mapf.py) | Decentralized MAPF | Head-on livelocks without global routing → **0.0% success** |
+| [`decentralized_local_mapf.py`](d2ro/baselines/decentralized_local_mapf.py) | Decentralized MAPF | **0.0% success**, but traced trials finish within ~1.3 m of the goal — a near-miss against the arrival criterion, not a livelock |
 
 ### Environment Domains (`d2ro/environments/`)
 
@@ -412,34 +449,57 @@ Tables III–IV below.
 > ORCA and Decentralized Local MAPF (our implementations) complete 0% of missions and
 > are omitted here as diagnostics; no claim depends on them.
 
-### Table II — Routing vs reactive yielding (N=50 paired trials per cell)
+### Table II — Proxemic routing vs reactive yielding (N=50 seed-paired trials per cell)
 
-| Configuration | Success | Makespan (s) | Exposure (person-s) |
-|:--------------|:-------:|:------------:|:-------------------:|
-| Frozen route, no yielding | 100.0% | 19.20 | 6.43 |
-| Frozen route, yielding | 12.0% | 173.89 | 49.35 |
-| Social route, no yielding | 100.0% | 49.14 | 0.03 |
-| Social route, yielding (**D²RO**) | 100.0% | 48.62 | 0.62 |
+The mesh and the corridor reservation are disabled in **every** cell and D\* Lite
+replans in **every** cell, so the routing factor toggles the proxemic cost term and
+nothing else.
 
-Routing, not yielding, produces the social benefit: cell C reaches 0.03 person-seconds
-with no reactive response at all, and adding yielding slightly *worsens* exposure.
-Yielding on a frozen route collapses success to 12% — an agent that stops for a
-pedestrian but cannot replan has no recourse.
+| Configuration | Success | Makespan (s) | Exposure, median [IQR] |
+|:--------------|:-------:|:------------:|:----------------------:|
+| `H_prox` OFF, yield OFF | 100.0% | 19.20 ± 0.00 | 6.45 [6.21, 6.60] |
+| `H_prox` OFF, yield ON | 12.0% | 173.89 ± 17.01 | 48.00 [38.51, 57.86] |
+| `H_prox` ON, yield OFF | 100.0% | 38.23 ± 10.90 | 0.00 [0.00, 0.00] |
+| `H_prox` ON, yield ON (**D²RO**) | 100.0% | 38.40 ± 11.04 | 0.00 [0.00, 0.00] |
+
+Pre-specified paired contrasts, tested against zero across matched trials and
+Holm-adjusted within outcome family:
+
+| Contrast | Effect (person-s) | 95% CI | *p* |
+|:---------|:-----------------:|:------:|:---:|
+| `H_prox`, yielding OFF (C − A) | −6.40 | [−6.48, −6.31] | 1.5 × 10⁻⁹ |
+| Yielding, `H_prox` ON (D − C) | 0.11 | [0.00, 0.32] | 0.59 |
+| Yielding, `H_prox` OFF (B − A) | 42.92 | [37.89, 48.08] | 4.7 × 10⁻²¹ |
+| **Interaction** (D−C)−(B−A) | −42.81 | [−47.99, −37.76] | 4.7 × 10⁻²¹ |
+
+Routing produces the social benefit; yielding adds nothing measurable on top of it.
+Yielding *without* social routing is actively harmful — an agent that stops for a
+pedestrian but has no social gradient to steer around them waits beside the
+obstruction until it times out.
 
 ### Table III — Component ablation (N=100 trials)
+
+*Routing-cost ablations*
 
 | Configuration | Success | Makespan (s) | Fixture contacts (median [IQR]) |
 |:--------------|:-------:|:------------:|:-------------------------------:|
 | Full D²RO | 100.0% | 47.38 | 3 [2, 6] |
 | w/o V2V mesh | 100.0% | 38.23 | 3 [3, 9] |
-| w/o corridor reservation | 100.0% | 37.86 | 3 [3, 9] |
 | w/o proxemics | 11.0% | 172.05 | 56 [39, 78] |
-| w/o *S*ₜᵣₒₗₗₑᵧ cost only | 99.0% | 53.52 | 5 [5, 8] |
-| w/o safety controller only | 100.0% | 42.34 | 48 [35, 69] |
-| w/o safety (full stack) | 100.0% | 43.02 | 94 [82, 96] |
+| reservation constraint lifted | 100.0% | 37.86 | 3 [3, 9] |
+
+*Safety attribution*
+
+| Configuration | Success | Makespan (s) | Fixture contacts (median [IQR]) |
+|:--------------|:-------:|:------------:|:-------------------------------:|
+| Full D²RO | 100.0% | 47.38 | 3 [2, 6] |
+| *w_S* = 0, reactive controller retained | 99.0% | 53.52 | 5 [5, 8] |
+| controller off, *w_S* retained | 100.0% | 42.34 | 48 [35, 69] |
+| both off | 100.0% | 43.02 | 94 [82, 96] |
 
 The safety term is ablated three ways because one switch used to remove both the
-graph cost and the reactive controller. The effect is mostly the **controller**.
+graph cost and the reactive controller. The effect is mostly the **controller**:
+3 → 5 contacts when only the cost term goes, 3 → 48 when only the controller does.
 
 ### Table IV — Controlled mechanism experiments (N=50 paired trials)
 
@@ -455,10 +515,16 @@ encounters are unchanged, deadlocks are zero in both arms, and total wait is 0.0
 
 ### Sensitivity and robustness
 
-Success stays within **97–100%** under every perturbation of every weight
-(×0.5 to ×1.5, disjoint seed set), so the operating point is a plateau, not a ridge.
-Anticipation tolerates one-hop latency to 200 ms and packet loss to ~10%, degrading
-about 44% at 20% loss.
+Success stays within **97–100%** under every perturbation of each of the four soft
+weights (×0.5 to ×1.5, disjoint seed set), so the operating point is a plateau, not
+a ridge. Reservation is not in the sweep: it is a feasibility constraint, and the
+ablation lifts it outright instead.
+
+Under communication degradation the mesh advantage is measured as a **paired**
+within-seed effect at each channel condition. Relative to a clean channel it is
+statistically unchanged at 10% packet loss (−0.80 s, *p* = 0.16) and falls about
+38% at 20% (−4.26 s, 95% CI [−5.73, −2.90], *p* = 6.6 × 10⁻⁶). One-hop latency to
+200 ms is detectable but practically negligible (≤ 0.55 s).
 
 ## 9. Dependencies
 
