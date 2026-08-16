@@ -50,14 +50,21 @@ APF = "Reactive Avoidance (Potential Field)"
 # wide enough to absorb hardware and load differences but narrow enough to catch a
 # genuine regression such as a repair that has become milliseconds rather than
 # microseconds. The manuscript already tells the reader to read these ordinally.
-TIMING_TOLERANCE = 0.60      # +/-60% of the quoted value
-
-TIMING_CHECKS = [
-    ("repair median ms",   0.002,  lambda: B[D2]["repair_median_ms"]["mean"]),
-    ("repair p95 ms",      0.10,   lambda: B[D2]["repair_p95_ms"]["mean"]),
-    ("controller step ms", 0.118,  lambda: B[D2]["step_compute_ms"]["mean"]),
-    ("crowd step ms @2",   0.093,  lambda: C["2"]["replan_latency_ms"]["mean"]),
-    ("crowd step ms @30",  0.172,  lambda: C["30"]["replan_latency_ms"]["mean"]),
+# Point estimates were previously checked against a +/-60% band. That failed on a
+# rerun of the SAME code on the SAME machine: the median repair time moved from
+# 0.002 ms to 0.004 ms purely because the second run competed with other work. The
+# right response was not a wider band -- at 2x drift the band would have to be so
+# loose as to check nothing -- but a claim that survives the drift.
+#
+# The manuscript therefore states upper bounds, and this asserts them. A bound is
+# both reproducible and the honest form of the claim: what the evidence supports is
+# that repair costs microseconds rather than milliseconds, not that it costs 2 us.
+TIMING_BOUNDS = [
+    ("repair median ms",   0.01,  lambda: B[D2]["repair_median_ms"]["mean"]),
+    ("repair p95 ms",      0.20,  lambda: B[D2]["repair_p95_ms"]["mean"]),
+    ("controller step ms", 0.30,  lambda: B[D2]["step_compute_ms"]["mean"]),
+    ("crowd step ms @2",   0.20,  lambda: C["2"]["replan_latency_ms"]["mean"]),
+    ("crowd step ms @30",  0.30,  lambda: C["30"]["replan_latency_ms"]["mean"]),
 ]
 
 CHECKS = [
@@ -146,17 +153,14 @@ def main() -> int:
             bad += 1
     print(f"{len(CHECKS) - bad}/{len(CHECKS)} exact claims match analysis_results.json")
 
-    print("\n  timing claims (machine-dependent, checked within "
-          f"+/-{TIMING_TOLERANCE:.0%}):")
-    for label, claimed, getter in TIMING_CHECKS:
+    print("\n  timing bounds (wall-clock, host- and load-dependent):")
+    for label, bound, getter in TIMING_BOUNDS:
         actual = float(getter())
-        lo, hi = claimed * (1 - TIMING_TOLERANCE), claimed * (1 + TIMING_TOLERANCE)
-        ok = lo <= actual <= hi
+        ok = actual <= bound
         if not ok:
             bad += 1
-        mark = "ok " if ok else "OUT"
-        print(f"    [{mark}] {label:20s} paper={claimed:.3f}  data={actual:.3f} "
-              f"  band=[{lo:.3f}, {hi:.3f}]")
+        mark = "ok  " if ok else "OVER"
+        print(f"    [{mark}] {label:20s} data={actual:.4f}  must be <= {bound:.2f}")
 
     # derived statements made in the text
     gap_unmatched = (B[D2]["makespan_successful"]["mean"]
