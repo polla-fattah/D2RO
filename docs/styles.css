@@ -1,19 +1,22 @@
-/* Modern Dark Mode UI for D²RO / SW-DGO Web Simulator */
+/* ---------------------------------------------------------------------------
+   D²RO / SW-DGO Web Simulator Stylesheet (Grayscale / Slate Palette)
+   --------------------------------------------------------------------------- */
+
 :root {
-  --bg-dark: #0b1120;
-  --bg-surface: #0f172a;
-  --bg-card: #1e293b;
-  --bg-card-hover: #334155;
-  --border-color: #334155;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --accent-cyan: #38bdf8;
-  --accent-green: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-purple: #a855f7;
-  --accent-rose: #f43f5e;
+  --bg-dark: #141416;
+  --bg-surface: #1c1c1f;
+  --bg-card: #27272a;
+  --bg-card-hover: #3f3f46;
+  --border-color: #3f3f46;
+  --text-main: #f4f4f5;
+  --text-muted: #a1a1aa;
+  
+  --primary: #52525b;
+  --primary-hover: #71717a;
+  --accent-gray-light: #e4e4e7;
+  --accent-gray-mid: #a1a1aa;
+  --accent-gray-dark: #3f3f46;
+
   --font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   --font-mono: 'Consolas', 'Fira Code', 'Monaco', monospace;
 }
@@ -58,7 +61,7 @@ body {
 .header-title h1 {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-main);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -85,15 +88,15 @@ body {
 }
 
 .badge-wasm {
-  background: rgba(56, 189, 248, 0.15);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent-gray-light);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .badge-status {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--accent-green);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -103,8 +106,8 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: var(--accent-green);
-  box-shadow: 0 0 8px var(--accent-green);
+  background-color: var(--accent-gray-light);
+  box-shadow: 0 0 6px var(--accent-gray-light);
 }
 
 /* Navigation Tabs */
@@ -155,27 +158,35 @@ body {
 .tab-btn:hover {
   background: var(--bg-card-hover);
   color: var(--text-main);
+  border-color: #52525b;
 }
 
 .tab-btn.active {
   background: var(--primary);
   color: #ffffff;
-  border-color: var(--primary);
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+  border-color: #71717a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .tab-btn.env-btn.active {
-  background: #0284c7;
-  border-color: #0284c7;
+  background: #3f3f46;
+  border-color: #71717a;
+  color: #ffffff;
+}
+
+.tab-btn.ablation-btn.active {
+  background: #52525b;
+  border-color: #71717a;
+  color: #ffffff;
 }
 
 .scenario-desc-banner {
-  background: rgba(30, 41, 59, 0.8);
-  border-left: 3px solid var(--accent-cyan);
+  background: var(--bg-card);
+  border-left: 3px solid var(--accent-gray-light);
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 0.88rem;
-  color: var(--accent-cyan);
+  color: var(--text-main);
   font-weight: 500;
 }
 
@@ -199,7 +210,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #060a12;
+  background: #101012;
   border-radius: 10px;
   border: 1px solid var(--border-color);
   overflow: auto;
@@ -211,7 +222,7 @@ canvas#simCanvas {
   max-width: 100%;
   height: auto;
   cursor: crosshair;
-  background: #090d16;
+  background: #161619;
   border-radius: 6px;
 }
 
@@ -222,7 +233,7 @@ canvas#simCanvas {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(11, 17, 32, 0.92);
+  background: rgba(20, 20, 23, 0.92);
   backdrop-filter: blur(4px);
   display: flex;
   flex-direction: column;
@@ -236,8 +247,8 @@ canvas#simCanvas {
 .spinner {
   width: 48px;
   height: 48px;
-  border: 4px solid rgba(56, 189, 248, 0.2);
-  border-top-color: var(--accent-cyan);
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--accent-gray-light);
   border-radius: 50%;
   animation: spin 1s infinite linear;
 }
@@ -249,7 +260,7 @@ canvas#simCanvas {
 .loading-text {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--accent-cyan);
+  color: var(--accent-gray-light);
 }
 
 .loading-subtext {
@@ -290,6 +301,7 @@ canvas#simCanvas {
 .btn-primary {
   background: var(--primary);
   color: #ffffff;
+  border-color: #71717a;
 }
 
 .btn-primary:hover {
@@ -304,6 +316,7 @@ canvas#simCanvas {
 
 .btn-secondary:hover {
   background: var(--bg-card-hover);
+  border-color: #52525b;
 }
 
 .slider-group {
@@ -316,7 +329,7 @@ canvas#simCanvas {
 }
 
 .slider-group input[type="range"] {
-  accent-color: var(--accent-cyan);
+  accent-color: var(--accent-gray-light);
   cursor: pointer;
 }
 
@@ -395,12 +408,12 @@ canvas#simCanvas {
 }
 
 .app-footer a {
-  color: var(--accent-cyan);
-  text-decoration: none;
+  color: var(--accent-gray-light);
+  text-decoration: underline;
 }
 
 .app-footer a:hover {
-  text-decoration: underline;
+  color: #ffffff;
 }
 
 @media (max-width: 768px) {
