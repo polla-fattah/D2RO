@@ -1,227 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SW-DGO — Socially-Weighted Distributed Graph Optimization</title>
-  <meta name="description" content="Multi-agent route planning for autonomous service fleets in crowded, human-shared indoor space. Browser simulator, open datasets and full source.">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="landing.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SW-DGO — Socially-Weighted Distributed Graph Optimization</title>
+<meta name="description" content="Multi-agent route planning for autonomous service fleets in crowded, human-shared indoor space. Browser simulator, open datasets, full source.">
+<link rel="stylesheet" href="landing.css">
 </head>
-<body class="landing">
+<body>
 
-<header class="lp-hero">
-  <div class="lp-wrap">
-    <div class="lp-eyebrow">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-      </svg>
-      <span>SW-DGO</span>
-    </div>
+<h1>Socially-Weighted Distributed Graph Optimization (SW-DGO)</h1>
 
-    <h1>Socially-Weighted<br>Distributed Graph Optimization</h1>
-    <p class="lp-lede">
-      Multi-agent route planning for autonomous service fleets — shopping carts,
-      hospital pushchairs, airport trolleys — moving through space full of people
-      who are under no obligation to get out of the way.
-    </p>
+<p class="sub">
+Multi-agent route planning for autonomous service fleets — shopping carts,
+hospital pushchairs, airport trolleys — in space shared with people who are under
+no obligation to get out of the way.
+</p>
 
-    <div class="lp-cta-row">
-      <a class="lp-cta lp-cta-primary" href="simulator.html">
-        Launch the simulator
-        <span class="lp-cta-sub">runs the real Python planner in your browser</span>
-      </a>
-      <a class="lp-cta lp-cta-ghost" href="https://github.com/polla-fattah/SW-DGO">
-        Source on GitHub
-        <span class="lp-cta-sub">MIT · datasets CC BY 4.0</span>
-      </a>
-    </div>
-  </div>
-</header>
+<p class="repo">
+<a href="https://github.com/polla-fattah/SW-DGO">github.com/polla-fattah/SW-DGO</a>
+&nbsp;&mdash;&nbsp; source, datasets and tests
+</p>
 
-<main class="lp-wrap">
+<p class="meta">
+Code under <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE">MIT</a>,
+datasets under <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE-DATA">CC BY 4.0</a>.
+</p>
 
-  <!-- ------------------------------------------------------------------ -->
-  <section class="lp-section">
-    <h2>The problem</h2>
-    <div class="lp-two-col">
-      <div class="lp-panel">
-        <h3>Pedestrians are not obstacles</h3>
-        <p>
-          A shortest-path planner will drive straight through a browsing shopper's
-          personal space, because nothing in its objective says not to. Reactive
-          avoidance only helps once someone is already close — by then the
-          intrusion has happened.
-        </p>
-      </div>
-      <div class="lp-panel">
-        <h3>Symmetric conflicts have no local fix</h3>
-        <p>
-          Two carts entering the same single-file aisle from opposite ends is not a
-          collision-avoidance problem. It is a coordination problem, and a purely
-          local controller can only oscillate.
-        </p>
-      </div>
-    </div>
-  </section>
+<hr>
 
-  <!-- ------------------------------------------------------------------ -->
-  <section class="lp-section">
-    <h2>The formulation</h2>
-    <p class="lp-note">
-      Each agent minimises four weighted soft terms over its own directed cost
-      graph, subject to one hard feasibility constraint, solved by
-      <strong>D* Lite</strong> incremental repair.
-    </p>
-<pre class="lp-code"><code>minimise  C(u,v,t) = w_D · D(u,v)         <span class="c">// Euclidean distance</span>
-                   + w_M · W_mesh(u,v,t)   <span class="c">// V2V anticipatory congestion</span>
-                   + w_H · H_prox(v,t)     <span class="c">// human proxemics</span>
-                   + w_S · S_trolley(v,t)  <span class="c">// clearance envelope</span>
+<h2>Contents</h2>
 
-subject to  (u,v) ∉ E_reserved(t)          <span class="c">// corridor reservation</span></code></pre>
-    <p class="lp-note lp-muted">
-      Reservation is a <em>constraint</em>, not a fifth weight: a reserved edge is
-      unavailable at any coefficient and an unreserved one contributes zero, so a
-      weight on it would have no operative magnitude in any reachable state.
-    </p>
-  </section>
+<dl>
+  <dt><a href="simulator.html">Interactive simulator</a></dt>
+  <dd>Three environments with live ablation toggles. Runs the actual Python
+      planner compiled to WebAssembly, not a re-implementation.</dd>
 
-  <!-- ------------------------------------------------------------------ -->
-  <section class="lp-section">
-    <h2>Explore the project</h2>
-    <div class="lp-grid">
+  <dt><a href="https://github.com/polla-fattah/SW-DGO/tree/main/d2ro">Python package (<code>d2ro/</code>)</a></dt>
+  <dd>D* Lite replanner, directed cost graph, proxemics field, V2V mesh,
+      reservation protocol, four baselines, three environments.</dd>
 
-      <a class="lp-card" href="simulator.html">
-        <h3>Interactive simulator</h3>
-        <p>
-          Three environments, live ablation toggles, real-time metrics. Executes the
-          actual planner compiled to WebAssembly via Pyodide — not a JavaScript
-          re-implementation.
-        </p>
-        <span class="lp-card-go">Launch →</span>
-      </a>
+  <dt><a href="https://github.com/polla-fattah/SW-DGO/tree/main/experiments/data">Experiment data</a></dt>
+  <dd>Raw CSVs from 4,650 trials across eleven experiments. Each file carries a
+      fingerprint of the code that produced it.</dd>
 
-      <a class="lp-card" href="https://github.com/polla-fattah/SW-DGO/tree/main/d2ro">
-        <h3>Python package</h3>
-        <p>
-          The planner itself: D* Lite, the cost graph, proxemics field, V2V mesh,
-          reservation protocol, plus four baselines and three environments.
-        </p>
-        <span class="lp-card-go">Browse <code>d2ro/</code> →</span>
-      </a>
+  <dt><a href="https://github.com/polla-fattah/SW-DGO/tree/main/analysis/scripts">Analysis pipeline</a></dt>
+  <dd>Turns the raw CSVs into every reported statistic. Refuses to report data
+      whose source code has since changed.</dd>
 
-      <a class="lp-card" href="https://github.com/polla-fattah/SW-DGO/tree/main/experiments/data">
-        <h3>Experiment data</h3>
-        <p>
-          Raw CSVs from 4,650 trials across eleven experiments. Every file carries a
-          fingerprint of the code that produced it, so results can never silently
-          drift from their source.
-        </p>
-        <span class="lp-card-go">Open datasets →</span>
-      </a>
+  <dt><a href="https://github.com/polla-fattah/SW-DGO/tree/main/d2ro/tests">Test suite</a></dt>
+  <dd>67 tests: replanner optimality against Dijkstra, heuristic admissibility,
+      kinematics, metric semantics, provenance.</dd>
 
-      <a class="lp-card" href="https://github.com/polla-fattah/SW-DGO/tree/main/analysis/scripts">
-        <h3>Analysis pipeline</h3>
-        <p>
-          One script turns the raw CSVs into every reported statistic: paired tests,
-          Holm correction, bootstrap intervals. It refuses to report data whose code
-          has changed.
-        </p>
-        <span class="lp-card-go">Read the pipeline →</span>
-      </a>
+  <dt><a href="https://github.com/polla-fattah/SW-DGO#readme">README</a></dt>
+  <dd>Repository layout, reproduction commands, limitations, future work.</dd>
+</dl>
 
-      <a class="lp-card" href="https://github.com/polla-fattah/SW-DGO/tree/main/d2ro/tests">
-        <h3>Test suite</h3>
-        <p>
-          67 tests: replanner optimality against Dijkstra, heuristic admissibility,
-          kinematics, metric semantics, and the provenance fingerprint itself.
-        </p>
-        <span class="lp-card-go">See tests →</span>
-      </a>
+<hr>
 
-      <a class="lp-card" href="https://github.com/polla-fattah/SW-DGO#readme">
-        <h3>Full documentation</h3>
-        <p>
-          Repository layout, reproduction commands, how provenance is enforced, the
-          complete list of limitations, and the future-work agenda.
-        </p>
-        <span class="lp-card-go">Read the README →</span>
-      </a>
+<h2>Problem</h2>
 
-    </div>
-  </section>
+<p>
+Classical planners fail here in two specific ways. A shortest-path planner drives
+through a browsing shopper's personal space because nothing in its objective says
+not to, and reactive avoidance only engages once someone is already close — by
+which point the intrusion has happened. Separately, two carts entering one
+single-file aisle from opposite ends is not a collision-avoidance problem but a
+coordination problem, and a purely local controller can only oscillate.
+</p>
 
-  <!-- ------------------------------------------------------------------ -->
-  <section class="lp-section">
-    <h2>What the evidence shows</h2>
+<h2>Formulation</h2>
 
-    <div class="lp-stats">
-      <div class="lp-stat">
-        <span class="lp-stat-n">0.00</span>
-        <span class="lp-stat-l">person-seconds of intimate-space exposure (median)</span>
-      </div>
-      <div class="lp-stat">
-        <span class="lp-stat-n">6.40</span>
-        <span class="lp-stat-l">for a matched-controller shortest path</span>
-      </div>
-      <div class="lp-stat">
-        <span class="lp-stat-n">4,650</span>
-        <span class="lp-stat-l">kinodynamic trials, eleven experiments</span>
-      </div>
-    </div>
+<p>
+Each agent minimises four weighted soft terms over its own directed cost graph,
+subject to one hard feasibility constraint, solved by D* Lite incremental repair:
+</p>
 
-    <div class="lp-two-col">
-      <div class="lp-panel lp-panel-good">
-        <h3>Social routing does the work</h3>
-        <p>
-          A 2×2 factorial with the mesh and reservation disabled in every cell
-          isolates the proxemic cost term: enabling it alone cuts exposure by
-          <strong>6.40 person-seconds</strong> (95% CI [−6.48, −6.31],
-          <em>p</em> = 1.5 × 10⁻⁹), costing 19.03 s of travel time. Reactive
-          yielding adds no detectable reduction on top of it.
-        </p>
-      </div>
-      <div class="lp-panel lp-panel-warn">
-        <h3>The distributed layer is conditional</h3>
-        <p>
-          An ordinary human-aware planner with no mesh and no reservation matches
-          that compliance <em>exactly</em> (<em>p</em> = 1) while finishing ~8 s
-          sooner. The distributed machinery earns its cost only under the topologies
-          it was designed for. We report this rather than omit it.
-        </p>
-      </div>
-    </div>
-  </section>
+<pre>minimise  C(u,v,t) = w_D · D(u,v)          Euclidean distance
+                   + w_M · W_mesh(u,v,t)    V2V anticipatory congestion
+                   + w_H · H_prox(v,t)      human proxemics
+                   + w_S · S_trolley(v,t)   clearance envelope
 
-  <!-- ------------------------------------------------------------------ -->
-  <section class="lp-section">
-    <h2>Honest limits</h2>
-    <ul class="lp-limits">
-      <li>Simulated pedestrians do <strong>not react</strong> to the robots, so reported exposure is an upper bound on a real crowd.</li>
-      <li>Weights are <strong>hand-selected</strong>; the sensitivity sweep shows a plateau but claims no optimality.</li>
-      <li>Sensing is <strong>range-limited</strong>, without ray-casting against shelf occlusion.</li>
-      <li>Fleet scaling is bounded — success falls to 78% at twelve carts in 36 × 24 m.</li>
-      <li>ORCA and local MAPF are <strong>our own implementations</strong>; no conclusion depends on them.</li>
-      <li>Everything is <strong>simulation</strong>. No physical fleet was deployed.</li>
-      <li>We report <em>when</em> the distributed layer helps, not <em>how often</em> those conditions arise.</li>
-    </ul>
-  </section>
+subject to  (u,v) ∉ E_reserved(t)           corridor reservation</pre>
 
-</main>
+<p>
+Reservation is a constraint, not a fifth weight: a reserved edge is unavailable at
+any coefficient and an unreserved one contributes zero, so a weight on it would
+have no operative magnitude in any reachable state.
+</p>
 
-<footer class="lp-footer">
-  <div class="lp-wrap">
-    <p>
-      Code under <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE">MIT</a> ·
-      datasets under <a href="https://github.com/polla-fattah/SW-DGO/blob/main/LICENSE-DATA">CC BY 4.0</a>
-    </p>
-    <p class="lp-muted">
-      A manuscript describing this work is under peer review. Citation details will be
-      added on acceptance.
-    </p>
-  </div>
-</footer>
+<h2>Results</h2>
+
+<table>
+<thead>
+<tr><th>Planner</th><th>Success</th><th>Makespan (s)</th><th>Exposure (person-s, median)</th></tr>
+</thead>
+<tbody>
+<tr><td>SW-DGO</td><td>99.0%</td><td>47.18 ± 13.40</td><td>0.00</td></tr>
+<tr><td>Local Social D* Lite</td><td>100.0%</td><td>39.06 ± 15.12</td><td>0.00</td></tr>
+<tr><td>Static A* (matched controller)</td><td>100.0%</td><td>19.20</td><td>6.40</td></tr>
+<tr><td>Static A*</td><td>100.0%</td><td>18.00</td><td>6.40</td></tr>
+<tr><td>Artificial potential fields</td><td>100.0%</td><td>34.54</td><td>10.18</td></tr>
+</tbody>
+</table>
+
+<p>
+A 2&times;2 factorial with the mesh and reservation disabled in every cell isolates
+the proxemic cost term: enabling it alone reduces exposure by 6.40 person-seconds
+(95% CI [&minus;6.48, &minus;6.31], <i>p</i> = 1.5 &times; 10<sup>&minus;9</sup>),
+at a cost of 19.03 s of travel time. Reactive yielding adds no statistically
+detectable reduction on top of it (<i>p</i> = 0.59).
+</p>
+
+<p>
+The distributed layer is conditional. An ordinary human-aware planner with no mesh
+and no reservation matches that social compliance exactly (<i>p</i> = 1) while
+finishing about 8 s sooner. The mesh and reservation earn their cost only under the
+topologies they were designed for — a blockage outside a follower's sensing range,
+and a single-file corridor entered from both ends.
+</p>
+
+<h2>Limitations</h2>
+
+<ul>
+<li>Simulated pedestrians do not react to the robots; reported exposure is an upper bound on a real crowd.</li>
+<li>Weights are hand-selected. The sensitivity sweep shows a plateau but claims no optimality, and is one-at-a-time.</li>
+<li>Sensing is range-limited, without ray-casting against shelf occlusion.</li>
+<li>Fleet scaling is bounded: success falls to 78% at twelve carts in 36 &times; 24 m.</li>
+<li>ORCA and local MAPF are our own implementations and complete 0% of missions; no conclusion depends on them.</li>
+<li>All results are simulation. No physical fleet was deployed.</li>
+<li>We report when the distributed layer helps, not how often those conditions arise.</li>
+</ul>
+
+<hr>
+
+<p class="meta">
+A manuscript describing this work is under peer review. Citation details will be
+added on acceptance.
+</p>
 
 </body>
 </html>

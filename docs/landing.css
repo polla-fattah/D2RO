@@ -1,262 +1,131 @@
 /* ---------------------------------------------------------------------------
-   Landing page for SW-DGO.
+   SW-DGO project page.
 
-   Deliberately monochrome and flat. An earlier version used the simulator's
-   accent palette, gradients and hover lifts; that reads as a product launch
-   rather than a research artefact, and colour that carries no information is
-   just decoration competing with the text. Everything here is greyscale, and
-   the only emphasis available is weight, size and rule placement -- which is
-   roughly the typographic vocabulary of a paper.
+   A document, not a landing page. Earlier versions had a hero block, call-to-
+   action buttons and stat tiles; greying those out did not stop them being
+   product-page furniture. This is plain: one column, black on white, ordinary
+   HTML elements carrying their own semantics, and no class names doing visual
+   work that a <dl> or a <table> already does.
 
-   It defines its own tokens rather than inheriting the simulator's, because the
-   simulator's colours are semantic (each accent means something on a canvas)
-   and reusing them here would imply meaning that does not exist.
+   It no longer loads styles.css. That file is the simulator's application
+   shell -- full-height flex, dark surfaces, semantic accent colours -- and
+   every one of those had to be fought here. The simulator keeps it; this page
+   has no use for it.
    --------------------------------------------------------------------------- */
 
-:root {
-  --lp-bg:        #0f0f0f;
-  --lp-surface:   #171717;
-  --lp-panel:     #1b1b1b;
-  --lp-line:      #333333;
-  --lp-line-soft: #262626;
-  --lp-ink:       #f4f4f4;
-  --lp-ink-2:     #cacaca;
-  --lp-ink-3:     #949494;
-  --lp-ink-4:     #737373;
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
-body.landing {
-  display: block;
-  height: auto;
-  min-height: 100vh;
-  overflow: auto;
-  background: var(--lp-bg);
-  color: var(--lp-ink-2);
-  font-family: var(--font-family);
-  font-size: 16px;
+body {
+  max-width: 46rem;
+  margin: 3rem auto 5rem;
+  padding: 0 1.5rem;
+  background: #fff;
+  color: #1a1a1a;
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+}
+
+h1 {
+  margin: 0 0 0.6rem;
+  font-size: 1.55rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  margin: 2.4rem 0 0.7rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+p { margin: 0 0 1rem; }
+
+.sub {
+  color: #333;
+}
+
+/* The repository link is the main exit from this page; give it its own line. */
+.repo {
+  margin: 0 0 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono",
+               Menlo, monospace;
+  font-size: 0.92rem;
+}
+.repo a { font-weight: 600; }
+
+.meta {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+a         { color: #1a1a1a; text-decoration: underline; text-underline-offset: 2px; }
+a:hover   { color: #000; }
+.meta a   { color: #444; }
+
+hr {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Contents: a definition list is exactly this shape, so no cards required. */
+dl { margin: 0; }
+dt { margin: 1.1rem 0 0.15rem; font-weight: 600; }
+dd { margin: 0 0 0 0; color: #444; font-size: 0.95rem; }
+
+ul { margin: 0 0 1rem; padding-left: 1.2rem; }
+li { margin-bottom: 0.4rem; color: #333; }
+
+pre {
+  margin: 0 0 1rem;
+  padding: 1rem 1.1rem;
+  background: #f6f6f6;
+  border: 1px solid #e0e0e0;
+  border-radius: 2px;
+  overflow-x: auto;                  /* long lines scroll; the page never does */
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono",
+               Menlo, monospace;
+  font-size: 0.83rem;
   line-height: 1.7;
-  -webkit-font-smoothing: antialiased;
+  color: #1a1a1a;
 }
 
-.lp-wrap {
-  max-width: 860px;          /* a measure that stays readable, not a wide grid */
-  margin: 0 auto;
-  padding: 0 28px;
+code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono",
+               Menlo, monospace;
+  font-size: 0.9em;
 }
 
-/* ----------------------------------------------------------------- head -- */
-.lp-hero {
-  padding: 64px 0 40px;
-  border-bottom: 1px solid var(--lp-line);
-  background: var(--lp-surface);
+table {
+  width: 100%;
+  margin: 0 0 1rem;
+  border-collapse: collapse;
+  font-size: 0.92rem;
 }
-
-.lp-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--lp-ink-4);
-  font-family: var(--font-mono);
-  font-size: 0.76rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+th, td {
+  padding: 0.45rem 0.6rem 0.45rem 0;
+  text-align: left;
+  border-bottom: 1px solid #e8e8e8;
 }
-
-.lp-hero h1 {
-  margin: 16px 0 0;
-  font-size: clamp(1.7rem, 3.6vw, 2.4rem);
-  line-height: 1.2;
+th {
+  border-bottom: 1px solid #bbb;
   font-weight: 600;
-  letter-spacing: -0.015em;
-  color: var(--lp-ink);
 }
+td + td, th + th { text-align: right; }
 
-.lp-lede {
-  margin: 16px 0 0;
-  max-width: 64ch;
-  font-size: 1.02rem;
-  color: var(--lp-ink-3);
-}
-
-.lp-cta-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 28px;
-}
-
-.lp-cta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 11px 20px;
-  border: 1px solid var(--lp-line);
-  border-radius: 3px;
-  text-decoration: none;
-  font-size: 0.95rem;
-  font-weight: 550;
-  color: var(--lp-ink);
-  background: transparent;
-  transition: background 0.12s ease, border-color 0.12s ease;
-}
-.lp-cta:hover { background: var(--lp-panel); border-color: var(--lp-ink-4); }
-
-.lp-cta-primary { background: var(--lp-panel); border-color: var(--lp-ink-4); }
-.lp-cta-primary:hover { background: #242424; }
-
-.lp-cta-sub {
-  font-size: 0.78rem;
-  font-weight: 400;
-  color: var(--lp-ink-4);
-}
-
-/* -------------------------------------------------------------- sections -- */
-.lp-section { padding: 44px 0 0; }
-
-.lp-section h2 {
-  margin: 0 0 6px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--lp-line-soft);
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--lp-ink-4);
-}
-
-.lp-note  { margin: 16px 0; max-width: 70ch; }
-.lp-muted { color: var(--lp-ink-4); font-size: 0.94rem; }
-
-.lp-two-col {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 0 32px;
-  margin-top: 18px;
-}
-
-.lp-panel { padding: 0 0 18px; }
-.lp-panel h3 {
-  margin: 0 0 6px;
-  font-size: 0.98rem;
-  font-weight: 600;
-  color: var(--lp-ink);
-}
-.lp-panel p { margin: 0; color: var(--lp-ink-3); font-size: 0.96rem; }
-
-/* Retained as hooks; in monochrome the distinction is carried by the prose. */
-.lp-panel-good, .lp-panel-warn { }
-
-/* ------------------------------------------------------------------ code -- */
-.lp-code {
-  margin: 16px 0;
-  padding: 18px 20px;
-  border: 1px solid var(--lp-line-soft);
-  border-radius: 3px;
-  background: var(--lp-surface);
-  overflow-x: auto;                 /* long lines scroll; the page never does */
-  font-family: var(--font-mono);
-  font-size: 0.84rem;
-  line-height: 1.75;
-  color: var(--lp-ink-2);
-}
-.lp-code .c { color: var(--lp-ink-4); }
-
-/* ------------------------------------------------------------------ list -- */
-.lp-grid {
-  margin-top: 10px;
-  border-top: 1px solid var(--lp-line-soft);
-}
-
-.lp-card {
-  display: block;
-  padding: 18px 0;
-  border-bottom: 1px solid var(--lp-line-soft);
-  text-decoration: none;
-  color: inherit;
-}
-.lp-card:hover h3 { text-decoration: underline; }
-.lp-card:hover .lp-card-go { color: var(--lp-ink-2); }
-
-.lp-card-icon { display: none; }     /* decorative only; removed in monochrome */
-
-.lp-card h3 {
-  margin: 0 0 4px;
-  font-size: 0.99rem;
-  font-weight: 600;
-  color: var(--lp-ink);
-}
-.lp-card p {
-  margin: 0 0 6px;
-  max-width: 72ch;
-  font-size: 0.94rem;
-  color: var(--lp-ink-3);
-}
-.lp-card code { font-family: var(--font-mono); font-size: 0.88em; }
-
-.lp-card-go {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--lp-ink-4);
-}
-
-/* ----------------------------------------------------------------- stats -- */
-.lp-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 24px;
-  margin: 20px 0 26px;
-  padding: 18px 0;
-  border-top: 1px solid var(--lp-line-soft);
-  border-bottom: 1px solid var(--lp-line-soft);
-}
-
-.lp-stat-n {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 1.7rem;
-  font-weight: 500;
-  color: var(--lp-ink);
-  font-variant-numeric: tabular-nums;
-}
-.lp-stat-l {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.85rem;
-  color: var(--lp-ink-4);
-}
-
-/* ---------------------------------------------------------------- limits -- */
-.lp-limits {
-  margin: 18px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.lp-limits li {
-  position: relative;
-  padding: 7px 0 7px 22px;
-  font-size: 0.95rem;
-  color: var(--lp-ink-3);
-}
-.lp-limits li::before {
-  content: "—";
-  position: absolute;
-  left: 0;
-  color: var(--lp-ink-4);
-}
-
-/* ---------------------------------------------------------------- footer -- */
-.lp-footer {
-  margin-top: 56px;
-  padding: 24px 0 40px;
-  border-top: 1px solid var(--lp-line);
-  background: var(--lp-surface);
-  font-size: 0.88rem;
-  color: var(--lp-ink-4);
-}
-.lp-footer p { margin: 0 0 5px; }
-.lp-footer a { color: var(--lp-ink-2); }
-
-@media (max-width: 640px) {
-  .lp-hero { padding: 44px 0 32px; }
-  .lp-cta  { width: 100%; }
+@media (prefers-color-scheme: dark) {
+  body      { background: #131313; color: #e4e4e4; }
+  .sub      { color: #cfcfcf; }
+  .meta     { color: #909090; }
+  .meta a   { color: #b4b4b4; }
+  a         { color: #e4e4e4; }
+  a:hover   { color: #fff; }
+  hr        { border-top-color: #303030; }
+  dd, li    { color: #b8b8b8; }
+  pre       { background: #1b1b1b; border-color: #303030; color: #e4e4e4; }
+  th, td    { border-bottom-color: #2a2a2a; }
+  th        { border-bottom-color: #4a4a4a; }
 }
