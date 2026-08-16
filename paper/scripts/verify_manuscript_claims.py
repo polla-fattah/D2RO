@@ -96,6 +96,16 @@ CHECKS = [
     ("factorial interaction lo", -47.99,  YC["interaction_exposure"]["bootstrap"]["ci95_difference"][0], 2),
     ("factorial interaction hi", -37.76,  YC["interaction_exposure"]["bootstrap"]["ci95_difference"][1], 2),
     ("factorial routing cost",    19.03,  YC["routing_effect_yield_off_makespan"]["mean"], 2),
+    # Exposure normalised by mission duration. Total exposure confounds how
+    # intrusive an agent is with how long it stays, and the two disagree in sign
+    # for the yielding effect and the interaction, so both are pinned.
+    ("rate A (prox off/yield off)", 20.11, (Y.get("A_prox_off_yield_off") or {}).get("exposure_rate_per_min", {}).get("mean"), 2),
+    ("rate B (prox off/yield on)",  17.02, (Y.get("B_prox_off_yield_on") or {}).get("exposure_rate_per_min", {}).get("mean"), 2),
+    ("rate C (prox on/yield off)",   0.04, (Y.get("C_prox_on_yield_off") or {}).get("exposure_rate_per_min", {}).get("mean"), 2),
+    ("rate routing effect",        -20.06, YC["routing_effect_yield_off_exposure_rate"]["mean"], 2),
+    ("rate yielding effect",        -3.09, YC["yielding_effect_prox_off_exposure_rate"]["mean"], 2),
+    ("rate interaction",             3.22, YC["interaction_exposure_rate"]["mean"], 2),
+    ("rate interaction p",         0.0018, YC["interaction_exposure_rate"]["p_holm"], 4),
     # --- communication degradation: the tolerance threshold ---------------------
     ("degradation 10% delta",     -0.80,  DL["0.1"]["mean"], 2),
     ("degradation 10% p",          0.16,  DL["0.1"]["p_holm"], 2),

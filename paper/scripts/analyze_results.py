@@ -64,6 +64,10 @@ ALPHA = 0.05
 BOOTSTRAP_RESAMPLES = 10000
 BOOTSTRAP_SEED = 20260815
 
+# The simulation control step. Exposure counters increment once per human per tick,
+# so a tick count multiplied by this is person-seconds exactly.
+CONTROL_DT_S = 0.05
+
 # Expected row counts; a dataset that does not match is treated as incomplete.
 EXPECTED_ROWS = {
     "benchmark_comparison.csv": 700,   # 7 planners x 100 paired trials
@@ -399,6 +403,14 @@ def analyse_grouped(fname: str, group_key: str,
         for label, col in metrics.items():
             if col in rs[0]:
                 entry[label] = describe([fnum(r, col) for r in rs])
+        # Person-ticks are an artefact of the integration step: the counter
+        # increments once per human per tick, so multiplying by dt yields person-
+        # seconds exactly. Exporting the converted series keeps every exposure
+        # figure and table in the one unit the manuscript reasons about, rather
+        # than leaving a tick count for a caption to explain away.
+        if "intimate_exposure_ticks" in rs[0]:
+            entry["exposure_person_s"] = describe(
+                [fnum(r, "intimate_exposure_ticks") * CONTROL_DT_S for r in rs])
         if "success" in rs[0]:
             s = [int(r["success"]) for r in rs]
             entry["success_rate"] = 100.0 * sum(s) / len(s)
@@ -512,6 +524,24 @@ def analyse_factorial() -> Dict[str, Any]:
             return fnum(row, "intimate_exposure_person_s")
         return fnum(row, "intimate_exposure_person_ticks") * 0.05
 
+    def exposure_rate(row: Dict[str, str]) -> float:
+        """
+        Person-seconds of intimate-space exposure per MINUTE of mission.
+
+        Total exposure confounds two different things: how intrusive the robot is
+        while it is present, and how long it is present. Cells differ enormously on
+        the second -- a cell whose missions mostly time out spends nine times longer
+        in the environment than one that completes, and accumulates person-seconds
+        for the whole of it. Reading the total difference as a per-moment social
+        effect would therefore overstate it.
+
+        Normalising by mission duration separates the two. The total remains the
+        operationally meaningful quantity (a pedestrian crowded for 50 person-seconds
+        does not care that the robot was also failing), so both are reported.
+        """
+        m = fnum(row, "makespan_s")
+        return exposure(row) / m * 60.0 if m and m > 0 else 0.0
+
     groups: Dict[str, Dict[str, Any]] = {}
     for c in cells:
         cell_rows = list(by_cell.get(c, {}).values())
@@ -528,6 +558,7 @@ def analyse_factorial() -> Dict[str, Any]:
             "success_ci95": [lo * 100.0, hi * 100.0],
             "makespan": describe([fnum(r, "makespan_s") for r in cell_rows]),
             "exposure_person_s": describe([exposure(r) for r in cell_rows]),
+            "exposure_rate_per_min": describe([exposure_rate(r) for r in cell_rows]),
             "encounters": describe([fnum(r, "intimate_encounters") for r in cell_rows]),
         }
     out["groups"] = groups
@@ -560,6 +591,7 @@ def analyse_factorial() -> Dict[str, Any]:
 
     contrasts: Dict[str, Any] = {}
     for outcome, getter in (("exposure", exposure),
+                            ("exposure_rate", exposure_rate),
                             ("makespan", lambda r: fnum(r, "makespan_s"))):
         a, b, c, d = (vec(x, getter) for x in (A, B, C, D))
         defs = {

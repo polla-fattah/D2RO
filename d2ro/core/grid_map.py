@@ -21,8 +21,11 @@ class SupermarketGrid:
     """
     Supermarket 2D Grid Representation for SW-DGO Pathfinding.
     
-    Evaluates dynamic edge traversal costs:
-    C(u, v, t) = w_D * D(u, v) + w_M * W_mesh(u, v, t) + w_H * H_prox(v, t) + w_R * R_lock(u, v, t) + w_S * S_trolley(v, t)
+    Evaluates dynamic edge traversal costs over four weighted soft terms:
+    C(u, v, t) = w_D * D(u, v) + w_M * W_mesh(u, v, t) + w_H * H_prox(v, t)
+               + w_S * S_trolley(v, t)
+    with corridor reservation applied as a hard feasibility constraint, not a
+    weighted term.
     """
 
     def __init__(self, width: int, height: int, default_obstacle_grid: Optional[List[List[int]]] = None,

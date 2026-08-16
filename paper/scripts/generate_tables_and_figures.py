@@ -730,19 +730,23 @@ def table_factorial(res):
         f"is active in every cell, so the only quantities that vary are the two named "
         f"factors. Exposure is person-seconds inside the intimate boundary, reported "
         f"as median [IQR] because it is zero-inflated once $H_{{\\text{{prox}}}}$ is "
-        f"active, with mean $\\pm$ SD alongside. The lower block gives the "
-        f"pre-specified paired contrasts: each is tested against zero across the "
-        f"seed-matched trials and Holm-adjusted within its outcome family.",
-        "tab:factorial", "lccccc",
+        f"active, with mean $\\pm$ SD alongside. Because the cells differ greatly in "
+        f"how long a mission lasts, total exposure confounds intrusiveness with "
+        f"time spent in the environment; the final column therefore normalises by "
+        f"mission duration, and the two should be read together.",
+        "tab:factorial", "lcccccc",
         r"\textbf{Configuration} & \textbf{Success (95\% CI)} & "
         r"\textbf{Makespan (s)} & \textbf{Exposure median [IQR]} & "
-        r"\textbf{Exposure mean $\pm$ SD} & \textbf{Encounters} \\",
+        r"\textbf{Exposure mean $\pm$ SD} & \textbf{Encounters} & "
+        r"\textbf{Exposure rate (person-s/min)} \\",
         wide=True, resize=True)
     for k in order:
         e = g[k]
+        rate = e.get("exposure_rate_per_min")
         L.append(f"{FACTORIAL_LABEL[k]} & {_pct(e)} & {_f(e['makespan'])} & "
                  f"{_med(e['exposure_person_s'], 2)} & {_f(e['exposure_person_s'])} & "
-                 f"{_med(e['encounters'], 1)} \\\\")
+                 f"{_med(e['encounters'], 1)} & "
+                 f"{_f(rate) if rate else '--'} \\\\")
 
     L += _footer(wide=True, resize=True)
     return _emit("table_factorial", L)
@@ -781,35 +785,46 @@ def table_factorial_contrasts(res: Dict[str, Any]) -> bool:
     succ = res.get("success_contrasts", {})
     n = con["interaction_exposure"].get("n", 0)
 
-    def mediqr(d: Dict[str, Any]) -> str:
+    def mediqr(d: Dict[str, Any], p: int = 2) -> str:
         q1, q3 = d.get("iqr", [0.0, 0.0])
-        return f"${d.get('median', 0.0):.2f}$ [${q1:.2f}$, ${q3:.2f}$]"
+        return f"${d.get('median', 0.0):.{p}f}$ [${q1:.{p}f}$, ${q3:.{p}f}$]"
 
     L = _header(
         f"Pre-specified paired contrasts for the $2\\times2$ factorial "
-        f"($N={n}$ seed-matched trials per contrast). Exposure is in person-seconds; "
-        f"a negative effect is a reduction. Each contrast is tested against zero "
-        f"across matched trials --- by paired $t$-test where the differences are "
-        f"normal by Shapiro--Wilk and Wilcoxon signed-rank otherwise, with the test "
-        f"used named in the table --- and $p$ values are Holm-adjusted within the "
-        f"outcome family. Intervals are percentile bootstrap 95\\% CIs on the mean "
-        f"difference. Binary success is compared by exact McNemar on the same "
-        f"matched trials.",
+        f"($N={n}$ seed-matched trials per contrast). A negative effect is a "
+        f"reduction. Each contrast is tested against zero across matched trials --- "
+        f"by paired $t$-test where the differences are normal by Shapiro--Wilk and "
+        f"Wilcoxon signed-rank otherwise, with the test used named in the table --- "
+        f"and $p$ values are Holm-adjusted within the outcome family. Intervals are "
+        f"percentile bootstrap 95\\% CIs on the mean difference. Binary success is "
+        f"compared by exact McNemar on the same matched trials. The upper block "
+        f"gives total exposure in person-seconds; the lower block gives the same "
+        f"contrasts on exposure per minute of mission, which separates how intrusive "
+        f"an agent is from how long it remains in the environment. The two blocks "
+        f"disagree in sign for the yielding effect and the interaction, and that "
+        f"disagreement is the point: see Section~\\ref{{sec:factorial}}.",
         "tab:factorial_contrasts", "llccccc",
         r"\textbf{Contrast} & \textbf{Cells} & \textbf{Median [IQR]} & "
         r"\textbf{Mean (95\% CI)} & \textbf{Test} & \textbf{$p_{\text{Holm}}$} & "
         r"\textbf{Success $p_{\text{Holm}}$} \\",
         wide=True, resize=True)
-    for key, lab, cells in FACTORIAL_CONTRASTS:
-        c = con.get(f"{key}_exposure")
-        if not c:
-            continue
-        lo, hi = c["bootstrap"]["ci95_difference"]
-        s = succ.get(f"{key}_success")
-        sp = _p(s.get("p_holm")) if s else "--"
-        L.append(f"{lab} & {cells} & {mediqr(c)} & "
-                 f"${c['mean']:.2f}$ (${lo:.2f}$, ${hi:.2f}$) & "
-                 f"{c.get('test', '--')} & {_p(c.get('p_holm'))} & {sp} \\\\")
+
+    def block(title: str, suffix: str, places: int, with_success: bool) -> None:
+        L.append(f"\\multicolumn{{7}}{{l}}{{\\emph{{{title}}}}} \\\\")
+        for key, lab, cells in FACTORIAL_CONTRASTS:
+            c = con.get(f"{key}_{suffix}")
+            if not c:
+                continue
+            lo, hi = c["bootstrap"]["ci95_difference"]
+            s = succ.get(f"{key}_success")
+            sp = (_p(s.get("p_holm")) if s else "--") if with_success else "--"
+            L.append(f"{lab} & {cells} & {mediqr(c, places)} & "
+                     f"${c['mean']:.{places}f}$ (${lo:.{places}f}$, ${hi:.{places}f}$) & "
+                     f"{c.get('test', '--')} & {_p(c.get('p_holm'))} & {sp} \\\\")
+
+    block("Total exposure (person-s)", "exposure", 2, True)
+    L.append("\\midrule")
+    block("Exposure rate (person-s per minute of mission)", "exposure_rate", 2, False)
     L += _footer(wide=True, resize=True)
     return _emit("table_factorial_contrasts", L)
 
@@ -829,7 +844,7 @@ def figure_weight_sensitivity(res):
     mults = [0.5, 0.75, 1.0, 1.25, 1.5]
     panels = [("success_rate", "Mission success (%)", "(a) Success"),
               ("makespan", "Makespan (s)", "(b) Makespan"),
-              ("intimate_exposure", "Intimate exposure (ticks)", "(c) Social exposure")]
+              ("exposure_person_s", "Intimate exposure (person-s)", "(c) Social exposure")]
 
     fig, axes = plt.subplots(1, 3, figsize=(10.4, 3.2))
     for ax, (key, ylabel, title) in zip(axes, panels):

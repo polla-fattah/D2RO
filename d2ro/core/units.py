@@ -78,7 +78,7 @@ PROXEMIC_SIGMA_REAR_PX: float = PROXEMIC_SIGMA_REAR_M * M_TO_PX
 #
 # Every penalty term is expressed in the same physical unit as the distance term:
 # metres of equivalent detour. This is what makes the weight vector
-# [w_D, w_M, w_H, w_R, w_S] genuinely dimensionless, and it is what the phrase
+# [w_D, w_M, w_H, w_S] genuinely dimensionless, and it is what the phrase
 # "dimensionally normalised weights" in the manuscript must actually mean.
 #
 # Before normalisation the terms were incommensurable by two orders of magnitude

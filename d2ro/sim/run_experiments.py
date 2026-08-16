@@ -1187,7 +1187,7 @@ class ExperimentRunner:
 
     def run_weight_sensitivity(self, num_trials: int = 30) -> str:
         r"""
-        Perturbs each of the five cost weights in turn and measures the effect.
+        Perturbs each of the four soft cost weights in turn and measures the effect.
 
         The method is explicitly a weighted multi-component objective, so robustness
         to the weights is not peripheral -- if the reported operating point sits on a
@@ -1195,11 +1195,19 @@ class ExperimentRunner:
 
         Design
         ------
-        One weight is scaled at a time by x{0.5, 0.75, 1.25, 1.5} while the other four
+        One weight is scaled at a time by x{0.5, 0.75, 1.25, 1.5} while the other three
         are held at nominal, plus a single nominal run that serves as the x1.0 point of
-        all five curves. That is 5*4 + 1 = 21 configurations, rather than 25, because
-        re-running the identical nominal configuration five times on identical seeds
-        would produce five identical result sets.
+        all four curves. That is 4*4 + 1 = 17 configurations, rather than 20, because
+        re-running the identical nominal configuration four times on identical seeds
+        would produce four identical result sets.
+
+        Only w_D, w_M, w_H and w_S are swept. The corridor reservation is a hard
+        feasibility constraint rather than a weighted term: a reserved edge is
+        unavailable and an unreserved one contributes zero, so a coefficient on it has
+        no operative magnitude in any reachable state and there is nothing to perturb.
+        It is evaluated by the ON/OFF mechanism experiment instead. An earlier version
+        of this docstring described five weights and 21 configurations, which was the
+        formulation this study went on to correct.
 
         Seeds
         -----

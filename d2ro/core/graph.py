@@ -1,7 +1,15 @@
 """
 Topological Graph Representation for SW-DGO Framework.
-Models nodes (aisle junctions/waypoints) and directed edges with calibrated 5-component weighted costs:
-C(u, v, t) = w_D * D(u, v) + w_M * W_mesh(u, v, t) + w_H * H_prox(v, t) + w_R * R_lock(u, v, t) + w_S * S_trolley(v, t)
+Models nodes (aisle junctions/waypoints) and directed edges carrying four weighted
+soft cost terms minimised subject to one hard reservation constraint:
+
+    C(u, v, t) = w_D * D(u, v) + w_M * W_mesh(u, v, t)
+               + w_H * H_prox(v, t) + w_S * S_trolley(v, t)
+    subject to (u, v) not reserved by a preceding peer
+
+Reservation is a feasibility constraint rather than a weighted term: a reserved edge
+is unavailable at any coefficient, and an unreserved one contributes zero. See the
+note on Edge.weight_r for why the field is retained as a documented no-op.
 """
 
 from __future__ import annotations
@@ -37,8 +45,10 @@ class Node:
 @dataclass
 class Edge:
     """
-    Directed edge between two nodes with SW-DGO 5-component weighted traversal cost:
-    C(u, v, t) = w_D * D(u, v) + w_M * W_mesh(u, v, t) + w_H * H_prox(v, t) + w_R * R_lock(u, v) + w_S * S_trolley
+    Directed edge carrying the four weighted soft cost terms of SW-DGO:
+    C(u, v, t) = w_D * D(u, v) + w_M * W_mesh(u, v, t) + w_H * H_prox(v, t)
+               + w_S * S_trolley
+    A reserved edge is infeasible and returns infinite cost before these apply.
     """
     u: str
     v: str

@@ -209,6 +209,25 @@ def gate_semantic_consistency() -> None:
         (r"line[- ]of[- ]sight",
          "line-of-sight sensing claimed, but no occlusion ray-casting is implemented",
          r"range-limited rather than line-of-sight|rather than line of sight"),
+        # An unrejected null is not an absence of effect. Round-4 review caught the
+        # abstract asserting that yielding "adds nothing" while the body correctly
+        # said the effect was merely undetectable.
+        (r"yielding adds nothing|adds nothing on a social route|"
+         r"contributes nothing on a social route",
+         "a null result stated as an absence of effect", None),
+        # A LaTeX control sequence whose backslash was eaten renders as literal
+        # text. Two distinct forms occur; both are checked. This one is the
+        # backslash simply dropped.
+        (r"(?<!\\)\b(?:textbf|textit|emph|begin|end|item|section)\{",
+         "LaTeX command missing its backslash (renders as literal text)", None),
+        # The other form -- an escape-interpreting edit turning "\t" of \textbf
+        # into a literal TAB, leaving "<TAB>extbf{" -- leaves a different fragment
+        # for every command, so it is caught by its control character instead. See
+        # gate_control_characters.
+        # IEEEtran numbers subsubsections itself; a manual number inside the title
+        # renders as "1) 1. Title".
+        (r"\\subsubsection\{\s*\d+\.\s",
+         "manual number inside an auto-numbered subsubsection title", None),
     ]
 
     violations = []
@@ -228,6 +247,42 @@ def gate_semantic_consistency() -> None:
     check("no superseded terminology in prose or generated artefacts",
           not violations, "; ".join(violations[:6])
           + (f" (+{len(violations) - 6} more)" if len(violations) > 6 else ""))
+
+
+def gate_control_characters() -> None:
+    r"""
+    No literal control characters in the manuscript sources.
+
+    This project has repeatedly corrupted LaTeX by editing it through a tool that
+    interprets backslash escapes: `\textbf` becomes TAB + "extbf", `\newcommand`
+    becomes NEWLINE + "ewcommand", `\begin` becomes BACKSPACE + "egin". Round-4
+    review found two surviving instances rendering as "extbfeffective perception".
+
+    The surviving fragment differs per command, so matching fragments is
+    unreliable. The control character is the invariant: a TAB, form feed,
+    vertical tab, backspace or bell has no legitimate place in this document, and
+    its presence is near-proof that an escape was interpreted somewhere.
+    """
+    targets = [os.path.join(PAPER, "paper.tex")]
+    gen = os.path.join(PAPER, "generated")
+    if os.path.isdir(gen):
+        targets += [os.path.join(gen, f) for f in sorted(os.listdir(gen))
+                    if f.endswith(".tex")]
+
+    FORBIDDEN = {"\t": "TAB", "\x0c": "form feed", "\x0b": "vertical tab",
+                 "\x08": "backspace", "\x07": "bell"}
+    hits = []
+    for path in targets:
+        if not os.path.exists(path):
+            continue
+        rel = os.path.relpath(path, BASE).replace(os.sep, "/")
+        text = io.open(path, encoding="utf-8", errors="ignore", newline="").read()
+        for n, line in enumerate(text.split("\n"), 1):
+            for ch, name in FORBIDDEN.items():
+                if ch in line:
+                    hits.append(f"{rel}:{n} contains a literal {name}")
+    check("no literal control characters in LaTeX sources", not hits,
+          "; ".join(hits[:5]) + (f" (+{len(hits) - 5} more)" if len(hits) > 5 else ""))
 
 
 def gate_aims_consistent() -> None:
@@ -299,6 +354,7 @@ def main() -> int:
     gate_commit_stamp()
     gate_tag_exists()
     gate_semantic_consistency()
+    gate_control_characters()
     gate_aims_consistent()
     gate_no_invented_p_values()
     gate_references(args.no_net)
