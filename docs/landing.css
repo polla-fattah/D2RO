@@ -1,131 +1,225 @@
 /* ---------------------------------------------------------------------------
    SW-DGO project page.
 
-   A document, not a landing page. Earlier versions had a hero block, call-to-
-   action buttons and stat tiles; greying those out did not stop them being
-   product-page furniture. This is plain: one column, black on white, ordinary
-   HTML elements carrying their own semantics, and no class names doing visual
-   work that a <dl> or a <table> already does.
+   Two failed attempts bracket this one. The first borrowed the simulator's
+   accent palette, gradients and hover lifts, which read as a product launch.
+   The correction stripped everything to bare default HTML, which read as 1993.
 
-   It no longer loads styles.css. That file is the simulator's application
-   shell -- full-height flex, dark surfaces, semantic accent colours -- and
-   every one of those had to be fought here. The simulator keeps it; this page
-   has no use for it.
+   The target is the middle: a page that is obviously typeset rather than
+   styled. Restraint here means spending the effort on measure, rhythm and
+   hierarchy instead of on ornament -- no cards, no buttons, no tiles, no
+   colour carrying meaning it does not have, but not the browser defaults
+   either.
+
+   Serif body text on a warm off-white, one accent-free grey scale, and a
+   vertical rhythm that stays consistent from the title to the footnote.
    --------------------------------------------------------------------------- */
 
-html {
-  -webkit-text-size-adjust: 100%;
+:root {
+  --ink:        #17171a;
+  --ink-soft:   #3d3d42;
+  --ink-mute:   #6e6e75;
+  --ink-faint:  #93939a;
+  --rule:       #e2e0dc;
+  --rule-soft:  #edebe7;
+  --paper:      #fcfbf9;
+  --paper-alt:  #f5f3ef;
+
+  --serif: "Charter", "Bitstream Charter", "Sitka Text", Cambria, Georgia,
+           "Times New Roman", serif;
+  --sans:  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+           Arial, sans-serif;
+  --mono:  ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+           "Liberation Mono", Menlo, monospace;
 }
 
+html { -webkit-text-size-adjust: 100%; }
+
 body {
-  max-width: 46rem;
-  margin: 3rem auto 5rem;
-  padding: 0 1.5rem;
-  background: #fff;
-  color: #1a1a1a;
-  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        Helvetica, Arial, sans-serif;
+  max-width: 38rem;
+  margin: 0 auto;
+  padding: 5.5rem 1.75rem 7rem;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: var(--serif);
+  font-size: 1.0625rem;      /* 17px: comfortable for sustained serif reading */
+  line-height: 1.72;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+}
+
+/* ------------------------------------------------------------------ head -- */
+.eyebrow {
+  margin: 0 0 1.1rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
 }
 
 h1 {
-  margin: 0 0 0.6rem;
-  font-size: 1.55rem;
+  margin: 0 0 0.85rem;
+  font-size: 1.85rem;
   font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
+  line-height: 1.24;
+  letter-spacing: -0.011em;
+  color: var(--ink);
+  text-wrap: balance;
 }
-
-h2 {
-  margin: 2.4rem 0 0.7rem;
-  font-size: 1.05rem;
-  font-weight: 600;
-}
-
-p { margin: 0 0 1rem; }
 
 .sub {
-  color: #333;
+  margin: 0 0 1.6rem;
+  font-size: 1.0625rem;
+  color: var(--ink-mute);
 }
 
-/* The repository link is the main exit from this page; give it its own line. */
 .repo {
-  margin: 0 0 0.35rem;
-  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono",
-               Menlo, monospace;
-  font-size: 0.92rem;
+  margin: 0 0 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.845rem;
+  letter-spacing: -0.01em;
 }
-.repo a { font-weight: 600; }
+.repo a { font-weight: 500; border-bottom-color: var(--ink-faint); }
 
 .meta {
-  color: #666;
-  font-size: 0.9rem;
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--ink-faint);
 }
 
-a         { color: #1a1a1a; text-decoration: underline; text-underline-offset: 2px; }
-a:hover   { color: #000; }
-.meta a   { color: #444; }
-
-hr {
-  margin: 2rem 0;
-  border: 0;
-  border-top: 1px solid #e0e0e0;
+/* --------------------------------------------------------------- headings -- */
+h2 {
+  margin: 3.1rem 0 1.1rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.79rem;
+  font-weight: 600;
+  font-family: var(--sans);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
 }
 
-/* Contents: a definition list is exactly this shape, so no cards required. */
+p { margin: 0 0 1.15rem; }
+p:last-child { margin-bottom: 0; }
+
+/* ------------------------------------------------------------------ links -- */
+a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  transition: border-color 0.12s ease;
+}
+a:hover { border-bottom-color: var(--ink); }
+
+/* --------------------------------------------------------------- contents -- */
 dl { margin: 0; }
-dt { margin: 1.1rem 0 0.15rem; font-weight: 600; }
-dd { margin: 0 0 0 0; color: #444; font-size: 0.95rem; }
 
-ul { margin: 0 0 1rem; padding-left: 1.2rem; }
-li { margin-bottom: 0.4rem; color: #333; }
+dt {
+  margin: 1.35rem 0 0.2rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+dt:first-child { margin-top: 0; }
+dt a { border-bottom-width: 1px; }
 
+dd {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.62;
+  color: var(--ink-mute);
+}
+
+/* ------------------------------------------------------------------ lists -- */
+ul { margin: 0 0 1.15rem; padding-left: 1.15rem; }
+li { margin-bottom: 0.5rem; }
+li::marker { color: var(--ink-faint); }
+
+/* ------------------------------------------------------------------- code -- */
 pre {
-  margin: 0 0 1rem;
-  padding: 1rem 1.1rem;
-  background: #f6f6f6;
-  border: 1px solid #e0e0e0;
-  border-radius: 2px;
-  overflow-x: auto;                  /* long lines scroll; the page never does */
-  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono",
-               Menlo, monospace;
-  font-size: 0.83rem;
-  line-height: 1.7;
-  color: #1a1a1a;
+  margin: 0 0 1.3rem;
+  padding: 1.15rem 1.25rem;
+  background: var(--paper-alt);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  overflow-x: auto;                 /* long lines scroll; the page never does */
+  font-family: var(--mono);
+  font-size: 0.795rem;
+  line-height: 1.78;
+  color: var(--ink);
 }
 
 code {
-  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono",
-               Menlo, monospace;
-  font-size: 0.9em;
+  font-family: var(--mono);
+  font-size: 0.88em;
 }
 
+/* ------------------------------------------------------------------ table -- */
 table {
   width: 100%;
-  margin: 0 0 1rem;
+  margin: 0 0 1.3rem;
   border-collapse: collapse;
-  font-size: 0.92rem;
+  font-family: var(--sans);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
 }
-th, td {
-  padding: 0.45rem 0.6rem 0.45rem 0;
-  text-align: left;
-  border-bottom: 1px solid #e8e8e8;
-}
-th {
-  border-bottom: 1px solid #bbb;
-  font-weight: 600;
-}
-td + td, th + th { text-align: right; }
 
+th {
+  padding: 0 0.7rem 0.5rem 0;
+  border-bottom: 1px solid var(--ink-faint);
+  font-weight: 600;
+  font-size: 0.76rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-mute);
+  text-align: left;
+}
+
+td {
+  padding: 0.52rem 0.7rem 0.52rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  text-align: left;
+  color: var(--ink-soft);
+}
+
+tbody tr:first-child td { color: var(--ink); font-weight: 600; }
+tbody tr:last-child td  { border-bottom: none; }
+
+th + th, td + td { text-align: right; padding-right: 0; }
+
+/* The closing note sits below the final rule, quieter than body text. */
+.colophon {
+  margin: 1.6rem 0 0;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+/* ----------------------------------------------------------------- rules -- */
+hr {
+  margin: 3rem 0 0;
+  border: 0;
+  border-top: 1px solid var(--rule);
+}
+hr + h2 { margin-top: 2.4rem; }
+
+/* ------------------------------------------------------------------ dark -- */
 @media (prefers-color-scheme: dark) {
-  body      { background: #131313; color: #e4e4e4; }
-  .sub      { color: #cfcfcf; }
-  .meta     { color: #909090; }
-  .meta a   { color: #b4b4b4; }
-  a         { color: #e4e4e4; }
-  a:hover   { color: #fff; }
-  hr        { border-top-color: #303030; }
-  dd, li    { color: #b8b8b8; }
-  pre       { background: #1b1b1b; border-color: #303030; color: #e4e4e4; }
-  th, td    { border-bottom-color: #2a2a2a; }
-  th        { border-bottom-color: #4a4a4a; }
+  :root {
+    --ink:       #eceae6;
+    --ink-soft:  #c6c3bd;
+    --ink-mute:  #99958e;
+    --ink-faint: #74716b;
+    --rule:      #33322f;
+    --rule-soft: #262523;
+    --paper:     #161514;
+    --paper-alt: #1d1c1a;
+  }
+}
+
+@media (max-width: 34rem) {
+  body { padding: 3.25rem 1.35rem 4.5rem; font-size: 1.02rem; }
+  h1   { font-size: 1.55rem; }
 }
